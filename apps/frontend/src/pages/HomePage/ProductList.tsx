@@ -44,8 +44,8 @@ export default function ProductList({ products, categories }: Props) {
             {items.map((p) => (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 0, translateY: 12 }}
-                animate={{ opacity: 1, translateY: 0 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <Card sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2 }}>
