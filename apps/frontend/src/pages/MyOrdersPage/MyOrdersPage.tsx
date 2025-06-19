@@ -86,20 +86,13 @@ export default function MyOrdersPage() {
     fetchOrders();
   }, []);
 
-
   const filteredOrders = useMemo(() => {
+    if (!Array.isArray(localState.orders)) return [];
     return localState.orders.filter(order => {
-      const matchesStatus =
-        filterState.status === 'all' || order.status === filterState.status;
-      const matchesDate =
-        !filterState.createdAfter ||
-        (order.createdAt?.toDate &&
-          order.createdAt.toDate().getTime() >=
-          filterState.createdAfter.toDate().getTime());
-
-      return matchesStatus && matchesDate;
+      // ...
     });
   }, [localState.orders, filterState.status, filterState.createdAfter]);
+
 
   const paginatedOrders = useMemo(() => {
     const start = (filterState.page - 1) * filterState.pageSize;

@@ -29,12 +29,12 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLogsPage from './pages/admin/AdminLogsPage';
 import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
 import AdminHomePage from './pages/admin/AdminHomePage';
-
+import { onAuthStateChanged } from 'firebase/auth';
 import { useRedirect } from './context/RedirectContext';
 import { useFirebaseAuthListener } from './hooks/useFirebaseAuthListener';
 import { useAuthStore } from './stores/useAuthStore';
 import { useThemeContext } from './context/ThemeContext';
-
+import { auth } from './firebase';
 import { StripeProvider } from './stripe/StripeProvider';
 
 import './App.css';
@@ -42,10 +42,41 @@ import './App.css';
 export default function App() {
   useFirebaseAuthListener();
   const navigate = useNavigate();
-  const { user, loading } = useAuthStore();
+  const { user, loading, setUser, setLoading } = useAuthStore();
   const { consumeRedirect } = useRedirect();
   const { theme, isLoading } = useThemeContext();
   const hasRedirected = useRef(false);
+
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(false);
+
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdTokenResult();
+        const u = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          name: firebaseUser.displayName ?? '',
+          role: (token.claims.role as 'user' | 'admin' | 'superadmin') ?? 'user',
+        };
+
+        console.log('✅ Setting user:', u);
+        setUser(u);
+      } else {
+        console.log('👋 No user');
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [setUser, setLoading]);
+
+
+
+
+
+
 
   useEffect(() => {
     if (!loading && !user && !hasRedirected.current) {

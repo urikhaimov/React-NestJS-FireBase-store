@@ -5,8 +5,21 @@ import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 export class OrdersController {
   @UseGuards(FirebaseAuthGuard)
   @Get()
-  getMyOrders(@Req() req) {
-    const uid = req.user.uid;
-    return `Returning orders for user: ${uid}`;
-  }
+@UseGuards(FirebaseAuthGuard)
+getMyOrders(@Req() req) {
+  const uid = req.user.uid;
+
+  // Temporary mock — replace with Firestore logic later
+  return [
+    {
+      id: '1',
+      status: 'pending',
+      amount: 59.99,
+      createdAt: new Date(),
+      items: [
+        { name: 'Baby Blanket', quantity: 1, price: 59.99 },
+      ],
+    },
+  ];
+}
 }
