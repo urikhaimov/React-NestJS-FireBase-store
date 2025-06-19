@@ -26,6 +26,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 import BrushIcon from '@mui/icons-material/Brush';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -69,13 +70,14 @@ export default function LeftMenu() {
     { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
   ];
 
-  const adminLinks = [
-    { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
-    { label: 'Categories', icon: <CategoryIcon />, path: '/admin/categories' },
-    { label: 'Users', icon: <PeopleIcon />, path: '/admin/users' },
-    { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
-    { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
-  ];
+ const adminLinks = [
+  { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
+  { label: 'Categories', icon: <CategoryIcon />, path: '/admin/categories' },
+  { label: 'Users', icon: <PeopleIcon />, path: '/admin/users' },
+  { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
+  { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' }, // ✅ unique icon
+  { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
+];
 
   const drawerContent = (
     <Box width={drawerWidth} display="flex" flexDirection="column" height="100%">
