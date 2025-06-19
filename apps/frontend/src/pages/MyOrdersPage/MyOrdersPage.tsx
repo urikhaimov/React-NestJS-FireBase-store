@@ -20,7 +20,7 @@ import { db, auth } from '../../firebase';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { Order, filterReducer, initialFilterState } from './FilterReducer';
 import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
-
+import { retryWithBackoff } from '../../utils/retryWithBackoff';
 const statusOptions = ['all', 'pending', 'shipped', 'delivered', 'succeeded'];
 
 interface LocalState {
@@ -53,37 +53,38 @@ export default function MyOrdersPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-useEffect(() => {
-  const fetchOrders = async () => {
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          localDispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        }
 
-      const idToken = await user.getIdToken();
+        const idToken = await user.getIdToken();
 
-      const res = await fetch('/orders', {
-        headers: {
-          Authorization: `Bearer ${idToken}`, // ✅ still required
-        },
-      });
+        const fetchFn = () =>
+          fetch('/orders', {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+            },
+          }).then((res) => {
+            if (!res.ok) throw new Error('Failed to fetch orders');
+            return res.json();
+          });
 
-      const text = await res.text();
-      console.log('Raw response:', text);
+        const list = await retryWithBackoff(fetchFn);
+        localDispatch({ type: 'SET_ORDERS', payload: list });
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+      } finally {
+        localDispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
 
-      if (!res.ok) throw new Error('Failed to fetch orders');
-
-      const list = JSON.parse(text);
-      localDispatch({ type: 'SET_ORDERS', payload: list });
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-    } finally {
-      localDispatch({ type: 'SET_LOADING', payload: false });
-    }
-  };
-
-  fetchOrders();
-}, []);
-
+    fetchOrders();
+  }, []);
 
 
   const filteredOrders = useMemo(() => {

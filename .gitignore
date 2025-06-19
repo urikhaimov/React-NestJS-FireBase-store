@@ -24,7 +24,7 @@ Thumbs.db
 # Env files
 .env
 .env.*.local
-functions/.env
+
 
 # Firebase
 .firebase/
