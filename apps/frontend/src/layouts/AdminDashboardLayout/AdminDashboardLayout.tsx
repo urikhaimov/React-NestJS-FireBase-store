@@ -25,7 +25,7 @@ export default function AdminDashboardLayout() {
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: '70vh', overflow: 'hidden' }}>
       <CssBaseline />
 
       <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
