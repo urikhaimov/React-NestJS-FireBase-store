@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { auth as adminAuth } from 'firebase-admin';
+import { adminAuth } from '../firebase/firebase-admin'; // path depends on your structure
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -19,8 +19,8 @@ export class FirebaseAuthGuard implements CanActivate {
     const idToken = authHeader.split('Bearer ')[1];
 
     try {
-      const decodedToken = await adminAuth().verifyIdToken(idToken);
-      req.user = decodedToken; // 🔐 Makes `req.user.uid` available in controller
+      const decodedToken = await adminAuth.verifyIdToken(idToken);
+      req.user = decodedToken; // Attach user to request
       return true;
     } catch (error) {
       throw new UnauthorizedException('Invalid Firebase token');

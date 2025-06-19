@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "concurrently \"npm:dev:*\"",
     "dev:frontend": "npm --workspace apps/frontend run dev",
-    "dev:backend": "npm --workspace apps/backend run start:dev"
+    "dev:backend": "npm --workspace apps/backend run start:dev",
+    "start:dev": "nest start --watch"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
