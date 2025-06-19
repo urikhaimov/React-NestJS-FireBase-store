@@ -1,4 +1,4 @@
-# React-NestJS-Firebase Store 🛒
+# React-NestJS-Firebase Store (in progress) 🛒
 
 A modern, full-stack e-commerce platform built using:
 
