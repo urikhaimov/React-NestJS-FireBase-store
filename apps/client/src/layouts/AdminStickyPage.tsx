@@ -1,5 +1,4 @@
 import { Box, Typography } from '@mui/material';
-import React from 'react';
 
 interface AdminStickyPageProps {
   title: string;
@@ -9,31 +8,40 @@ interface AdminStickyPageProps {
 
 export default function AdminStickyPage({ title, filters, children }: AdminStickyPageProps) {
   return (
-    <Box px={2} py={2} height="100%" display="flex" flexDirection="column" overflow="hidden">
-      <Box>
-        <Typography variant="h4" gutterBottom>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '70vh',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Sticky Top Filters */}
+      <Box
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          bgcolor: 'background.paper',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h5" sx={{ px: { xs: 1, sm: 2 }, pt: 2, pb: 1 }}>
           {title}
         </Typography>
-
-        {filters && (
-          <Box
-            sx={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              bgcolor: 'background.paper',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              pb: 2,
-              mb: 2,
-            }}
-          >
-            {filters}
-          </Box>
-        )}
+        {filters && <Box sx={{ px: { xs: 1, sm: 2 }, pb: 2 }}>{filters}</Box>}
       </Box>
 
-      <Box flex={1} overflow="auto">
+      {/* Scrollable Content */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          px: { xs: 1, sm: 2 },
+          pb: 4,
+        }}
+      >
         {children}
       </Box>
     </Box>
