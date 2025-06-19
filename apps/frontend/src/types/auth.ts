@@ -5,10 +5,11 @@ import type { Role } from '../constants/roles';
 
 export interface AppUser {
   uid: string;
-  name: string;
+  name?: string;
   email: string;
-  role: Role;
+  role?: Role;
   photoURL?: string;
+
 }
 export interface AuthContextType {
   user: AppUser | null;

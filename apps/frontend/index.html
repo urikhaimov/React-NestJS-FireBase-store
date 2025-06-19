@@ -1,13 +1,34 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+<meta
+  http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self' https://js.stripe.com;
+    script-src 'self' https://js.stripe.com;
+    font-src 'self' https://js.stripe.com;
+    style-src 'self' 'unsafe-inline' https://js.stripe.com;
+    img-src 'self' data: https://firebasestorage.googleapis.com https://www.google.com;
+    connect-src 'self'
+      https://identitytoolkit.googleapis.com
+      https://securetoken.googleapis.com
+      https://firestore.googleapis.com
+      https://firebase.googleapis.com
+      https://www.googleapis.com;
+    frame-src https://js.stripe.com;
+  "
+/>
+
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + React + TS</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
