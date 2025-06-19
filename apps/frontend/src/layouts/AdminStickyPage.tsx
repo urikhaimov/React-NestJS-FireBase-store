@@ -12,7 +12,7 @@ export default function AdminStickyPage({ title, filters, children }: AdminStick
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '70vh',
+        height: '100vh',
         overflow: 'hidden',
       }}
     >
@@ -37,7 +37,7 @@ export default function AdminStickyPage({ title, filters, children }: AdminStick
       <Box
         sx={{
           flexGrow: 1,
-          overflowY: 'auto',
+          overflow: 'hidden',
           px: { xs: 1, sm: 2 },
           pb: 4,
         }}
