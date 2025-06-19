@@ -25,6 +25,8 @@ import Layout from './layouts/MainLayout';
 import AdminDashboardLayout from './layouts/AdminDashboardLayout';
 import AdminThemePage from './pages/admin/AdminThemePage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
+
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLogsPage from './pages/admin/AdminLogsPage';
 import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
@@ -172,6 +174,7 @@ export default function App() {
           >
             <Route index element={<AdminHomePage />} />
             <Route path="categories" element={<AdminCategoriesPage />} />
+             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="logs" element={<AdminLogsPage />} />
             <Route path="products" element={<AdminProductsPage />} />
