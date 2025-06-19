@@ -1,3 +1,5 @@
+// src/pages/admin/AdminOrdersPage/LocalReducer.ts
+
 export interface Order {
   id: string;
   userId: string;
@@ -7,7 +9,7 @@ export interface Order {
   status: string;
 }
 
-interface FilterState {
+export interface FilterState {
   email: string;
   status: string;
   minTotal: number;
@@ -17,6 +19,11 @@ interface FilterState {
   sortDirection: 'asc' | 'desc';
   loading: boolean;
   orders: Order[];
+  page: number;
+  pageSize: number;
+  searchTerm: string;
+  selectedCategoryId: string;
+  createdAfter: Date | null;
 }
 
 export const initialState: FilterState = {
@@ -29,9 +36,14 @@ export const initialState: FilterState = {
   sortDirection: 'desc',
   loading: false,
   orders: [],
+  page: 1,
+  pageSize: 10,
+  searchTerm: '',
+  selectedCategoryId: '',
+  createdAfter: null,
 };
 
-type Action =
+export type Action =
   | { type: 'setEmail'; payload: string }
   | { type: 'setStatus'; payload: string }
   | { type: 'setMinTotal'; payload: number }
@@ -40,7 +52,12 @@ type Action =
   | { type: 'setEndDate'; payload: Date | null }
   | { type: 'setSortDirection'; payload: 'asc' | 'desc' }
   | { type: 'setLoading'; payload: boolean }
-  | { type: 'setOrders'; payload: Order[] };
+  | { type: 'setOrders'; payload: Order[] }
+  | { type: 'setPage'; payload: number }
+  | { type: 'SET_SEARCH_TERM'; payload: string }
+  | { type: 'SET_CATEGORY_FILTER'; payload: string }
+  | { type: 'SET_CREATED_AFTER'; payload: Date | null }
+  | { type: 'RESET_FILTERS' };
 
 export function reducer(state: FilterState, action: Action): FilterState {
   switch (action.type) {
@@ -62,8 +79,29 @@ export function reducer(state: FilterState, action: Action): FilterState {
       return { ...state, loading: action.payload };
     case 'setOrders':
       return { ...state, orders: action.payload };
+    case 'setPage':
+      return { ...state, page: action.payload };
+    case 'SET_SEARCH_TERM':
+      return { ...state, searchTerm: action.payload };
+    case 'SET_CATEGORY_FILTER':
+      return { ...state, selectedCategoryId: action.payload };
+    case 'SET_CREATED_AFTER':
+      return { ...state, createdAfter: action.payload };
+    case 'RESET_FILTERS':
+      return {
+        ...state,
+        searchTerm: '',
+        selectedCategoryId: '',
+        createdAfter: null,
+        email: '',
+        status: 'all',
+        minTotal: 0,
+        maxTotal: 0,
+        startDate: null,
+        endDate: null,
+        sortDirection: 'desc',
+      };
     default:
       return state;
   }
 }
-
