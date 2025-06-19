@@ -1,0 +1,51 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build output
+dist
+dist-ssr
+.svelte-kit
+.next
+out
+
+# Firebase emulator + functions output
+.firebase
+functions/lib
+
+# Local environment files
+.env
+.env.*.local
+functions/.env
+functions/.env.*.local
+
+# System files
+.DS_Store
+
+# Dependency directories
+node_modules
+functions/node_modules
+
+# Editor and IDE files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc
+coverage
+*.tgz
+*.zip
+*.bak
+*.tmp
+.env
+.env

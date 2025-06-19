@@ -1,0 +1,14 @@
+
+html, body {
+  height: 100%;          /* ✅ correct */
+  overflow-x: hidden;    /* ✅ correct */
+  overflow-y: auto;      /* ✅ required */
+  margin: 0;
+  padding: 0;
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+/* * {
+  outline: 1px dashed red;
+} */
