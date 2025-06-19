@@ -66,6 +66,7 @@ export default function App() {
       } else {
         console.log('👋 No user');
         setUser(null);
+        navigate('/login');
       }
     });
 
