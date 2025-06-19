@@ -1,0 +1,53 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules
+**/node_modules/
+**/.pnp/
+.pnp.js
+
+# TypeScript build output
+**/dist/
+**/build/
+
+# Vite cache
+**/.vite/
+
+# Env files
+.env
+.env.*.local
+functions/.env
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+
+# IDEs and tools
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage
+coverage/
+
+# Mac system files
+*.DS_Store
+
+# Optional: ignore React/Vite production build if handled by Firebase only
+# client/dist/
+
+**/service-account.json
+**/.env*

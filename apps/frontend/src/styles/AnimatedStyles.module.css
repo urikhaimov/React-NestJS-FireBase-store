@@ -1,0 +1,33 @@
+/* Animated background */
+.animated-background {
+  min-height: 100vh;
+  background: linear-gradient(-45deg, #f5f7fa, #c3cfe2, #fdfbfb, #ebedee);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Product card hover effect */
+.product-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
+/* Optional: Smooth image styling */
+.product-image {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+}
