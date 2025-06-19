@@ -28,7 +28,7 @@ const LoginPage = () => {
   useEffect(() => {
     if (user) {
       const target = redirectTo || location.state?.from?.pathname ||
-        ['admin', 'superadmin'].includes(user.role) ? '/admin' : '/';
+        ['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/';
       navigate(target, { replace: true });
       setRedirectTo(null);
     }
