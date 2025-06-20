@@ -12,7 +12,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import LeftMenu from '../../components/LeftMenu';
+import LeftMenu from '../../components/LeftMenu/LeftMenu';
 
 const drawerWidth = 240;
 
