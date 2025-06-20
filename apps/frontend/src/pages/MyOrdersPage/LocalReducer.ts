@@ -1,6 +1,8 @@
+import { Timestamp } from 'firebase/firestore'; // for frontend types
+
 export type Order = {
   id: string;
-  createdAt: { toDate: () => Date };
+  createdAt: Timestamp;
   status: string;
   email: string;
   amount: number;

@@ -154,6 +154,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/my-orders"
+            element={
+              <ProtectedRoute>
+                <OrderDetailPage  />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/thank-you"
@@ -174,7 +182,7 @@ export default function App() {
           >
             <Route index element={<AdminHomePage />} />
             <Route path="categories" element={<AdminCategoriesPage />} />
-             <Route path="orders" element={<AdminOrdersPage />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="logs" element={<AdminLogsPage />} />
             <Route path="products" element={<AdminProductsPage />} />

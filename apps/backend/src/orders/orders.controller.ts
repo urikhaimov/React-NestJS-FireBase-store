@@ -1,25 +1,30 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
-import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { adminDb } from '../firebase/firebase-admin';
 
-@Controller('orders')
-export class OrdersController {
-  @UseGuards(FirebaseAuthGuard)
-  @Get()
-@UseGuards(FirebaseAuthGuard)
-getMyOrders(@Req() req) {
-  const uid = req.user.uid;
+@Injectable()
+export class OrdersService {
+  async getOrdersByUserId(uid: string) {
+    const snapshot = await adminDb
+      .collection('orders')
+      .where('userId', '==', uid)
+      .orderBy('createdAt', 'desc')
+      .get();
 
-  // Temporary mock — replace with Firestore logic later
-  return [
-    {
-      id: '1',
-      status: 'pending',
-      amount: 59.99,
-      createdAt: new Date(),
-      items: [
-        { name: 'Baby Blanket', quantity: 1, price: 59.99 },
-      ],
-    },
-  ];
-}
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  }
+
+  // ✅ THIS METHOD MUST EXIST
+  async getOrderById(uid: string, orderId: string) {
+    const doc = await adminDb.collection('orders').doc(orderId).get();
+
+    if (!doc.exists) throw new NotFoundException('Order not found');
+
+    const data = doc.data();
+    if (data?.userId !== uid) throw new ForbiddenException('Access denied');
+
+    return { id: doc.id, ...data };
+  }
 }

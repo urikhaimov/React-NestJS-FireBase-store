@@ -1,5 +1,4 @@
-// ✅ MyOrdersPage.tsx
-import React, { useEffect, useMemo, useReducer, useCallback } from 'react';
+import React, { useEffect, useMemo, useReducer, useCallback, useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,31 +14,34 @@ import {
 } from '@mui/material';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
-import { auth } from '../../firebase';
 import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
 import OrderFilters from './OrderFilters';
+import { useAuthReady } from '../../hooks/useAuthReady';
 
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
-  const [orders, setOrders] = React.useState<Order[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const { user, ready } = useAuthReady();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
+    if (!ready) return;
+
     const fetchOrders = async () => {
       try {
-        const user = auth.currentUser;
         if (!user) {
           setLoading(false);
           return;
         }
 
         const idToken = await user.getIdToken();
+
         const fetchFn = () =>
-          fetch('/orders', {
+          fetch('/orders/mine', {
             headers: {
               Authorization: `Bearer ${idToken}`,
             },
@@ -58,12 +60,15 @@ export default function MyOrdersPage() {
     };
 
     fetchOrders();
-  }, []);
+  }, [ready, user]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      const matchStatus = filterState.status === 'all' || order.status === filterState.status;
-      const matchStart = !filterState.startDate || order.createdAt.toDate().getTime() >= filterState.startDate.getTime();
+      const matchStatus =
+        filterState.status === 'all' || order.status === filterState.status;
+      const matchStart =
+        !filterState.startDate ||
+        order.createdAt.toDate().getTime() >= filterState.startDate.getTime();
       return matchStatus && matchStart;
     });
   }, [orders, filterState.status, filterState.startDate]);
@@ -75,35 +80,43 @@ export default function MyOrdersPage() {
 
   const totalPages = Math.ceil(filteredOrders.length / filterState.pageSize);
 
-  const Row = useCallback(({ index, style }: ListChildComponentProps) => {
-    const order = paginatedOrders[index];
-    return (
-      <Box style={style} px={1}>
-        <Paper elevation={3} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-          <Typography variant="subtitle1" fontWeight="bold">Order #{order.id}</Typography>
-          <Typography variant="body2">Status: {order.status}</Typography>
-          <Typography variant="body2">
-            Date: {order.createdAt?.toDate?.().toLocaleString()}
-          </Typography>
-          <Typography variant="body2" gutterBottom>Total: ${order.amount}</Typography>
-          <Divider sx={{ my: 1 }} />
-          <List dense disablePadding>
-            {order.items.map((item, idx) => (
-              <ListItem key={idx} disablePadding>
-                <ListItemText
-                  primary={`${item.name} × ${item.quantity}`}
-                  secondary={`Price: $${item.price}`}
-                  sx={{ pl: 1 }}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      </Box>
-    );
-  }, [paginatedOrders]);
+  const Row = useCallback(
+    ({ index, style }: ListChildComponentProps) => {
+      const order = paginatedOrders[index];
+      return (
+        <Box style={style} px={1}>
+          <Paper elevation={3} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              Order #{order.id}
+            </Typography>
+            <Typography variant="body2">Status: {order.status}</Typography>
+            <Typography variant="body2">
+              Date:{' '}
+              {order.createdAt.toDate().toLocaleString()}
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              Total: ${order.amount}
+            </Typography>
+            <Divider sx={{ my: 1 }} />
+            <List dense disablePadding>
+              {order.items.map((item, idx) => (
+                <ListItem key={idx} disablePadding>
+                  <ListItemText
+                    primary={`${item.name} × ${item.quantity}`}
+                    secondary={`Price: $${item.price}`}
+                    sx={{ pl: 1 }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Box>
+      );
+    },
+    [paginatedOrders]
+  );
 
-  if (loading) {
+  if (!ready || loading) {
     return (
       <Box display="flex" justifyContent="center" mt={5}>
         <CircularProgress />
@@ -113,7 +126,9 @@ export default function MyOrdersPage() {
 
   return (
     <PageWithStickyFilters>
-      <Typography variant="h4" gutterBottom>My Orders</Typography>
+      <Typography variant="h4" gutterBottom>
+        My Orders
+      </Typography>
 
       <OrderFilters state={filterState} dispatch={dispatch} />
 
@@ -134,7 +149,9 @@ export default function MyOrdersPage() {
             <Pagination
               count={totalPages}
               page={filterState.page}
-              onChange={(_, page) => dispatch({ type: 'setPage', payload: page })}
+              onChange={(_, page) =>
+                dispatch({ type: 'setPage', payload: page })
+              }
               color="primary"
             />
           </Box>
@@ -143,4 +160,3 @@ export default function MyOrdersPage() {
     </PageWithStickyFilters>
   );
 }
-
