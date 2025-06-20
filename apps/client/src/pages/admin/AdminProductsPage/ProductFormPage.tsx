@@ -18,9 +18,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
 import { fetchCategories } from '../../../api/categories';
 import { getProductById, updateProduct, createProduct } from '../../../api/products';
-import AdminPageLayout from '../../../layouts/AdminPageLayout';
+
 import { uploadFilesAndReturnUrls } from '../../../utils/uploadFilesAndReturnUrls';
 import type { Category, Product } from '../../../types/firebase';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 
 type FormState = {
   name: string;
@@ -160,7 +161,11 @@ export default function ProductFormPage({ mode }: Props) {
     return <Typography sx={{ mt: 4 }}>❌ Product not found.</Typography>;
 
   return (
-    <AdminPageLayout title={isEdit ? 'Edit Product' : 'Add Product'}>
+    <PageWithStickyFilters >
+
+      <Typography variant="h4" gutterBottom>
+        {isEdit ? 'Edit Product' : 'Add Product'}
+      </Typography>
       <Paper sx={{ p: 3, maxWidth: 700 }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
@@ -275,6 +280,6 @@ export default function ProductFormPage({ mode }: Props) {
           Product {isEdit ? 'updated' : 'created'} successfully!
         </Alert>
       </Snackbar>
-    </AdminPageLayout>
+    </PageWithStickyFilters>
   );
 }
