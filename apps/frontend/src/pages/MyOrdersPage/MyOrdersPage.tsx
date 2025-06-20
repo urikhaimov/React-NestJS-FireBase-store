@@ -1,3 +1,4 @@
+// ✅ MyOrdersPage.tsx
 import React, { useEffect, useMemo, useReducer, useCallback } from 'react';
 import {
   Box,
@@ -8,47 +9,21 @@ import {
   ListItem,
   ListItemText,
   CircularProgress,
-  TextField,
-  MenuItem,
   Pagination,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db, auth } from '../../firebase';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import { Order, filterReducer, initialFilterState } from './FilterReducer';
-import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
-const statusOptions = ['all', 'pending', 'shipped', 'delivered', 'succeeded'];
-
-interface LocalState {
-  orders: Order[];
-  loading: boolean;
-}
-
-type LocalAction =
-  | { type: 'SET_ORDERS'; payload: Order[] }
-  | { type: 'SET_LOADING'; payload: boolean };
-
-const localReducer = (state: LocalState, action: LocalAction): LocalState => {
-  switch (action.type) {
-    case 'SET_ORDERS':
-      return { ...state, orders: action.payload };
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    default:
-      return state;
-  }
-};
+import { auth } from '../../firebase';
+import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
+import { Order, filterReducer, initialFilterState } from './LocalReducer';
+import OrderFilters from './OrderFilters';
 
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
-  const [localState, localDispatch] = useReducer(localReducer, {
-    orders: [],
-    loading: true,
-  });
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -58,12 +33,11 @@ export default function MyOrdersPage() {
       try {
         const user = auth.currentUser;
         if (!user) {
-          localDispatch({ type: 'SET_LOADING', payload: false });
+          setLoading(false);
           return;
         }
 
         const idToken = await user.getIdToken();
-
         const fetchFn = () =>
           fetch('/orders', {
             headers: {
@@ -75,11 +49,11 @@ export default function MyOrdersPage() {
           });
 
         const list = await retryWithBackoff(fetchFn);
-        localDispatch({ type: 'SET_ORDERS', payload: list });
+        setOrders(list);
       } catch (err) {
         console.error('Error fetching orders:', err);
       } finally {
-        localDispatch({ type: 'SET_LOADING', payload: false });
+        setLoading(false);
       }
     };
 
@@ -87,12 +61,12 @@ export default function MyOrdersPage() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    if (!Array.isArray(localState.orders)) return [];
-    return localState.orders.filter(order => {
-      // ...
+    return orders.filter((order) => {
+      const matchStatus = filterState.status === 'all' || order.status === filterState.status;
+      const matchStart = !filterState.startDate || order.createdAt.toDate().getTime() >= filterState.startDate.getTime();
+      return matchStatus && matchStart;
     });
-  }, [localState.orders, filterState.status, filterState.createdAfter]);
-
+  }, [orders, filterState.status, filterState.startDate]);
 
   const paginatedOrders = useMemo(() => {
     const start = (filterState.page - 1) * filterState.pageSize;
@@ -105,30 +79,14 @@ export default function MyOrdersPage() {
     const order = paginatedOrders[index];
     return (
       <Box style={style} px={1}>
-        <Paper
-          key={order.id}
-          elevation={3}
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            mb: 2,
-            backgroundColor: 'background.paper',
-            boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Order #{order.id}
-          </Typography>
+        <Paper elevation={3} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight="bold">Order #{order.id}</Typography>
           <Typography variant="body2">Status: {order.status}</Typography>
           <Typography variant="body2">
             Date: {order.createdAt?.toDate?.().toLocaleString()}
           </Typography>
-          <Typography variant="body2" gutterBottom>
-            Total: ${order.amount}
-          </Typography>
-
+          <Typography variant="body2" gutterBottom>Total: ${order.amount}</Typography>
           <Divider sx={{ my: 1 }} />
-
           <List dense disablePadding>
             {order.items.map((item, idx) => (
               <ListItem key={idx} disablePadding>
@@ -145,7 +103,7 @@ export default function MyOrdersPage() {
     );
   }, [paginatedOrders]);
 
-  if (localState.loading) {
+  if (loading) {
     return (
       <Box display="flex" justifyContent="center" mt={5}>
         <CircularProgress />
@@ -155,44 +113,9 @@ export default function MyOrdersPage() {
 
   return (
     <PageWithStickyFilters>
-      <Typography variant="h4" gutterBottom>
-        My Orders
-      </Typography>
+      <Typography variant="h4" gutterBottom>My Orders</Typography>
 
-      <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={2}
-        mb={3}
-        alignItems="center"
-        justifyContent={{ xs: 'center', sm: 'flex-start' }}
-      >
-        <TextField
-          label="Status"
-          value={filterState.status}
-          onChange={(e) =>
-            dispatch({ type: 'SET_STATUS', payload: e.target.value })
-          }
-          select
-          size="small"
-          sx={{ minWidth: 140 }}
-        >
-          {statusOptions.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <DatePicker
-          label="Created After"
-          value={filterState.createdAfter}
-          onChange={(newDate) =>
-            dispatch({ type: 'SET_CREATED_AFTER', payload: newDate })
-          }
-          slotProps={{ textField: { size: 'small' } }}
-        />
-      </Box>
+      <OrderFilters state={filterState} dispatch={dispatch} />
 
       {paginatedOrders.length === 0 ? (
         <Typography>No orders found.</Typography>
@@ -211,9 +134,7 @@ export default function MyOrdersPage() {
             <Pagination
               count={totalPages}
               page={filterState.page}
-              onChange={(_, page) =>
-                dispatch({ type: 'SET_PAGE', payload: page })
-              }
+              onChange={(_, page) => dispatch({ type: 'setPage', payload: page })}
               color="primary"
             />
           </Box>
@@ -222,3 +143,4 @@ export default function MyOrdersPage() {
     </PageWithStickyFilters>
   );
 }
+
