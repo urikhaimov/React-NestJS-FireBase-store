@@ -1,5 +1,5 @@
-// src/components/LeftMenu.tsx
-import React, { useState } from 'react';
+// src/components/LeftMenu/LeftMenu.tsx
+import React, { useEffect } from 'react';
 import {
   Drawer,
   Box,
@@ -31,9 +31,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/useAuthStore';
-import { useCartStore } from '../store/cartStore';
-import CartDrawer from './CartDrawer';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useCartStore } from '../../store/cartStore';
+import CartDrawer from '../CartDrawer';
+import { useSidebarStore } from '../../stores/useSidebarStore';
 
 export default function LeftMenu() {
   const navigate = useNavigate();
@@ -42,18 +43,33 @@ export default function LeftMenu() {
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-  const [expanded, setExpanded] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const drawerWidth = expanded ? 240 : 72;
 
-  const toggleDrawer = () => setMobileOpen(!mobileOpen);
-  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-  const handleProfileMenuClose = () => setAnchorEl(null);
+  const {
+    mobileOpen,
+    expanded,
+    cartOpen,
+    anchorEl,
+    setExpanded,
+    toggleMobileDrawer,
+    closeMobileDrawer,
+    openCartDrawer,
+    closeCartDrawer,
+    setAnchorEl,
+  } = useSidebarStore();
+
+  const drawerWidth = expanded ? 240 : 72;
+  const showLabel = expanded && !isMobile;
+
+  useEffect(() => {
+    setExpanded(!isMobile);
+  }, [isMobile, setExpanded]);
+
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
+    setAnchorEl(event.currentTarget);
+  const handleProfileMenuClose = () =>
+    setAnchorEl(null);
 
   const storeLinks = [
     { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
@@ -64,20 +80,20 @@ export default function LeftMenu() {
           <ShoppingCartIcon />
         </Badge>
       ),
-      action: () => setCartOpen(true),
+      action: () => openCartDrawer(),
     },
     { label: 'My Orders', icon: <InventoryIcon />, action: () => navigate('/my-orders') },
     { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
   ];
 
- const adminLinks = [
-  { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
-  { label: 'Categories', icon: <CategoryIcon />, path: '/admin/categories' },
-  { label: 'Users', icon: <PeopleIcon />, path: '/admin/users' },
-  { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
-  { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' }, // ✅ unique icon
-  { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
-];
+  const adminLinks = [
+    { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
+    { label: 'Categories', icon: <CategoryIcon />, path: '/admin/categories' },
+    { label: 'Users', icon: <PeopleIcon />, path: '/admin/users' },
+    { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
+    { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' },
+    { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
+  ];
 
   const drawerContent = (
     <Box width={drawerWidth} display="flex" flexDirection="column" height="100%">
@@ -94,7 +110,7 @@ export default function LeftMenu() {
           <Avatar sx={{ width: 32, height: 32 }}>
             {user.name?.[0] || user.email?.[0] || 'U'}
           </Avatar>
-          {expanded && (
+          {showLabel && (
             <Typography variant="subtitle2" noWrap>
               {user.name || user.email}
             </Typography>
@@ -116,11 +132,16 @@ export default function LeftMenu() {
       <Divider />
       <List>
         {storeLinks.map(({ label, icon, action }) => (
-          <Tooltip title={!expanded ? label : ''} placement="right" key={label}>
+          <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => { action(); if (isMobile) setMobileOpen(false); }}>
+              <ListItemButton
+                onClick={() => {
+                  action();
+                  if (isMobile) closeMobileDrawer();
+                }}
+              >
                 <ListItemIcon>{icon}</ListItemIcon>
-                {expanded && <ListItemText primary={label} />}
+                {showLabel && <ListItemText primary={label} />}
               </ListItemButton>
             </ListItem>
           </Tooltip>
@@ -132,11 +153,16 @@ export default function LeftMenu() {
           <Divider />
           <List>
             {adminLinks.map(({ label, icon, path }) => (
-              <Tooltip title={!expanded ? label : ''} placement="right" key={label}>
+              <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
                 <ListItem disablePadding>
-                  <ListItemButton onClick={() => { navigate(path); if (isMobile) setMobileOpen(false); }}>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(path);
+                      if (isMobile) closeMobileDrawer();
+                    }}
+                  >
                     <ListItemIcon>{icon}</ListItemIcon>
-                    {expanded && <ListItemText primary={label} />}
+                    {showLabel && <ListItemText primary={label} />}
                   </ListItemButton>
                 </ListItem>
               </Tooltip>
@@ -148,11 +174,11 @@ export default function LeftMenu() {
       <Box flexGrow={1} />
 
       <List>
-        <Tooltip title={!expanded ? 'Logout' : ''} placement="right">
+        <Tooltip title={!showLabel ? 'Logout' : ''} placement="right">
           <ListItem disablePadding>
             <ListItemButton onClick={logout}>
               <ListItemIcon><LogoutIcon /></ListItemIcon>
-              {expanded && <ListItemText primary="Logout" />}
+              {showLabel && <ListItemText primary="Logout" />}
             </ListItemButton>
           </ListItem>
         </Tooltip>
@@ -162,26 +188,21 @@ export default function LeftMenu() {
 
   return (
     <>
-      {isMobile ? (
-        <>
-          <IconButton
-            color="inherit"
-            onClick={toggleDrawer}
-            sx={{ position: 'fixed', top: 10, left: 10, zIndex: 1400 }}
-          >
-            <MenuIcon />
-          </IconButton>
+      <Drawer
+        anchor="left"
+        open={mobileOpen}
+        onClose={closeMobileDrawer}
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{
+          sx: {
+            zIndex: (theme) => theme.zIndex.drawer + 2,
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
 
-          <Drawer
-            anchor="left"
-            open={mobileOpen}
-            onClose={toggleDrawer}
-            ModalProps={{ keepMounted: true }}
-          >
-            {drawerContent}
-          </Drawer>
-        </>
-      ) : (
+      {!isMobile && (
         <Drawer
           variant="permanent"
           sx={{
@@ -200,7 +221,7 @@ export default function LeftMenu() {
         </Drawer>
       )}
 
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <CartDrawer open={cartOpen} onClose={closeCartDrawer} />
     </>
   );
 }
