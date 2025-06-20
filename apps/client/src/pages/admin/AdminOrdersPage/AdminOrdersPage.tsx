@@ -36,7 +36,7 @@ export default function AdminOrdersPage() {
           borderRadius: 2,
           backgroundColor: theme.palette.background.paper,
           boxShadow: theme.shadows[2],
-          width: '100%',            // ✅ Prevents overflow
+          width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
         }}
@@ -74,21 +74,20 @@ export default function AdminOrdersPage() {
         </Box>
       ) : (
         <>
-
-          <VirtualList
-            style={{ overflowX: 'hidden' }}
-            height={isMobile ? 360 : 600}
-            width="100%"
-            itemCount={paginatedOrders.length}
-            itemSize={isMobile ? 220 : 160}
-          >
-            {renderRow}
-          </VirtualList>
-
+          <Box sx={{ width: '100%', overflowX: 'hidden' }}>
+            <VirtualList
+              height={isMobile ? 360 : 600}
+              width="100%"
+              itemCount={paginatedOrders.length}
+              itemSize={isMobile ? 220 : 160}
+            >
+              {renderRow}
+            </VirtualList>
+          </Box>
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
-              count={Math.ceil(state.orders.length / state.pageSize)}
+              count={Math.ceil(state.orders.length / pageSize)}
               page={state.page}
               onChange={(_, value) => dispatch({ type: 'setPage', payload: value })}
               color="primary"
