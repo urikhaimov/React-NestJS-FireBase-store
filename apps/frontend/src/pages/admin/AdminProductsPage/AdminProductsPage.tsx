@@ -18,7 +18,7 @@ import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import ProductAdminCard from './ProductAdminCard';
 import ProductFilters from './ProductFilters';
-import {fetchProductsPage} from '../../../hooks/fetchProductsPage'
+import { fetchProductsPage } from '../../../hooks/fetchProductsPage'
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
@@ -114,6 +114,7 @@ export default function AdminProductsPage() {
       ) : (
         <>
           <VirtualList
+            style={{ overflowX: 'hidden' }}
             height={isMobile ? 360 : 600}
             width="100%"
             itemCount={paginatedProducts.length}

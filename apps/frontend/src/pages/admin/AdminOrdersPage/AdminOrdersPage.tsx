@@ -1,33 +1,24 @@
-
-// src/pages/admin/AdminOrdersPage/AdminOrdersPage.tsx
-import React, { useEffect, useReducer } from 'react';
+import React, { useReducer } from 'react';
 import {
   Box,
   Typography,
   Paper,
   CircularProgress,
-  MenuItem,
-  TextField,
-  Button,
   Divider,
   useMediaQuery,
   useTheme,
   Pagination,
 } from '@mui/material';
-
 import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import dayjs from 'dayjs';
 import ProductFilters from './ProductFilters';
-import { reducer, initialState, Order } from './LocalReducer';
-
+import { reducer, initialState } from './LocalReducer';
 
 export default function AdminOrdersPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
- 
   const pageSize = state.pageSize;
   const paginatedOrders = state.orders.slice(
     (state.page - 1) * pageSize,
@@ -45,6 +36,9 @@ export default function AdminOrdersPage() {
           borderRadius: 2,
           backgroundColor: theme.palette.background.paper,
           boxShadow: theme.shadows[2],
+          width: '100%',            // ✅ Prevents overflow
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
         style={style}
       >
@@ -63,15 +57,15 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <AdminStickyPage title="Admin Orders"  filters={
-            <ProductFilters
-              state={state}
-              dispatch={dispatch}
-             
-             
-            />
-          }>
-    
+    <AdminStickyPage
+      title="Admin Orders"
+      filters={
+        <ProductFilters
+          state={state}
+          dispatch={dispatch}
+        />
+      }
+    >
       <Divider sx={{ mb: 2 }} />
 
       {state.loading ? (
@@ -80,7 +74,9 @@ export default function AdminOrdersPage() {
         </Box>
       ) : (
         <>
+
           <VirtualList
+            style={{ overflowX: 'hidden' }}
             height={isMobile ? 360 : 600}
             width="100%"
             itemCount={paginatedOrders.length}
@@ -88,6 +84,8 @@ export default function AdminOrdersPage() {
           >
             {renderRow}
           </VirtualList>
+
+
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
               count={Math.ceil(state.orders.length / state.pageSize)}
