@@ -1,5 +1,5 @@
 // src/products/dto/create-product.dto.ts
-import { IsString, IsNumber, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, IsUrl } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -16,5 +16,6 @@ export class CreateProductDto {
 
   @IsArray()
   @IsOptional()
+  @IsUrl({}, { each: true })
   images?: string[];
 }
