@@ -7,17 +7,18 @@ import {
   FormControlLabel,
   Switch,
   TextField,
+  Typography
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { useThemeSettings } from './useThemeSettings';
-
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 type ThemeFormValues = {
   primaryColor: string;
   secondaryColor: string;
   font: string;
   darkMode: boolean;
-};
-import AdminPageLayout from '../../../layouts/AdminPageLayout';
+}
+
 export function ThemePanel() {
   const { data: theme, saveTheme, isSaving } = useThemeSettings();
 
@@ -35,8 +36,10 @@ export function ThemePanel() {
   };
 
   return (
-    <AdminPageLayout title={'Theme Settings'}>
-
+    <PageWithStickyFilters>
+         <Typography variant="h4" gutterBottom>
+        {'Theme Settings'}
+      </Typography>
       <Box p={3}>
         <Card>
           <CardHeader title="Admin Dashboard – Theme Manager" />
@@ -75,6 +78,6 @@ export function ThemePanel() {
           </CardContent>
         </Card>
       </Box>
-    </AdminPageLayout >
+    </PageWithStickyFilters >
   );
 }
