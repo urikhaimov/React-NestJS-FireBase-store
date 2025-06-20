@@ -40,6 +40,7 @@ export default function AdminStickyPage({ title, filters, children }: AdminStick
           overflow: 'hidden',
           px: { xs: 1, sm: 2 },
           pb: 4,
+          height:'50vh'
         }}
       >
         {children}

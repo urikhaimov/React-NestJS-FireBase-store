@@ -25,82 +25,55 @@ export default function AdminDashboardLayout() {
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
 
   return (
-    <Box sx={{ display: 'flex', height: '70vh', overflow: 'hidden' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+         width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
+        overflow: 'hidden',
+        m: 0,
+        p: 0,
+      }}
+    >
       <CssBaseline />
 
-      <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
-        <Toolbar sx={{ minHeight: 48, px: 2 }}>
-          {(isMobile || isTablet) && (
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 1 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          <Typography variant="h6" fontSize={18} noWrap>
-            My Online Store
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="admin menu"
+      {/* Sidebar Navigation */}
+      <Drawer
+        variant={isMobile || isTablet ? 'temporary' : 'permanent'}
+        open={isMobile || isTablet ? mobileOpen : true}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            m: 0,
+            p: 0,
+          },
+        }}
       >
-        <Drawer
-          variant={isMobile || isTablet ? 'temporary' : 'permanent'}
-          open={isMobile || isTablet ? mobileOpen : true}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-            },
-          }}
-        >
-          <LeftMenu />
-        </Drawer>
-      </Box>
+        <LeftMenu />
+      </Drawer>
 
-      {/* Sticky Filter + Main Content */}
+      {/* Main Content Area */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
-          pt: 6,
-          px: 2,
-          pb: 1,
-          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          m: 0,
+          p: 0,
+          width: `calc(100vw - ${drawerWidth}px)`,
         }}
       >
-
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '90vh',
-            overflow: 'hidden', // prevent double scrollbars
-            width: {
-              xs: '100%',
-              sm: `calc(100% - ${drawerWidth}px)`,
-            },
-            pt: { xs: 1.5, sm: 3 },
-            px: { xs: 1.5, sm: 3 },
-          }}
-        >
-          <Toolbar />
+      
           <Outlet />
-        </Box>
-
       </Box>
     </Box>
+
+
+
   );
 }
