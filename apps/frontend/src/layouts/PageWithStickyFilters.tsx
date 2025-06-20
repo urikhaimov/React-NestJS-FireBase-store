@@ -9,7 +9,7 @@ export default function PageWithStickyFilters({ children }: { children: React.Re
         width: '100%',
         maxWidth: '1200px',
         px: 2,
-        py: 4,
+        py: 10,
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100%', // ✅ allow scrollable growth
