@@ -10,9 +10,13 @@ lerna-debug.log*
 # Build output
 dist
 dist-ssr
+.vite
 .svelte-kit
 .next
 out
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
 
 # Firebase emulator + functions output
 .firebase
@@ -24,17 +28,14 @@ functions/lib
 functions/.env
 functions/.env.*.local
 
-# System files
-.DS_Store
-
 # Dependency directories
-node_modules
-functions/node_modules
+node_modules/
+functions/node_modules/
 
 # Editor and IDE files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
@@ -42,10 +43,11 @@ functions/node_modules
 *.sw?
 
 # Misc
-coverage
+coverage/
 *.tgz
 *.zip
 *.bak
 *.tmp
-.env
-.env
+
+# Prevent accidental browser-save folders
+*_files/
