@@ -1,107 +1,102 @@
+// src/pages/OrderDetailPage/OrderDetailPage.tsx
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
+  Paper,
+  Divider,
   List,
   ListItem,
   ListItemText,
-  Card,
-  CardContent,
-  Divider,
   CircularProgress,
-  Alert,
+  Button,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-
-interface OrderItem {
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
-
-interface Order {
-  id: string;
-  email: string;
-  total: number;
-  status: string;
-  createdAt: any;
-  items: OrderItem[];
-}
-
-const fetchOrderById = async (orderId: string): Promise<Order> => {
-  const ref = doc(db, 'orders', orderId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error('Order not found');
-  return { id: snap.id, ...snap.data() } as Order;
-};
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuthReady } from '../../hooks/useAuthReady';
+import { Order } from '../MyOrdersPage/LocalReducer'; // ✅ same type
 
 export default function OrderDetailPage() {
-  const { id: orderId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, ready } = useAuthReady();
 
-  const {
-    data: order,
-    isLoading,
-    error,
-  } = useQuery<Order>({
-    queryKey: ['order', orderId],
-    queryFn: () => fetchOrderById(orderId!),
-    enabled: !!orderId,
-  });
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) return <CircularProgress />;
-  if (error || !order)
+  useEffect(() => {
+    if (!ready || !id) return;
+
+    const fetchOrder = async () => {
+      try {
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const token = await user.getIdToken();
+
+        const res = await fetch(`/orders/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error('Order not found');
+
+        const data = await res.json();
+        setOrder(data);
+      } catch (err) {
+        console.error('Error loading order:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [ready, user, id]);
+
+  if (!ready || loading) {
     return (
-      <Alert severity="error">
-        Order not found or you don’t have access to it.
-      </Alert>
+      <Box display="flex" justifyContent="center" mt={5}>
+        <CircularProgress />
+      </Box>
     );
+  }
+
+  if (!order) {
+    return (
+      <Box textAlign="center" mt={5}>
+        <Typography variant="h6">Order not found</Typography>
+        <Button onClick={() => navigate('/orders')} variant="contained" sx={{ mt: 2 }}>
+          Back to Orders
+        </Button>
+      </Box>
+    );
+  }
 
   return (
-    <PageWithStickyFilters>
+    <Box maxWidth="md" mx="auto" mt={4} px={2}>
       <Typography variant="h4" gutterBottom>
         Order #{order.id}
       </Typography>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="subtitle1">
-            {order.email} • {format(order.createdAt.toDate?.(), 'PPPpp')}
-          </Typography>
-          <Typography variant="subtitle2" sx={{ mt: 1 }}>
-            Status: <strong>{order.status}</strong>
-          </Typography>
-          <Typography sx={{ mt: 1 }}>
-            Total: <strong>${order.total.toFixed(2)}</strong>
-          </Typography>
-        </CardContent>
-      </Card>
+      <Paper sx={{ p: 3 }}>
+        <Typography>Status: {order.status}</Typography>
+        <Typography>Date: {order.createdAt.toDate().toLocaleString()}</Typography>
+        <Typography>Total: ${order.amount}</Typography>
 
-      <Typography variant="h6" gutterBottom>
-        Items
-      </Typography>
-      <List dense>
-        {order.items.map((item, idx) => (
-          <ListItem key={idx} disableGutters>
-            <img
-              src={item.image || '/placeholder.jpg'}
-              alt={item.name}
-              width={60}
-              height={60}
-              style={{ marginRight: 16, borderRadius: 8 }}
-            />
-            <ListItemText
-              primary={`${item.name} × ${item.quantity}`}
-              secondary={`$${(item.price * item.quantity).toFixed(2)}`}
-            />
-          </ListItem>
-        ))}
-      </List>
-      <Divider sx={{ mt: 2 }} />
-    </PageWithStickyFilters>
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="h6" gutterBottom>Items</Typography>
+        <List dense disablePadding>
+          {order.items.map((item, idx) => (
+            <ListItem key={idx}>
+              <ListItemText
+                primary={`${item.name} × ${item.quantity}`}
+                secondary={`$${item.price}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Box>
   );
 }
