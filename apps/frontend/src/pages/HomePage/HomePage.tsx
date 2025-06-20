@@ -1,28 +1,14 @@
 import React, { useMemo, useReducer } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  MenuItem,
-  InputAdornment,
-  Card,
-  CardContent,
-  CardMedia,
-  Divider,
-  Stack,
-  Pagination,
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import SearchIcon from '@mui/icons-material/Search';
+import { Box, Typography, Card, CardContent, CardMedia, Button, Divider, Pagination } from '@mui/material';
+import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import { useAllProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
-import type { Category } from '../../types/firebase';
-import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import { reducer, initialState } from './LocalReducer';
 import { useCartStore } from '../../store/cartStore';
-import { VariableSizeList, ListChildComponentProps } from 'react-window';
-import { Product } from '../../types/firebase'
+import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
+import { Product } from '../../types/firebase';
+import { reducer, initialState } from './LocalReducer';
+import ProductFilters from './ProductFilters'; // 👈 your reusable filter UI
+
 export default function HomePage() {
   const { data: products = [] } = useAllProducts();
   const { data: categories = [] } = useCategories();
@@ -59,7 +45,6 @@ export default function HomePage() {
 
   const totalPages = Math.ceil(filteredProducts.length / state.pageSize);
 
-  // 🔄 Transform to flat list with headers
   const flatList = useMemo(() => {
     const grouped = paginatedProducts.reduce<Record<string, Product[]>>((acc, p) => {
       const name = categoryMap.get(p.categoryId) || 'Uncategorized';
@@ -79,12 +64,13 @@ export default function HomePage() {
 
     return result;
   }, [paginatedProducts, categoryMap]);
+
   const getItemSize = (index: number) => {
     return flatList[index].type === 'header' ? 70 : 190;
   };
+
   const Row = ({ index, style }: ListChildComponentProps) => {
     const item = flatList[index];
-
     if (item.type === 'header') {
       return (
         <Box style={style} px={2} py={0.5}>
@@ -150,59 +136,8 @@ export default function HomePage() {
         Products
       </Typography>
 
-      {/* Filters */}
-      <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={2}
-        mb={3}
-        alignItems="center"
-        justifyContent={{ xs: 'center', sm: 'flex-start' }}
-      >
-        <TextField
-          label="Search"
-          value={state.search}
-          onChange={(e) => dispatch({ type: 'SET_SEARCH', payload: e.target.value })}
-          size="small"
-          sx={{ minWidth: 200 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+      <ProductFilters state={state} dispatch={dispatch} categories={categories} />
 
-        <TextField
-          label="Category"
-          value={state.selectedCategoryId}
-          onChange={(e) =>
-            dispatch({ type: 'SET_CATEGORY', payload: e.target.value })
-          }
-          select
-          size="small"
-          sx={{ minWidth: 160 }}
-        >
-          <MenuItem value="">All</MenuItem>
-          {categories.map((cat) => (
-            <MenuItem key={cat.id} value={cat.id}>
-              {cat.name}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <DatePicker
-          label="Created After"
-          value={state.createdAfter}
-          onChange={(newDate) =>
-            dispatch({ type: 'SET_CREATED_AFTER', payload: newDate })
-          }
-          slotProps={{ textField: { size: 'small' } }}
-        />
-      </Box>
-
-      {/* Product List */}
       {flatList.length === 0 ? (
         <Typography>No products found.</Typography>
       ) : (
