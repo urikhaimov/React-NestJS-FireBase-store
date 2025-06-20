@@ -38,22 +38,7 @@ export default function AdminDashboardLayout() {
       <CssBaseline />
 
       {/* Sidebar Navigation */}
-      <Drawer
-        variant={isMobile || isTablet ? 'temporary' : 'permanent'}
-        open={isMobile || isTablet ? mobileOpen : true}
-        onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            m: 0,
-            p: 0,
-          },
-        }}
-      >
-        <LeftMenu />
-      </Drawer>
+      
 
       {/* Main Content Area */}
       <Box
