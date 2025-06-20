@@ -143,7 +143,7 @@ export default function HomePage() {
       ) : (
         <>
           <VariableSizeList
-            height={450}
+            height={600}
             width="100%"
             itemCount={flatList.length}
             itemSize={getItemSize}
