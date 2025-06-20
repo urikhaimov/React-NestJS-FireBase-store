@@ -1,3 +1,4 @@
+// src/pages/admin/AdminProductsPage/LocalReducer.ts
 import { Dayjs } from 'dayjs';
 import { Product } from '../../../types/firebase';
 
@@ -10,6 +11,7 @@ export interface State {
   selectedCategoryId: string;
   createdAfter: Dayjs | null;
   page: number;
+  pageSize: number;
   successMessage: string;
   pendingDelete: Product | null;
 }
@@ -27,6 +29,7 @@ export type Action =
   | { type: 'RESET_FILTERS' }
   | { type: 'INCREMENT_PAGE' }
   | { type: 'DECREMENT_PAGE' }
+  | { type: 'SET_PAGE'; payload: number }
   | { type: 'SET_SUCCESS_MESSAGE'; payload: string }
   | { type: 'CLEAR_SUCCESS_MESSAGE' }
   | { type: 'SET_PENDING_DELETE'; payload: Product | null }
@@ -41,6 +44,7 @@ export const initialState: State = {
   selectedCategoryId: '',
   createdAfter: null,
   page: 1,
+  pageSize: 10,
   successMessage: '',
   pendingDelete: null,
 };
@@ -85,6 +89,8 @@ export function reducer(state: State, action: Action): State {
         successMessage: '',
         pendingDelete: null,
       };
+    case 'SET_PAGE':
+      return { ...state, page: action.payload };
     case 'INCREMENT_PAGE':
       return { ...state, page: state.page + 1 };
     case 'DECREMENT_PAGE':
@@ -101,5 +107,3 @@ export function reducer(state: State, action: Action): State {
       return state;
   }
 }
-
-
