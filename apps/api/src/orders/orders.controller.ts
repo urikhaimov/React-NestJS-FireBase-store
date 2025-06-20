@@ -1,30 +1,29 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { adminDb } from '../firebase/firebase-admin';
+import {
+  Controller,
+  Get,
+  Req,
+  UseGuards,
+  Param,
+} from '@nestjs/common';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { OrdersService } from './orders.service';
 
-@Injectable()
-export class OrdersService {
-  async getOrdersByUserId(uid: string) {
-    const snapshot = await adminDb
-      .collection('orders')
-      .where('userId', '==', uid)
-      .orderBy('createdAt', 'desc')
-      .get();
+@Controller('orders')
+@UseGuards(FirebaseAuthGuard)
+export class OrdersController {
+  constructor(private readonly ordersService: OrdersService) {}
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+  @Get('mine')
+  getMyOrders(@Req() req) {
+    return this.ordersService.getOrdersByUserId(req.user.uid);
   }
 
-  // ✅ THIS METHOD MUST EXIST
-  async getOrderById(uid: string, orderId: string) {
-    const doc = await adminDb.collection('orders').doc(orderId).get();
-
-    if (!doc.exists) throw new NotFoundException('Order not found');
-
-    const data = doc.data();
-    if (data?.userId !== uid) throw new ForbiddenException('Access denied');
-
-    return { id: doc.id, ...data };
+  @UseGuards(RolesGuard)
+  @Roles('user', 'admin', 'superadmin')
+  @Get(':id')
+  getOrderById(@Req() req, @Param('id') id: string) {
+    return this.ordersService.getOrderById(req.user.uid, id, req.user.role);
   }
 }
