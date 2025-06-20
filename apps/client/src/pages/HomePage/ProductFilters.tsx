@@ -1,18 +1,12 @@
 import React from 'react';
-import {
-  Box,
-  Grid,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Grid } from '@mui/material';
+import { Dayjs } from 'dayjs';
 import { Category } from '../../types/firebase';
 import { State, Action } from './LocalReducer';
-import FilterLayout from '../../components/admin/FilterLayout';
+import UserFilterLayout from '../../components/UserFilterLayout';
+import UserFilterTextField from '../../components/UserFilterTextField';
+import UserFilterDatePicker from '../../components/UserFilterDatePicker';
+
 interface Props {
   state: State;
   dispatch: React.Dispatch<Action>;
@@ -24,60 +18,42 @@ export default function ProductFilters({ state, dispatch, categories }: Props) {
     state.search || state.selectedCategoryId || state.createdAfter;
 
   return (
-    <Box mb={3} position="sticky" top={0} zIndex={10} bgcolor="background.paper">
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        {hasFilters && (
-          <Button
-            variant="outlined"
-            color="warning"
-            onClick={() => dispatch({ type: 'RESET_FILTERS' })}
-          >
-            Clear Filters
-          </Button>
-        )}
-      </Box>
-
+    <UserFilterLayout title="Filters" collapsedByDefault={!hasFilters}>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            label="Search products"
+        <Grid item xs={12} sm={6} md={4}>
+          <UserFilterTextField
+            label="Search"
             value={state.search}
-            onChange={(e) =>
-              dispatch({ type: 'SET_SEARCH', payload: e.target.value })
-            }
+            onChange={(val) => dispatch({ type: 'SET_SEARCH', payload: val })}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Category</InputLabel>
-            <Select
-              label="Category"
-              value={state.selectedCategoryId}
-              onChange={(e) =>
-                dispatch({ type: 'SET_CATEGORY', payload: e.target.value })
-              }
-            >
-              <MenuItem value="">All</MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <UserFilterTextField
+            label="Category"
+            select
+            value={state.selectedCategoryId}
+            onChange={(val) => dispatch({ type: 'SET_CATEGORY', payload: val })}
+            options={[
+              { value: '', label: 'All' },
+              ...categories.map((cat) => ({
+                value: cat.id,
+                label: cat.name,
+              })),
+            ]}
+          />
         </Grid>
-        <Grid item xs={12} md={4}>
-          <DatePicker
+
+        <Grid item xs={12} sm={6} md={4}>
+          <UserFilterDatePicker
             label="Created After"
             value={state.createdAfter}
-            onChange={(val) =>
-              dispatch({ type: 'SET_CREATED_AFTER', payload: val })
+            onChange={(date: Dayjs | null) =>
+              dispatch({ type: 'SET_CREATED_AFTER', payload: date })
             }
-            slotProps={{ textField: { fullWidth: true } }}
           />
         </Grid>
       </Grid>
-    </Box>
+    </UserFilterLayout>
   );
 }
