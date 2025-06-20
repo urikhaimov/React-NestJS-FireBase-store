@@ -115,7 +115,7 @@ export default function AdminProductsPage() {
         <>
           <VirtualList
             style={{ overflowX: 'hidden' }}
-            height={isMobile ? 180 : 550}
+            height={isMobile ? 400 : 550}
             width="100%"
             itemCount={paginatedProducts.length}
             itemSize={isMobile ? 220 : 180}

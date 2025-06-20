@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import ProductFilters from './ProductFilters';
+import ProductFilters from './OrderFilters';
 import { reducer, initialState } from './LocalReducer';
 
 export default function AdminOrdersPage() {
@@ -76,7 +76,7 @@ export default function AdminOrdersPage() {
         <>
           <Box sx={{ width: '100%', overflowX: 'hidden' }}>
             <VirtualList
-              height={isMobile ? 360 : 600}
+              height={isMobile ? 560 : 600}
               width="100%"
               itemCount={paginatedOrders.length}
               itemSize={isMobile ? 220 : 160}
