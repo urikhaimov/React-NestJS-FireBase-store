@@ -49,7 +49,7 @@ export default function AdminDashboardLayout() {
           flexDirection: 'column',
           overflow: 'hidden',
           m: 0,
-          p: 0,
+          p: 10,
           width: `calc(100vw - ${drawerWidth}px)`,
         }}
       >
