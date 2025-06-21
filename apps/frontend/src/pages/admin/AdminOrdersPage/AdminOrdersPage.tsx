@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import {
   Box,
   Typography,
@@ -13,11 +13,33 @@ import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-win
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import ProductFilters from './OrderFilters';
 import { reducer, initialState } from './LocalReducer';
+import { fetchAllOrders } from '../../../api/orderApi';
+import { useAuthReady } from '../../../hooks/useAuthReady';
 
 export default function AdminOrdersPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { ready, user } = useAuthReady();
+
+  useEffect(() => {
+    if (!ready || !user) return;
+
+    const loadOrders = async () => {
+      dispatch({ type: 'setLoading', payload: true });
+      try {
+        const token = await user.getIdToken();
+        const response = await fetchAllOrders(token);
+        dispatch({ type: 'setOrders', payload: response.data });
+      } catch (error) {
+        console.error('Failed to fetch orders', error);
+      } finally {
+        dispatch({ type: 'setLoading', payload: false });
+      }
+    };
+
+    loadOrders();
+  }, [ready, user]);
 
   const pageSize = state.pageSize;
   const paginatedOrders = state.orders.slice(
@@ -27,6 +49,8 @@ export default function AdminOrdersPage() {
 
   const renderRow = ({ index, style }: ListChildComponentProps) => {
     const order = paginatedOrders[index];
+    const date = (order.createdAt as any).toDate?.() ?? new Date(order.createdAt);
+
     return (
       <Paper
         key={order.id}
@@ -49,7 +73,7 @@ export default function AdminOrdersPage() {
         <Typography variant="body2">Email: {order.email}</Typography>
         <Typography variant="body2">Total: ${order.total}</Typography>
         <Typography variant="body2">
-          Date: {new Date(order.createdAt).toLocaleString()}
+          Date: {date.toLocaleString?.() ?? 'Invalid date'}
         </Typography>
         <Typography variant="body2">Status: {order.status}</Typography>
       </Paper>
@@ -59,12 +83,7 @@ export default function AdminOrdersPage() {
   return (
     <AdminStickyPage
       title="Admin Orders"
-      filters={
-        <ProductFilters
-          state={state}
-          dispatch={dispatch}
-        />
-      }
+      filters={<ProductFilters state={state} dispatch={dispatch} />}
     >
       <Divider sx={{ mb: 2 }} />
 
