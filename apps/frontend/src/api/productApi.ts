@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 export function fetchAllProducts(token: string) {
-  return axios.get('/products', {
+  return axios.get('/api/products', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
