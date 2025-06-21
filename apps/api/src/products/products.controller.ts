@@ -16,33 +16,48 @@ import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 
-@UseGuards(FirebaseAuthGuard, RolesGuard)
-@Roles('admin', 'superadmin')
-@Controller('admin/products')
+@Controller()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Get()
-  getAll() {
+  // ✅ Public route for customer homepage
+  @Get('products')
+  getAllPublic() {
     return this.productsService.getAll();
   }
 
-  @Get(':id')
+  // ✅ Admin-only routes
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Get('admin/products')
+  getAllAdmin() {
+    return this.productsService.getAll();
+  }
+
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Get('admin/products/:id')
   getById(@Param('id') id: string) {
     return this.productsService.getById(id);
   }
 
-  @Post()
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Post('admin/products')
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
 
-  @Patch(':id')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Patch('admin/products/:id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
   }
 
-  @Delete(':id')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Delete('admin/products/:id')
   remove(@Param('id') id: string) {
     return this.productsService.delete(id);
   }
