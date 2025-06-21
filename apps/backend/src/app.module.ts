@@ -1,12 +1,8 @@
-// src/app.module.ts
+// apps/backend/src/app.module.ts
 import { Module } from '@nestjs/common';
-
-import { ConfigModule } from '@nestjs/config';
+import { ProductsModule } from './products/products.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // loads .env into process.env
-    // other modules...
-  ],
+  imports: [ProductsModule], // ✅ register the products module
 })
 export class AppModule {}
