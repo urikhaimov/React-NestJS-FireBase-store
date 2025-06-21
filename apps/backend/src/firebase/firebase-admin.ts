@@ -1,11 +1,11 @@
-// src/firebase/firebase-admin.ts
+// apps/backend/src/firebase/firebase-admin.ts
 import * as admin from 'firebase-admin';
-import serviceAccount from './service-account.json'; // ✅ ensure path is correct
+import * as serviceAccount from './service-account.json'; // ✅ adjust if needed
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
 
-export { admin }; // ✅ export full SDK
-export const adminAuth = admin.auth();
 export const adminDb = admin.firestore();
+export const adminAuth = admin.auth();
+export { admin };
