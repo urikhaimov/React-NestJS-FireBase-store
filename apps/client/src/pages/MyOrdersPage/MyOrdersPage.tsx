@@ -18,6 +18,7 @@ import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-win
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
 import OrderFilters from './OrderFilters';
 import { useAuthReady } from '../../hooks/useAuthReady';
+import { fetchMyOrders } from '../../api/orderApi';
 
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
@@ -31,7 +32,7 @@ export default function MyOrdersPage() {
   useEffect(() => {
     if (!ready) return;
 
-    const fetchOrders = async () => {
+    const loadOrders = async () => {
       try {
         if (!user) {
           setLoading(false);
@@ -40,26 +41,17 @@ export default function MyOrdersPage() {
 
         const idToken = await user.getIdToken();
 
-        const fetchFn = () =>
-          fetch('/orders/mine', {
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-            },
-          }).then((res) => {
-            if (!res.ok) throw new Error('Failed to fetch orders');
-            return res.json();
-          });
-
+        const fetchFn = () => fetchMyOrders(idToken).then(res => res.data);
         const list = await retryWithBackoff(fetchFn);
         setOrders(list);
       } catch (err) {
-        console.error('Error fetching orders:', err);
+        console.error('Error loading orders:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    loadOrders();
   }, [ready, user]);
 
   const filteredOrders = useMemo(() => {
@@ -91,8 +83,8 @@ export default function MyOrdersPage() {
             </Typography>
             <Typography variant="body2">Status: {order.status}</Typography>
             <Typography variant="body2">
-              Date:{' '}
-              {order.createdAt.toDate().toLocaleString()}
+           Date:{(order.createdAt as any).toDate?.()?.toLocaleString?.() ?? 'Invalid date'}
+
             </Typography>
             <Typography variant="body2" gutterBottom>
               Total: ${order.amount}
