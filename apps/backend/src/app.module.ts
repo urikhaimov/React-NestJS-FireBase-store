@@ -1,14 +1,12 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
-import { OrdersModule } from './orders/orders.module';
-import { ProductsModule } from './products/products.module';
-import { UsersModule } from './users/users.module';
+
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    OrdersModule,     // ✅ this is crucial
-    ProductsModule,
-    UsersModule,
+    ConfigModule.forRoot({ isGlobal: true }), // loads .env into process.env
+    // other modules...
   ],
 })
 export class AppModule {}

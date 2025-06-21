@@ -20,7 +20,7 @@ export default defineConfig({
       '/orders': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-       
+
       },
       '/admin': {
         target: 'http://localhost:3000',
@@ -36,6 +36,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+
     },
   },
 });
