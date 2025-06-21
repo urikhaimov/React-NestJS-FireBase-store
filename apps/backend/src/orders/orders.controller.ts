@@ -13,12 +13,20 @@ import { OrdersService } from './orders.service';
 @Controller('orders')
 @UseGuards(FirebaseAuthGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @Get('mine')
   getMyOrders(@Req() req) {
     return this.ordersService.getOrdersByUserId(req.user.uid);
   }
+
+  @Get()
+  // @Roles('admin', 'superadmin') ← Temporarily comment this
+  // @UseGuards(RolesGuard)        ← And this
+  getAllOrders() {
+    return this.ordersService.getAllOrders();
+  }
+
 
   @UseGuards(RolesGuard)
   @Roles('user', 'admin', 'superadmin')

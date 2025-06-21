@@ -1,15 +1,14 @@
 // src/orders/orders.service.ts
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { adminDb } from '../firebase/firebase-admin';
+import { Injectable } from '@nestjs/common';
+import { admin } from '../firebase/firebase-admin';
 
+import { adminDb } from '../firebase/firebase-admin';
 @Injectable()
 export class OrdersService {
-  private collection = adminDb.collection('orders');
-
   async getOrdersByUserId(uid: string) {
-    const snapshot = await this.collection
+    const snapshot = await admin.firestore()
+      .collection('orders')
       .where('userId', '==', uid)
-      .orderBy('createdAt', 'desc')
       .get();
 
     return snapshot.docs.map((doc) => ({
@@ -18,22 +17,28 @@ export class OrdersService {
     }));
   }
 
-  // ✅ Add this method if it's missing
-  async getOrderById(uid: string, orderId: string, role: string) {
-    const doc = await this.collection.doc(orderId).get();
-
-    if (!doc.exists) {
-      throw new NotFoundException('Order not found');
-    }
-
+  async getOrderById(uid: string, id: string, role: string) {
+    const doc = await admin.firestore().collection('orders').doc(id).get();
     const data = doc.data();
-    const isOwner = data?.userId === uid;
-    const isAdmin = role === 'admin' || role === 'superadmin';
 
-    if (!isOwner && !isAdmin) {
-      throw new ForbiddenException('Access denied');
+    if (!doc.exists || !data) throw new Error('Order not found');
+
+    if (role === 'admin' || role === 'superadmin' || data.userId === uid) {
+      return { id: doc.id, ...data };
     }
 
-    return { id: doc.id, ...data };
+    throw new Error('Unauthorized');
+  }
+
+
+
+  async getAllOrders() {
+    const snapshot = await adminDb.collection('orders').get();
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
   }
 }
+
+
