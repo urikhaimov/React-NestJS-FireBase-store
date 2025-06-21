@@ -18,7 +18,9 @@ import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import ProductAdminCard from './ProductAdminCard';
 import ProductFilters from './ProductFilters';
-import { fetchProductsPage } from '../../../hooks/fetchProductsPage'
+import { fetchAllProducts } from '../../../api/productApi';
+import { auth } from '../../../firebase'; // 👈 import Firebase auth
+
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
@@ -35,8 +37,8 @@ export default function AdminProductsPage() {
         !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
       const matchesDate =
         !state.createdAfter ||
-        (p.createdAt?.toDate?.() &&
-          p.createdAt.toDate().getTime() >= state.createdAfter.valueOf());
+        (p.createdAt &&
+          new Date(p.createdAt).getTime() >= state.createdAfter.valueOf());
       return matchesText && matchesCategory && matchesDate;
     });
   }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
@@ -76,22 +78,25 @@ export default function AdminProductsPage() {
     );
   };
 
-
   useEffect(() => {
-    async function loadInitialProducts() {
+    async function loadProducts() {
       dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+        const token = await user.getIdToken();
 
-      const { products: loaded, lastVisible } = await fetchProductsPage(null); // Add filters as needed
-
-      dispatch({ type: 'SET_PRODUCTS', payload: loaded });
-      dispatch({ type: 'SET_LAST_DOC', payload: lastVisible });
-      dispatch({ type: 'SET_HAS_MORE', payload: !!lastVisible });
-      dispatch({ type: 'SET_LOADING', payload: false });
+        const { data } = await fetchAllProducts(token);
+        dispatch({ type: 'SET_PRODUCTS', payload: data });
+      } catch (error) {
+        console.error('Failed to fetch products', error);
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
     }
 
-    loadInitialProducts();
+    loadProducts();
   }, []);
-
 
   return (
     <AdminStickyPage
@@ -101,7 +106,7 @@ export default function AdminProductsPage() {
           state={state}
           dispatch={dispatch}
           categories={categories}
-          onAddProduct={() => { }}
+          onAddProduct={() => {}}
         />
       }
     >
@@ -127,7 +132,9 @@ export default function AdminProductsPage() {
             <Pagination
               count={Math.ceil(filteredProducts.length / state.pageSize)}
               page={state.page}
-              onChange={(_, value) => dispatch({ type: 'SET_PAGE', payload: value })}
+              onChange={(_, value) =>
+                dispatch({ type: 'SET_PAGE', payload: value })
+              }
               color="primary"
             />
           </Box>
