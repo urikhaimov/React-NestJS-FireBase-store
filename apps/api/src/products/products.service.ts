@@ -8,12 +8,12 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   private readonly collection = adminDb.collection('products');
 
-  async getAll() {
-    const snapshot = await this.collection.orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+  async findAll() {
+    return [
+      { id: '1', name: 'Test Product', price: 5, stock: 10, category: 'Uncategorized' },
+      { id: '2', name: 'Cool Shirt', price: 19.99, stock: 25, category: 'Apparel' },
+      { id: '3', name: 'Baby Toy', price: 9.99, stock: 50, category: 'Toys' },
+    ];
   }
 
   async getById(id: string) {
