@@ -1,60 +1,61 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
+  Box, Typography, Button, TextField, List, ListItem, ListItemText, IconButton
 } from '@mui/material';
-
-import { Category } from '../../../types/firebase';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import { useCategories, useAddCategory, useDeleteCategory, useUpdateCategory } from '../../../hooks/useCategories';
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [errorMessage, setErrorMessage] = useState(''); // ✅ fix
 
-const fetchCategories = async () => {
-  try {
-    const res = await fetch('/api/categories');
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data: Category[] = await res.json();
-    setCategories(data);
-  } catch (error) {
-    console.error('❌ Failed to fetch categories:', error);
-  }
-};
+  const { data: categories = [], isLoading } = useCategories();
+  const addCategory = useAddCategory();
+  const deleteCategory = useDeleteCategory();
+  const updateCategory = useUpdateCategory();
 
- const handleAdd = async () => {
-  if (!newCategory.trim()) return;
-  try {
-    const res = await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newCategory }),
+  const handleAdd = () => {
+    if (!newCategory.trim()) {
+      setErrorMessage('Name cannot be empty');
+      return;
+    }
+
+    const exists = categories.some((c) => c.name.toLowerCase() === newCategory.trim().toLowerCase());
+    if (exists) {
+      setErrorMessage('Category already exists');
+      return;
+    }
+
+    setErrorMessage('');
+    addCategory.mutate(newCategory.trim(), {
+      onSuccess: () => {
+        setNewCategory('');
+      },
     });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    setNewCategory('');
-    fetchCategories();
-  } catch (error) {
-    console.error('❌ Failed to add category:', error);
-  }
-};
-  const handleDelete = async (id: string) => {
-  try {
-    const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    fetchCategories();
-  } catch (error) {
-    console.error('❌ Failed to delete category:', error);
-  }
-};
+  };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const handleEdit = (id: string, name: string) => {
+    setEditingId(id);
+    setEditName(name);
+  };
+
+  const handleSave = () => {
+    if (!editName.trim()) return;
+    updateCategory.mutate({ id: editingId!, name: editName.trim() });
+    setEditingId(null);
+    setEditName('');
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditName('');
+  };
 
   return (
     <AdminStickyPage title="Admin Categories">
@@ -62,23 +63,46 @@ const fetchCategories = async () => {
         <TextField
           label="New Category"
           value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
+          onChange={(e) => {
+            setNewCategory(e.target.value);
+            if (errorMessage) setErrorMessage('');
+          }}
+          error={!!errorMessage}
+          helperText={errorMessage}
         />
-        <Button variant="contained" onClick={handleAdd}>
-          Add
-        </Button>
+        <Button variant="contained" onClick={handleAdd}>Add</Button>
       </Box>
+
       <List>
         {categories.map((cat) => (
           <ListItem
             key={cat.id}
             secondaryAction={
-              <Button color="error" onClick={() => handleDelete(cat.id)}>
-                Delete
-              </Button>
+              editingId === cat.id ? (
+                <>
+                  <IconButton onClick={handleSave}><SaveIcon /></IconButton>
+                  <IconButton onClick={handleCancel}><CloseIcon /></IconButton>
+                </>
+              ) : (
+                <>
+                  <IconButton onClick={() => handleEdit(cat.id, cat.name)}><EditIcon /></IconButton>
+                  <IconButton color="error" onClick={() => deleteCategory.mutate(cat.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </>
+              )
             }
           >
-            <ListItemText primary={cat.name} />
+            {editingId === cat.id ? (
+              <TextField
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                size="small"
+                fullWidth
+              />
+            ) : (
+              <ListItemText primary={cat.name} />
+            )}
           </ListItem>
         ))}
       </List>
