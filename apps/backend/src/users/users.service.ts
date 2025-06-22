@@ -24,10 +24,7 @@ export class UsersService {
   }
 
   async getAllUsers() {
-    const snapshot = await adminDb.collection('users').get();
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  }
+  const snapshot = await adminDb.collection('users').get();
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
 }
