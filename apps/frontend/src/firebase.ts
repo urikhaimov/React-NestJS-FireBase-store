@@ -1,24 +1,24 @@
-// src/firebase.ts
-import { initializeApp, getApps, getApp } from 'firebase/app';
+// src/firebase/firebase.ts
+import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, setLogLevel } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// ✅ Load config from Vite environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyD3NlV8DFRgJPAio26-PgLerVK-ECwGteo",
-  authDomain: "onlinestoretemplate-59d3e.firebaseapp.com",
-  projectId: "onlinestoretemplate-59d3e",
-  storageBucket: "onlinestoretemplate-59d3e.appspot.com",
-  messagingSenderId: "492588425642",
-  appId: "1:492588425642:web:9eec725046f10937830bd3",
-  measurementId: "G-6YG7D3FZPN"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// ✅ Prevent duplicate app init during HMR
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// ✅ Initialize Firebase once
+const app = initializeApp(firebaseConfig);
 
-export { app };
+// ✅ Export useful services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-setLogLevel('debug');
+export { app };
