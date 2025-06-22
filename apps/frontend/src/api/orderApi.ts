@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 export function fetchMyOrders(token: string) {
-  return axios.get('/orders/mine', {
+  return axios.get('/api/orders/mine', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -10,7 +10,7 @@ export function fetchMyOrders(token: string) {
 }
 
 export function fetchAllOrders(token: string) {
-  return axios.get('/orders', {
+  return axios.get('/api/orders', {
     headers: {
       Authorization: `Bearer ${token}`,
     },

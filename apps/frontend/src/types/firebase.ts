@@ -12,6 +12,7 @@ export type Product = {
   price: number;
   stock: number;
   imageUrls?: string[];
+  imageUrl?: string;
   createdAt?: any; // Firestore Timestamp if needed
   categoryId: string; // ✅ ADD THIS
    images?: string[]; // ✅ add this

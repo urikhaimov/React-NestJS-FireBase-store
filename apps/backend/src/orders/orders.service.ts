@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { admin, adminDb } from '../firebase/firebase-admin';
+import { adminDb } from '../firebase/firebase-admin';
+import { query, where, getDocs, collection } from 'firebase/firestore'; // optional if using frontend SDK
 
 @Injectable()
 export class OrdersService {
@@ -21,10 +22,7 @@ export class OrdersService {
       .where('userId', '==', uid)
       .get();
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getOrderById(uid: string, id: string, role: string) {

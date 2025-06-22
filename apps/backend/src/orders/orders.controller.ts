@@ -11,10 +11,10 @@ import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dto/create-order.dto'; // 🔁 import DTO
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
-@UseGuards(FirebaseAuthGuard)
+@UseGuards(FirebaseAuthGuard) // 🔒 All routes below are protected
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -24,6 +24,8 @@ export class OrdersController {
   }
 
   @Get()
+  //@UseGuards(RolesGuard)
+  @Roles('admin', 'superadmin')
   getAllOrders() {
     return this.ordersService.getAllOrders();
   }
@@ -35,12 +37,11 @@ export class OrdersController {
     return this.ordersService.getOrderById(req.user.uid, id, req.user.role);
   }
 
-  // ✅ New route to create an order
   @Post()
   createOrder(@Req() req, @Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder({
       ...dto,
-      userId: req.user.uid, // Override for security
+      userId: req.user.uid, // ⛔ override client-sent userId
     });
   }
 }

@@ -52,7 +52,7 @@ export default function ProductList({ products, categories }: Props) {
                   <CardMedia
                     component="img"
                     sx={{ width: 120, height: 120, objectFit: 'cover' }}
-                    image={p.imageUrls?.[0] || '/placeholder.png'}
+                    image={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
                     alt={p.name}
                   />
                   <CardContent sx={{ flex: 1 }}>
