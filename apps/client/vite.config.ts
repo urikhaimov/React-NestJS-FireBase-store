@@ -17,31 +17,11 @@ export default defineConfig({
       `.replace(/\n/g, ''),
     },
     proxy: {
-      '/orders': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-
-      },
-      '/admin': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-      },
-      '/products': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/users': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      },
-
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        secure: false, // 🔄 consistent
       },
-
     },
   },
 });

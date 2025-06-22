@@ -51,7 +51,7 @@ export default function ProductAdminCard({ product, onConfirmDelete }: Props) {
         <CardMedia
           component="img"
           sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
-          image={product.imageUrls?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+          image={product.imageUrls?.[0] || product.imageUrl || 'https://picsum.photos/seed/fallback/100/100'}
           alt={product.name}
         />
         <CardContent sx={{ flex: 1 }}>
