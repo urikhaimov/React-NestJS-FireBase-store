@@ -1,33 +1,41 @@
 import {
+  Injectable,
   CanActivate,
   ExecutionContext,
-  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { adminAuth } from '../firebase/firebase-admin'; // path depends on your structure
+import { auth } from 'firebase-admin'; // Firebase Admin SDK
+import { Request } from 'express';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing Authorization header');
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing or invalid Authorization header');
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
+    const token = authHeader.split(' ')[1];
 
     try {
-      const decodedToken = await adminAuth.verifyIdToken(idToken);
-      req.user = {
+      const decodedToken = await auth().verifyIdToken(token);
+
+      // Optionally fetch custom claims or roles here
+      request.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
-        role: decodedToken.role || 'user', // fallback
+        role: decodedToken.role || 'user', // 👈 custom claim or fallback
       };
+
+      console.log('[FirebaseAuthGuard] Authenticated user:', request.user);
+
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid Firebase token');
+      console.error('[FirebaseAuthGuard] Token verification failed:', error);
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }
