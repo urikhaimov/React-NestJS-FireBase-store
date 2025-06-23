@@ -8,7 +8,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import useDebounce from '../../../hooks/useDebouncedValue';
 import { useAdminUsersQuery } from '../../../hooks/useAdminUsersQuery';
-
+import type { User } from '../../../types/User';
+import type { Role } from '../../../types/Role';
 
 export default function AdminUsersPage() {
   
@@ -67,7 +68,7 @@ export default function AdminUsersPage() {
                   <Select
                     size="small"
                     value={user.role}
-                    onChange={(e) => updateUserRole(user.id, e.target.value)}
+                    onChange={(e) => updateUserRole(user.id, e.target.value as Role)}
                     sx={{ mr: 2, minWidth: 120 }}
                   >
                     <MenuItem value="user">User</MenuItem>
