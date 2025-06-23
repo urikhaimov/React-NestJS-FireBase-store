@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Category } from '../types/firebase';
 import { useSnackbar } from 'notistack';
+import { useOptimisticMutation } from './useOptimisticMutation';
 export const useCategories = () => {
   return useQuery<Category[]>({
     queryKey: ['categories'],
@@ -53,19 +54,20 @@ export const useDeleteCategory = () => {
   });
 };
 
+// hooks/useCategories.ts
 export function useUpdateCategory() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+  return useOptimisticMutation<{ id: string; name: string }, Category>({
+    mutationFn: async ({ id, name }) => {
       await fetch(`/api/categories/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] }); // ✅ trigger refetch
-    },
+    queryKey: ['categories'],
+    getItemId: (item) => item.id,
+    getOptimisticUpdate: (item, { name }) => ({ ...item, name }),
+    successMessage: 'Category updated',
+    errorMessage: 'Failed to update category',
   });
 }
