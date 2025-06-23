@@ -2,11 +2,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/useAuthStore';
 import { auth } from '../firebase';
+import type { User } from '../types/User';
+
 export function useAdminUsersQuery() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
 
-  const { data: users = [], isLoading, error } = useQuery({
+  const {
+    data: users = [],
+    isLoading,
+    error,
+  } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
       const token = await auth.currentUser?.getIdToken();
@@ -18,7 +24,7 @@ export function useAdminUsersQuery() {
     },
   });
 
-  const updateUserRole = async (id: string, role: string) => {
+  const updateUserRole = async (id: string, role: User['role']) => {
     const token = await auth.currentUser?.getIdToken();
     await fetch(`/api/users/${id}`, {
       method: 'PATCH',
