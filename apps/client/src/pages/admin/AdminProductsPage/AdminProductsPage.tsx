@@ -20,13 +20,14 @@ import ProductAdminCard from './ProductAdminCard';
 import ProductFilters from './ProductFilters';
 import { fetchAllProducts } from '../../../api/productApi';
 import { auth } from '../../../firebase'; // 👈 import Firebase auth
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { data: categories = [] } = useAllCategories();
-
+const navigate = useNavigate();
   const filteredProducts = useMemo(() => {
     const term = state.searchTerm.toLowerCase();
     return state.products.filter((p) => {
@@ -77,7 +78,9 @@ export default function AdminProductsPage() {
       </motion.div>
     );
   };
-
+const handleAddProduct = () => {
+  navigate('/admin/products/add'); // 🔁 adjust path to match your router config
+};
   useEffect(() => {
     async function loadProducts() {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -106,7 +109,7 @@ export default function AdminProductsPage() {
           state={state}
           dispatch={dispatch}
           categories={categories}
-          onAddProduct={() => {}}
+          onAddProduct={handleAddProduct}
         />
       }
     >
