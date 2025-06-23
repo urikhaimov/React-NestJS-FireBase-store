@@ -53,23 +53,19 @@ export const useDeleteCategory = () => {
   });
 };
 
-export const useUpdateCategory = () => {
+export function useUpdateCategory() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      await axios.put(`/api/categories/${id}`, { name });
+      await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
     },
-    onMutate: async ({ id, name }) => {
-      await queryClient.cancelQueries({ queryKey: ['categories'] });
-      const previous = queryClient.getQueryData<Category[]>(['categories']);
-      queryClient.setQueryData(['categories'], previous?.map((c) => (c.id === id ? { ...c, name } : c)));
-      return { previous };
-    },
-    onError: (_err, _input, context) => {
-      queryClient.setQueryData(['categories'], context?.previous);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] }); // ✅ trigger refetch
     },
   });
-};
+}
