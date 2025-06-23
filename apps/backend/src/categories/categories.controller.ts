@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   BadRequestException,
+  Put,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 
@@ -30,4 +31,10 @@ export class CategoriesController {
   async remove(@Param('id') id: string) {
     return this.categoriesService.remove(id);
   }
+
+  @Put(':id')
+async update(@Param('id') id: string, @Body() body: { name: string }) {
+  return this.categoriesService.updateCategory(id, body.name);
+}
+  
 }

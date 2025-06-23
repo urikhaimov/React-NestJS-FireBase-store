@@ -1,60 +1,66 @@
-import React, { useState } from 'react';
+import React, { useReducer } from 'react';
 import {
-  Box, Typography, Button, TextField, List, ListItem, ListItemText, IconButton
+  Box, Typography, Button, TextField, List, ListItem, ListItemText, IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import { useCategories, useAddCategory, useDeleteCategory, useUpdateCategory } from '../../../hooks/useCategories';
+import {
+  useCategories,
+  useAddCategory,
+  useDeleteCategory,
+  useUpdateCategory,
+} from '../../../hooks/useCategories';
+import {
+  categoryReducer,
+  initialCategoryState,
+} from './categoryReducer';
 
 export default function AdminCategoriesPage() {
-  const [newCategory, setNewCategory] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [errorMessage, setErrorMessage] = useState(''); // ✅ fix
+  const [state, dispatch] = useReducer(categoryReducer, initialCategoryState);
+  const { newCategory, editingId, editName, errorMessage } = state;
 
-  const { data: categories = [], isLoading } = useCategories();
+  const { data: categories = [] } = useCategories();
   const addCategory = useAddCategory();
   const deleteCategory = useDeleteCategory();
   const updateCategory = useUpdateCategory();
 
   const handleAdd = () => {
     if (!newCategory.trim()) {
-      setErrorMessage('Name cannot be empty');
+      dispatch({ type: 'SET_ERROR', payload: 'Name cannot be empty' });
       return;
     }
 
-    const exists = categories.some((c) => c.name.toLowerCase() === newCategory.trim().toLowerCase());
+    const exists = categories.some(
+      (c) => c.name.toLowerCase() === newCategory.trim().toLowerCase()
+    );
     if (exists) {
-      setErrorMessage('Category already exists');
+      dispatch({ type: 'SET_ERROR', payload: 'Category already exists' });
       return;
     }
 
-    setErrorMessage('');
     addCategory.mutate(newCategory.trim(), {
-      onSuccess: () => {
-        setNewCategory('');
-      },
+      onSuccess: () => dispatch({ type: 'RESET_NEW' }),
     });
   };
 
   const handleEdit = (id: string, name: string) => {
-    setEditingId(id);
-    setEditName(name);
+    dispatch({ type: 'SET_EDIT', payload: { id, name } });
   };
 
   const handleSave = () => {
     if (!editName.trim()) return;
-    updateCategory.mutate({ id: editingId!, name: editName.trim() });
-    setEditingId(null);
-    setEditName('');
-  };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditName('');
+    updateCategory.mutate(
+      { id: editingId!, name: editName.trim() },
+      {
+        onSuccess: () => {
+          dispatch({ type: 'CLEAR_EDIT' });
+        },
+      }
+    );
   };
 
   return (
@@ -64,8 +70,8 @@ export default function AdminCategoriesPage() {
           label="New Category"
           value={newCategory}
           onChange={(e) => {
-            setNewCategory(e.target.value);
-            if (errorMessage) setErrorMessage('');
+            dispatch({ type: 'SET_NEW', payload: e.target.value });
+            if (errorMessage) dispatch({ type: 'SET_ERROR', payload: '' });
           }}
           error={!!errorMessage}
           helperText={errorMessage}
@@ -81,7 +87,9 @@ export default function AdminCategoriesPage() {
               editingId === cat.id ? (
                 <>
                   <IconButton onClick={handleSave}><SaveIcon /></IconButton>
-                  <IconButton onClick={handleCancel}><CloseIcon /></IconButton>
+                  <IconButton onClick={() => dispatch({ type: 'CLEAR_EDIT' })}>
+                    <CloseIcon />
+                  </IconButton>
                 </>
               ) : (
                 <>
@@ -96,7 +104,9 @@ export default function AdminCategoriesPage() {
             {editingId === cat.id ? (
               <TextField
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={(e) =>
+                  dispatch({ type: 'SET_EDIT_NAME', payload: e.target.value })
+                }
                 size="small"
                 fullWidth
               />

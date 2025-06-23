@@ -31,4 +31,13 @@ export class CategoriesService {
     await this.categoriesRef.doc(id).delete();
     return { message: 'Category deleted' };
   }
+  async updateCategory(id: string, name: string) {
+  if (!name || !name.trim()) {
+    throw new ConflictException('Name is required');
+  }
+
+  const ref = this.categoriesRef.doc(id);
+  await ref.update({ name: name.trim() });
+  return { id, name };
+}
 }
