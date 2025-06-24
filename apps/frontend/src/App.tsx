@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import {
   ThemeProvider as MuiThemeProvider,
   CssBaseline,
   CircularProgress,
   Box,
 } from '@mui/material';
+import { AnimatePresence } from 'framer-motion';
 
 import { ProtectedRoute, AdminProtectedRoute } from './components/ProtectedRoutes';
 import HomePage from './pages/HomePage/HomePage';
@@ -39,6 +40,7 @@ import './App.css';
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     loading,
@@ -49,13 +51,11 @@ export default function App() {
   const { theme, isLoading } = useThemeContext();
   const hasRedirected = useRef(false);
 
-  // ✅ Init Firebase auth listener and Zustand state hydration
   useEffect(() => {
     const unsubscribe = initializeAuth();
     return () => unsubscribe();
   }, [initializeAuth]);
 
-  // ✅ Handle unauthenticated redirect
   useEffect(() => {
     if (authInitialized && !user && !hasRedirected.current) {
       const next = consumeRedirect();
@@ -63,6 +63,18 @@ export default function App() {
       hasRedirected.current = true;
     }
   }, [authInitialized, user, consumeRedirect, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      const target =
+        consumeRedirect() ||
+        (['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/');
+
+      setTimeout(() => {
+        navigate(target, { replace: true });
+      }, 300); // Delay for animation
+    }
+  }, [user, consumeRedirect, navigate]);
 
   if (isLoading || !theme || !authInitialized) {
     return (
@@ -79,83 +91,89 @@ export default function App() {
     );
   }
 
+  const appRoutes = (
+    <Routes location={location} key={location.pathname}>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/product/:id" element={<ProductPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <StripeProvider>
+              <CheckoutPage />
+            </StripeProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order/:id"
+        element={
+          <ProtectedRoute>
+            <OrderDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <UserProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-orders"
+        element={
+          <ProtectedRoute>
+            <MyOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/thank-you"
+        element={
+          <ProtectedRoute>
+            <ThankYouPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/*"
+        element={
+          <AdminProtectedRoute>
+            <AdminDashboardLayout />
+          </AdminProtectedRoute>
+        }
+      >
+        <Route index element={<AdminHomePage />} />
+        <Route path="categories" element={<AdminCategoriesPage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="logs" element={<AdminLogsPage />} />
+        <Route path="products" element={<AdminProductsPage />} />
+        <Route path="products/add" element={<ProductFormPage mode="add" />} />
+        <Route path="products/edit/:productId" element={<ProductFormPage mode="edit" />} />
+        <Route path="theme" element={<AdminThemePage />} />
+      </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+
+  const isAuthPage = location.pathname.startsWith('/login') || location.pathname.startsWith('/signup') || location.pathname.startsWith('/reset-password');
+
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-          <Route
-            path="/checkout"
-            element={
-              <ProtectedRoute>
-                <StripeProvider>
-                  <CheckoutPage />
-                </StripeProvider>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/order/:id"
-            element={
-              <ProtectedRoute>
-                <OrderDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-orders"
-            element={
-              <ProtectedRoute>
-                <MyOrdersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/thank-you"
-            element={
-              <ProtectedRoute>
-                <ThankYouPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/*"
-            element={
-              <AdminProtectedRoute>
-                <AdminDashboardLayout />
-              </AdminProtectedRoute>
-            }
-          >
-            <Route index element={<AdminHomePage />} />
-            <Route path="categories" element={<AdminCategoriesPage />} />
-            <Route path="orders" element={<AdminOrdersPage />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="logs" element={<AdminLogsPage />} />
-            <Route path="products" element={<AdminProductsPage />} />
-            <Route path="products/add" element={<ProductFormPage mode="add" />} />
-            <Route path="products/edit/:productId" element={<ProductFormPage mode="edit" />} />
-            <Route path="theme" element={<AdminThemePage />} />
-          </Route>
-
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Layout>
+      <AnimatePresence mode="wait">{
+        isAuthPage ? appRoutes : <Layout>{appRoutes}</Layout>
+      }</AnimatePresence>
     </MuiThemeProvider>
   );
 }

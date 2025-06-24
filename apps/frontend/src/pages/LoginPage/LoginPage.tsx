@@ -10,6 +10,8 @@ import {
   IconButton,
   InputAdornment,
   Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Google } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
@@ -18,6 +20,7 @@ import { useRedirect } from '../../context/RedirectContext';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, db } from '../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 
 type LoginFormInputs = {
   email: string;
@@ -30,6 +33,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [showPassword, setShowPassword] = useState(false);
   const emailRef = useRef<HTMLInputElement | null>(null);
 
@@ -67,14 +72,11 @@ const LoginPage = () => {
     }
   };
 
-  // ✅ Google Sign-In
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
-
-      // 🔍 Ensure role exists in Firestore
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
 
@@ -102,98 +104,113 @@ const LoginPage = () => {
 
   return (
     <Box
-      flexGrow={1}
       display="flex"
       justifyContent="center"
       alignItems="center"
+      minHeight="100vh"
+      minWidth="100vw"
       px={2}
-      py={4}
       sx={{
-        width: '100%',
-        maxWidth: '100vw',
-        overflowX: 'hidden',
+        backgroundColor: (theme) => theme.palette.background.default,
       }}
     >
-      <Paper elevation={6} sx={{ p: 4, maxWidth: 400, width: '100%', borderRadius: 3 }}>
-        <Typography variant="h5" textAlign="center" gutterBottom>
-          Welcome back
-        </Typography>
-
-        {message && (
-          <Typography variant="body2" color="error" textAlign="center" mb={2}>
-            {message}
-          </Typography>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack spacing={3}>
-            <TextField
-              label="Email"
-              fullWidth
-              inputRef={emailRef}
-              autoFocus
-              {...register('email', { required: 'Email is required' })}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-            />
-
-            <TextField
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              fullWidth
-              {...register('password', { required: 'Password is required' })}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              disabled={isSubmitting}
-              sx={{ py: 1.5, fontWeight: 600, fontSize: '1rem' }}
-            >
-              {isSubmitting ? 'Logging in...' : 'Log in'}
-            </Button>
-
-            <Typography
-              component={RouterLink}
-              to="/reset-password"
-              variant="body2"
-              color="primary"
-              textAlign="right"
-              sx={{ textDecoration: 'none', mt: -1 }}
-            >
-              Forgot password?
-            </Typography>
-          </Stack>
-        </form>
-
-        <Divider sx={{ my: 3 }}>or</Divider>
-
-        <Button
-          onClick={handleGoogleLogin}
-          variant="outlined"
-          fullWidth
-          startIcon={<Google />}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <Paper
+          elevation={6}
+          sx={{
+            p: isMobile ? 3 : 5,
+            width: isMobile ? 320 : 400,
+            borderRadius: 3,
+          }}
         >
-          Sign in with Google
-        </Button>
-      </Paper>
+          {/* ✅ Logo or brand */}
+          <Box textAlign="center" mb={2}>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              My Online Store
+            </Typography>
+            <Typography variant="h6">Welcome back</Typography>
+          </Box>
+
+          {message && (
+            <Typography variant="body2" color="error" textAlign="center" mb={2}>
+              {message}
+            </Typography>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack spacing={3}>
+              <TextField
+                label="Email"
+                fullWidth
+                inputRef={emailRef}
+                autoFocus
+                {...register('email', { required: 'Email is required' })}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+
+              <TextField
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                fullWidth
+                {...register('password', { required: 'Password is required' })}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={isSubmitting}
+                sx={{ py: 1.5, fontWeight: 600 }}
+              >
+                {isSubmitting ? 'Logging in...' : 'Log in'}
+              </Button>
+
+              <Typography
+                component={RouterLink}
+                to="/reset-password"
+                variant="body2"
+                color="primary"
+                textAlign="right"
+                sx={{ textDecoration: 'none', mt: -1 }}
+              >
+                Forgot password?
+              </Typography>
+            </Stack>
+          </form>
+
+          <Divider sx={{ my: 3 }}>or</Divider>
+
+          <Button
+            onClick={handleGoogleLogin}
+            variant="outlined"
+            fullWidth
+            startIcon={<Google />}
+          >
+            Sign in with Google
+          </Button>
+        </Paper>
+      </motion.div>
     </Box>
   );
 };
