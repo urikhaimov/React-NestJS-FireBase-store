@@ -40,13 +40,13 @@ export default function ResetPasswordPage() {
 
   return (
     <Box
-      flexGrow={1}
       display="flex"
       justifyContent="center"
       alignItems="center"
+      minHeight="100vh"
+      minWidth="100vw"
       px={2}
-      py={4}
-      sx={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}
+    
     >
       <Paper elevation={6} sx={{ p: 4, maxWidth: 400, width: '100%', borderRadius: 3 }}>
         <Typography variant="h5" textAlign="center" gutterBottom>
