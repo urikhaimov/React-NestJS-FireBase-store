@@ -8,10 +8,16 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Avatar,
+  Badge,
+  Menu,
+  MenuItem,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
 
 import { useSafeAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../stores/useStoreSettings';
@@ -30,6 +36,11 @@ const Header: React.FC = () => {
 
   const { toggleMobileDrawer } = useSidebarStore();
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
   const handleStoreChange = (newId: string) => {
     setStoreId(newId);
     setShowToast(true);
@@ -42,30 +53,60 @@ const Header: React.FC = () => {
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
         boxShadow: 'none',
-        px: { xs: 0, sm: 3 }, // remove horizontal padding on mobile
+        px: { xs: 0, sm: 3 },
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
-        {/* LEFT: Hamburger menu for mobile */}
-        {isMobile && (
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={toggleMobileDrawer}
-            sx={{ ml: 0 }}
-          >
-            <MenuIcon />
+        {/* LEFT: Hamburger menu */}
+        <Box display="flex" alignItems="center">
+          {isMobile && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={toggleMobileDrawer}
+              sx={{ ml: 0, mr: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Typography variant="h6" fontWeight="bold" noWrap component="div">
+            My Online Store
+          </Typography>
+        </Box>
+
+        {/* RIGHT: Actions */}
+        <Box display="flex" alignItems="center" gap={1}>
+          <IconButton color="inherit">
+            <Brightness4Icon />
           </IconButton>
-        )}
 
-        {/* MIDDLE: Logo or title */}
-        <Typography variant="h6" fontWeight="bold" noWrap component="div">
-          My Online Store
-        </Typography>
+          <IconButton color="inherit">
+            <Badge badgeContent={itemCount} color="error">
+              <ShoppingCartIcon />
+            </Badge>
+          </IconButton>
 
-        {/* RIGHT: Placeholder or future action (optional) */}
-        <Box sx={{ width: 40 }} />
+          {user && (
+            <IconButton onClick={handleMenuClick} color="inherit">
+              <Avatar sx={{ width: 32, height: 32 }}>
+                {user.name?.[0] || user.email?.[0] || 'U'}
+              </Avatar>
+            </IconButton>
+          )}
+
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem disabled>{user?.name || user?.email}</MenuItem>
+            <MenuItem onClick={() => window.location.href = '/profile'}>Profile</MenuItem>
+            <MenuItem onClick={() => window.location.href = '/logout'}>Logout</MenuItem>
+          </Menu>
+        </Box>
       </Toolbar>
 
       <Snackbar
