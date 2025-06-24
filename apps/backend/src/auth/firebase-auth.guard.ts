@@ -4,14 +4,13 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { auth } from 'firebase-admin'; // Firebase Admin SDK
+import { auth, firestore } from 'firebase-admin';
 import { Request } from 'express';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,18 +22,24 @@ export class FirebaseAuthGuard implements CanActivate {
     try {
       const decodedToken = await auth().verifyIdToken(token);
 
-      // Optionally fetch custom claims or roles here
+      // 🔍 Get role from Firestore (users/{uid}.role)
+      const userDoc = await firestore().collection('users').doc(decodedToken.uid).get();
+      const role = userDoc.exists ? userDoc.data()?.role || 'user' : 'user';
+
+      // ✅ Attach user to request
       request.user = {
         uid: decodedToken.uid,
-        email: decodedToken.email,
-        role: decodedToken.role || 'user', // 👈 custom claim or fallback
+        email: decodedToken.email || '',
+        role,
       };
 
-      console.log('[FirebaseAuthGuard] Authenticated user:', request.user);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[FirebaseAuthGuard] Authenticated user:', request.user);
+      }
 
       return true;
     } catch (error) {
-      console.error('[FirebaseAuthGuard] Token verification failed:', error);
+      console.error('[FirebaseAuthGuard] Token verification failed:', error.message);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

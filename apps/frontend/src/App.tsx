@@ -1,6 +1,5 @@
-// src/App.tsx
 import React, { useEffect, useRef } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import {
   ThemeProvider as MuiThemeProvider,
   CssBaseline,
@@ -17,80 +16,55 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import UserProfilePage from './pages/UserProfilePage';
-
 import OrderDetailPage from './pages/OrderDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ThankYouPage from './pages/ThankYouPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+
 import Layout from './layouts/MainLayout';
 import AdminDashboardLayout from './layouts/AdminDashboardLayout';
 import AdminThemePage from './pages/admin/AdminThemePage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
-
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLogsPage from './pages/admin/AdminLogsPage';
 import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
 import AdminHomePage from './pages/admin/AdminHomePage';
-import { onAuthStateChanged } from 'firebase/auth';
+
 import { useRedirect } from './context/RedirectContext';
-import { useFirebaseAuthListener } from './hooks/useFirebaseAuthListener';
 import { useAuthStore } from './stores/useAuthStore';
 import { useThemeContext } from './context/ThemeContext';
-import { auth } from './firebase';
 import { StripeProvider } from './stripe/StripeProvider';
-
 import './App.css';
 
 export default function App() {
-  useFirebaseAuthListener();
   const navigate = useNavigate();
-  const { user, loading, setUser, setLoading } = useAuthStore();
+  const {
+    user,
+    loading,
+    authInitialized,
+    initializeAuth,
+  } = useAuthStore();
   const { consumeRedirect } = useRedirect();
   const { theme, isLoading } = useThemeContext();
   const hasRedirected = useRef(false);
 
-
+  // ✅ Init Firebase auth listener and Zustand state hydration
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(false);
-
-      if (firebaseUser) {
-        const token = await firebaseUser.getIdTokenResult();
-        const u = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email ?? '',
-          name: firebaseUser.displayName ?? '',
-          role: (token.claims.role as 'user' | 'admin' | 'superadmin') ?? 'user',
-        };
-
-        console.log('✅ Setting user:', u);
-        setUser(u);
-      } else {
-        console.log('👋 No user');
-        setUser(null);
-        navigate('/login');
-      }
-    });
-
+    const unsubscribe = initializeAuth();
     return () => unsubscribe();
-  }, [setUser, setLoading]);
+  }, [initializeAuth]);
 
-
-
-
-
-
-
+  // ✅ Handle unauthenticated redirect
   useEffect(() => {
-    if (!loading && !user && !hasRedirected.current) {
-      // If redirect context has a target path, navigate there
+    if (authInitialized && !user && !hasRedirected.current) {
       const next = consumeRedirect();
       navigate('/login' + (next ? `?redirect=${next}` : ''));
       hasRedirected.current = true;
     }
-  }, [user, loading, consumeRedirect, navigate]);
+  }, [authInitialized, user, consumeRedirect, navigate]);
 
-  if (isLoading || !theme || loading) {
+  if (isLoading || !theme || !authInitialized) {
     return (
       <Box
         height="100vh"
@@ -108,12 +82,14 @@ export default function App() {
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
-
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route
             path="/checkout"
@@ -125,7 +101,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/order/:id"
             element={
@@ -134,10 +109,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-
           <Route
             path="/profile"
             element={
@@ -154,15 +125,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/my-orders"
-            element={
-              <ProtectedRoute>
-                <OrderDetailPage  />
-              </ProtectedRoute>
-            }
-          />
-
           <Route
             path="/thank-you"
             element={

@@ -21,15 +21,17 @@ export default defineConfig({
         //     "Access-Control-Allow-Methods": "*",
         //     "Access-Control-Allow-Headers": "*",
         // },
-      headers: {
-    'Content-Security-Policy': 
-      "default-src 'self'; " +
-      "img-src 'self' data: blob: https://firebasestorage.googleapis.com; " +
-      "connect-src 'self' https://firebasestorage.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com; " +
-      "script-src 'self' 'unsafe-inline' https://js.stripe.com; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' https://fonts.gstatic.com;"
-  },
+ headers: {
+    'Content-Security-Policy': `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.googleapis.com https://js.stripe.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.stripe.com;
+      img-src 'self' data: https://firebasestorage.googleapis.com;
+      frame-src https://js.stripe.com;
+    `.replace(/\n/g, ''),
+  }, // ✅ no extra closing paren!
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',
