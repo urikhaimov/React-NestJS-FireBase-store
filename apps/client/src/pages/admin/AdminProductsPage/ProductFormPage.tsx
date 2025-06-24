@@ -121,12 +121,29 @@ export default function ProductFormPage({ mode }: Props) {
     return <Typography sx={{ mt: 4 }}>❌ Product not found.</Typography>;
 
   return (
-    <PageWithStickyFilters>
+    <Box
+      sx={{
+        height: '100vh',
+        overflowY: 'auto',
+        px: 2,
+        pt: { xs: 0.5, sm: 3 },
+        pb: { xs: 1, sm: 3 },
+        bgcolor: 'background.default',
+      }}
+    >
       <Typography variant="h4" gutterBottom>
         {isEdit ? 'Edit Product' : 'Add Product'}
       </Typography>
 
-      <Paper sx={{ p: 3, maxWidth: 700 }}>
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 3 },
+          maxWidth: 1200,
+          mx: 'auto',
+          mt: 0, // ✅ remove top margin
+          mb: 0, // ✅ remove bottom margin
+        }}
+      >
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
             label="Product Name"
@@ -205,6 +222,7 @@ export default function ProductFormPage({ mode }: Props) {
           Product {isEdit ? 'updated' : 'created'} successfully!
         </Alert>
       </Snackbar>
-    </PageWithStickyFilters>
+    </Box>
+
   );
 }
