@@ -1,3 +1,4 @@
+// src/components/Header/Header.tsx
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -15,19 +16,19 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useSafeAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../stores/useStoreSettings';
 import { useCartStore } from '../../store/cartStore';
-import { useSidebarStore } from '../../stores/useSidebarStore'; // Create Zustand store or use your reducer
+import { useSidebarStore } from '../../stores/useSidebarStore';
 
 const Header: React.FC = () => {
-  const { user } = useSafeAuth();
-  const isMobile = useMediaQuery(useTheme().breakpoints.down('sm'));
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const { user } = useSafeAuth();
   const { storeId, setStoreId } = useStoreSettings();
   const [showToast, setShowToast] = useState(false);
-
   const items = useCartStore((s) => s.items);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const { toggleMobileDrawer } = useSidebarStore(); // 👈 Inject your Zustand or reducer action
+  const { toggleMobileDrawer } = useSidebarStore();
 
   const handleStoreChange = (newId: string) => {
     setStoreId(newId);
@@ -40,26 +41,31 @@ const Header: React.FC = () => {
       position="fixed"
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
+        boxShadow: 'none',
+        px: { xs: 0, sm: 3 }, // remove horizontal padding on mobile
       }}
     >
-      <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* LEFT: Menu icon only on mobile */}
+      <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
+        {/* LEFT: Hamburger menu for mobile */}
         {isMobile && (
           <IconButton
             edge="start"
             color="inherit"
             aria-label="menu"
             onClick={toggleMobileDrawer}
-            sx={{ mr: 2 }}
+            sx={{ ml: 0 }}
           >
             <MenuIcon />
           </IconButton>
         )}
 
-        {/* RIGHT: Title */}
-        <Typography variant="h6" fontWeight="bold" noWrap>
+        {/* MIDDLE: Logo or title */}
+        <Typography variant="h6" fontWeight="bold" noWrap component="div">
           My Online Store
         </Typography>
+
+        {/* RIGHT: Placeholder or future action (optional) */}
+        <Box sx={{ width: 40 }} />
       </Toolbar>
 
       <Snackbar

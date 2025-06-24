@@ -1,3 +1,4 @@
+// ✅ src/layouts/AdminDashboardLayout.tsx
 import {
   AppBar,
   Box,
@@ -29,7 +30,7 @@ export default function AdminDashboardLayout() {
       sx={{
         display: 'flex',
         height: '100vh',
-         width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
+        width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
         overflow: 'hidden',
         m: 0,
         p: 0,
@@ -38,7 +39,6 @@ export default function AdminDashboardLayout() {
       <CssBaseline />
 
       {/* Sidebar Navigation */}
-      
 
       {/* Main Content Area */}
       <Box
@@ -49,15 +49,13 @@ export default function AdminDashboardLayout() {
           flexDirection: 'column',
           overflow: 'hidden',
           m: 0,
-          width: `calc(100vw - ${drawerWidth}px)`,
+          px: { xs: 0, sm: 3 }, // ✅ remove left/right padding on mobile
+          py: { xs: 1, sm: 3 },
+          width: '100%',
         }}
       >
-      
-          <Outlet />
+        <Outlet />
       </Box>
     </Box>
-
-
-
   );
 }
