@@ -25,6 +25,7 @@ export default function ProductFilters({ state, dispatch, categories }: Props) {
             label="Search"
             value={state.search}
             onChange={(val) => dispatch({ type: 'SET_SEARCH', payload: val })}
+            fullWidth
           />
         </Grid>
 
@@ -32,6 +33,7 @@ export default function ProductFilters({ state, dispatch, categories }: Props) {
           <UserFilterTextField
             label="Category"
             select
+            fullWidth
             value={state.selectedCategoryId}
             onChange={(val) => dispatch({ type: 'SET_CATEGORY', payload: val })}
             options={[
@@ -48,6 +50,7 @@ export default function ProductFilters({ state, dispatch, categories }: Props) {
           <UserFilterDatePicker
             label="Created After"
             value={state.createdAfter}
+            fullWidth
             onChange={(date: Dayjs | null) =>
               dispatch({ type: 'SET_CREATED_AFTER', payload: date })
             }
