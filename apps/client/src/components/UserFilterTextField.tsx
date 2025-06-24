@@ -1,37 +1,42 @@
 import React from 'react';
-import { TextField, TextFieldProps, MenuItem } from '@mui/material';
+import { TextField, MenuItem, TextFieldProps } from '@mui/material';
 
 interface Option {
-  value: string;
   label: string;
+  value: string;
 }
 
-interface Props extends Omit<TextFieldProps, 'onChange'> {
+interface Props extends Omit<TextFieldProps, 'onChange' | 'value'> {
+  label?: string;
   value: string;
-  onChange: (value: string) => void;
-  options?: Option[];
+  onChange: (val: string) => void;
   select?: boolean;
+  options?: Option[];
+  fullWidth?: boolean; // ✅ Add this
 }
 
 export default function UserFilterTextField({
+  label,
   value,
   onChange,
-  options,
-  select,
+  select = false,
+  options = [],
+  fullWidth = false,
   ...rest
 }: Props) {
   return (
     <TextField
-      fullWidth
-      select={select}
+      label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      select={select}
+      fullWidth={fullWidth} // ✅ Apply fullWidth
       {...rest}
     >
       {select &&
-        options?.map((opt) => (
-          <MenuItem key={opt.value} value={opt.value}>
-            {opt.label}
+        options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
           </MenuItem>
         ))}
     </TextField>
