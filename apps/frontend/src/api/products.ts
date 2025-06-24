@@ -1,4 +1,3 @@
-// src/api/products.ts
 import { db, storage } from '../firebase';
 import {
   collection,
@@ -7,19 +6,18 @@ import {
   doc,
   deleteDoc,
   getDoc,
-  getDocs
+  getDocs,
+  query,
+  where,
 } from 'firebase/firestore';
 import {
-  getStorage,
   ref,
-  uploadBytes,
-  uploadBytesResumable,
+  listAll,
+  deleteObject,
   getDownloadURL,
-  listAll, deleteObject
 } from 'firebase/storage';
-import type { Product } from '../types/firebase';
 
-import { query, where } from 'firebase/firestore';
+import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
 
 type NewProduct = Omit<Product, 'id' | 'imageUrls'> & {
@@ -28,18 +26,18 @@ type NewProduct = Omit<Product, 'id' | 'imageUrls'> & {
 
 export async function createProduct(product: NewProduct): Promise<void> {
   const { name, description, price, stock, categoryId, images } = product;
-  const imageUrls = await uploadFilesAndReturnUrls(images, 'products');
-
-  await addDoc(collection(db, 'products'), {
+  const docRef = await addDoc(collection(db, 'products'), {
     name,
     description,
     price,
     stock,
     categoryId,
-    imageUrls,
+    imageUrls: [],
   });
-}
 
+  const imageUrls = await uploadFilesAndReturnUrls(images, `products/${docRef.id}`);
+  await updateDoc(docRef, { imageUrls });
+}
 
 export async function fetchProducts(): Promise<Product[]> {
   const snapshot = await getDocs(collection(db, 'products'));
@@ -48,20 +46,20 @@ export async function fetchProducts(): Promise<Product[]> {
     ...(doc.data() as Omit<Product, 'id'>),
   }));
 }
+
 export async function fetchProductsByCategory(categoryId: string): Promise<Product[]> {
   const q = query(collection(db, 'products'), where('categoryId', '==', categoryId));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...(doc.data() as Omit<Product, 'id'>),
-    stock: (doc.data() as any).stock ?? 0, // fallback if needed
+    stock: (doc.data() as any).stock ?? 0,
   }));
 }
 
 export async function getProductById(productId: string): Promise<Product | null> {
-  const ref = doc(db, 'products', productId);
-  const snapshot = await getDoc(ref);
-
+  const refDoc = doc(db, 'products', productId);
+  const snapshot = await getDoc(refDoc);
   if (!snapshot.exists()) return null;
 
   const data = snapshot.data();
@@ -73,22 +71,43 @@ export async function getProductById(productId: string): Promise<Product | null>
     stock: data.stock ?? 0,
     categoryId: data.categoryId,
     imageUrls: data.imageUrls || [],
-  } as Product;
+  };
 }
 
+type UpdateProductPayload = {
+  data: Partial<Omit<Product, 'id'>>;
+  keepImageUrls: string[];
+  newImages: File[];
+};
+
+export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
+  const { data, keepImageUrls, newImages } = payload;
+
+  const folderRef = ref(storage, `products/${productId}`);
+  const { items } = await listAll(folderRef);
+
+  for (const item of items) {
+    const url = await getDownloadURL(item);
+    if (!keepImageUrls.includes(url)) {
+      await deleteObject(item);
+    }
+  }
+
+  const newImageUrls = await uploadFilesAndReturnUrls(newImages, `products/${productId}`);
+  const refDoc = doc(db, 'products', productId);
+
+  await updateDoc(refDoc, {
+    ...data,
+    imageUrls: [...keepImageUrls, ...newImageUrls],
+  });
+}
 
 export async function deleteProduct(productId: string): Promise<void> {
-  // Delete product document
   await deleteDoc(doc(db, 'products', productId));
 
-  // Delete associated images from storage
   const folderRef = ref(storage, `products/${productId}`);
   const { items } = await listAll(folderRef);
   for (const item of items) {
     await deleteObject(item);
   }
-}
-export async function updateProduct(productId: string, data: Partial<Omit<Product, 'id'>>): Promise<void> {
-  const ref = doc(db, 'products', productId);
-  await updateDoc(ref, data);
 }

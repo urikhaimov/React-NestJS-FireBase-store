@@ -7,27 +7,35 @@ import {
 } from 'firebase/storage';
 import { app } from '../firebase';
 
-export async function uploadFilesAndReturnUrls(files: File[], folderPath: string): Promise<string[]> {
+export async function uploadFilesAndReturnUrls(
+  files: File[],
+  folderPath: string
+): Promise<string[]> {
   const storage = getStorage(app);
-  const imageUrls: string[] = [];
 
-  for (const file of files) {
-    const storageRef = ref(storage, `${folderPath}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+  // Generate an array of upload promises
+  const uploadPromises = files.map((file) => {
+    const fileName = `${Date.now()}_${file.name}`;
+    const fileRef = ref(storage, `${folderPath}/${fileName}`);
+    const uploadTask = uploadBytesResumable(fileRef, file);
 
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       uploadTask.on(
         'state_changed',
-        null,
+        null, // optional progress callback
         reject,
         async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          imageUrls.push(url);
-          resolve();
+          try {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(url);
+          } catch (err) {
+            reject(err);
+          }
         }
       );
     });
-  }
+  });
 
-  return imageUrls;
+  // Wait for all uploads to complete
+  return Promise.all(uploadPromises);
 }
