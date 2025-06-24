@@ -4,8 +4,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
 import PeopleIcon from '@mui/icons-material/People';
 import { useNavigate } from 'react-router-dom';
-
-const drawerWidth = 240;
+import {drawerWidth}  from '../../constants/globalConstants'
 
 export default function Sidebar() {
   const navigate = useNavigate();

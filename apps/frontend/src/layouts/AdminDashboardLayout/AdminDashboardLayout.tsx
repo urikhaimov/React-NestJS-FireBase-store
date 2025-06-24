@@ -14,8 +14,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import LeftMenu from '../../components/LeftMenu/LeftMenu';
+import {drawerWidth}  from '../../constants/globalConstants'
 
-const drawerWidth = 240;
 
 export default function AdminDashboardLayout() {
   const theme = useTheme();

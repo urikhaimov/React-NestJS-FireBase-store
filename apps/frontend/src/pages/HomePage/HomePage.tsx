@@ -18,7 +18,7 @@ import { reducer, initialState } from './LocalReducer';
 import ProductFilters from './ProductFilters';
 import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
-
+import LoadingProgress from '../../components/LoadingProgress'
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<any[]>([]);
@@ -155,9 +155,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={5}>
-        <CircularProgress />
-      </Box>
+      <LoadingProgress />
     );
   }
 
