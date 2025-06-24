@@ -31,6 +31,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate } from 'react-router-dom';
+
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useCartStore } from '../../store/cartStore';
 import CartDrawer from '../CartDrawer';
@@ -68,8 +69,8 @@ export default function LeftMenu() {
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
     setAnchorEl(event.currentTarget);
-  const handleProfileMenuClose = () =>
-    setAnchorEl(null);
+
+  const handleProfileMenuClose = () => setAnchorEl(null);
 
   const storeLinks = [
     { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
@@ -96,7 +97,13 @@ export default function LeftMenu() {
   ];
 
   const drawerContent = (
-    <Box width={drawerWidth} display="flex" flexDirection="column" height="100%">
+    <Box
+      width={drawerWidth}
+      height="100%"
+      display="flex"
+      flexDirection="column"
+      sx={{ px: isMobile ? 0 : 1 }}
+    >
       {!isMobile && (
         <IconButton onClick={() => setExpanded(!expanded)} sx={{ m: 1 }}>
           <MenuIcon />
@@ -106,7 +113,14 @@ export default function LeftMenu() {
       <Divider />
 
       {user && (
-        <Box display="flex" alignItems="center" gap={1} p={2} sx={{ cursor: 'pointer' }} onClick={handleProfileMenuOpen}>
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={1}
+          p={2}
+          sx={{ cursor: 'pointer' }}
+          onClick={handleProfileMenuOpen}
+        >
           <Avatar sx={{ width: 32, height: 32 }}>
             {user.name?.[0] || user.email?.[0] || 'U'}
           </Avatar>
@@ -125,8 +139,12 @@ export default function LeftMenu() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>Edit Profile</MenuItem>
-        <MenuItem onClick={() => { logout(); handleProfileMenuClose(); }}>Logout</MenuItem>
+        <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
+          Edit Profile
+        </MenuItem>
+        <MenuItem onClick={() => { logout(); handleProfileMenuClose(); }}>
+          Logout
+        </MenuItem>
       </Menu>
 
       <Divider />
@@ -188,6 +206,7 @@ export default function LeftMenu() {
 
   return (
     <>
+      {/* Mobile Drawer */}
       <Drawer
         anchor="left"
         open={mobileOpen}
@@ -195,6 +214,8 @@ export default function LeftMenu() {
         ModalProps={{ keepMounted: true }}
         PaperProps={{
           sx: {
+            width: '100vw',
+            maxWidth: drawerWidth,
             zIndex: (theme) => theme.zIndex.drawer + 2,
           },
         }}
@@ -202,6 +223,7 @@ export default function LeftMenu() {
         {drawerContent}
       </Drawer>
 
+      {/* Desktop Drawer */}
       {!isMobile && (
         <Drawer
           variant="permanent"
