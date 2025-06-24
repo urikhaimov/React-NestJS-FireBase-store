@@ -1,67 +1,147 @@
 import React from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSafeAuth } from '../../hooks/getSafeAuth';
-import { Box, Button, TextField, Typography, Paper } from '@mui/material';
+import { motion } from 'framer-motion';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db } from '../../firebase';
+import { setDoc, doc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+
+type SignUpInputs = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export default function SignupPage() {
-  const { register, handleSubmit, reset } = useForm();
-  const { signup } = useSafeAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-const onSubmit = async (data: any) => {
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm<SignUpInputs>();
+
+  const onSubmit = async (data: SignUpInputs) => {
     try {
-      await signup(data.email, data.password);
-      alert('Signup successful!');
-      reset(); // clear form
-      navigate('/'); // navigate home or to dashboard
-    } catch (err: any) {
-      console.error('Signup error:', err); // log full error
-      alert('Signup failed: ' + (err?.message || 'Unknown error'));
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+
+      // Set display name in Firebase Auth
+      await updateProfile(user, { displayName: data.name });
+
+      // Create Firestore user document
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: data.name,
+        role: 'user',
+      });
+
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+      alert('Sign up failed. Please try again.');
     }
   };
 
-
   return (
     <Box
-         flexGrow={1}
-         display="flex"
-         justifyContent="center"
-         alignItems="center"
-         px={2}
-         py={4}
-         sx={{
-           width: '100%', // Safe
-           maxWidth: '100vw', // Prevent overflow
-           overflowX: 'hidden', // Enforced here too
-         }}
-       >
-      <Paper elevation={3} sx={{ p: 4, width: 400 }}>
-        <Typography variant="h5" gutterBottom>
-          Sign Up
-        </Typography>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField
-            label="Email"
-            type="email"
-            fullWidth
-            margin="normal"
-            {...register('email', { required: true })}
-          />
-          <TextField
-            label="Password"
-            type="password"
-            fullWidth
-            margin="normal"
-            {...register('password', { required: true })}
-          />
-          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-            Create Account
-          </Button>
-        </form>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          Already have an account? <Link to="/login">Log in</Link>
-        </Typography>
-      </Paper>
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      minWidth="100vw"
+      px={2}
+      sx={{ backgroundColor: theme.palette.background.default }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Paper
+          elevation={6}
+          sx={{
+            p: isMobile ? 3 : 5,
+            width: isMobile ? 320 : 400,
+            borderRadius: 3,
+          }}
+        >
+          <Box textAlign="center" mb={2}>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Create Account
+            </Typography>
+            <Typography variant="h6">Join My Online Store</Typography>
+          </Box>
+
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <Stack spacing={3}>
+              <TextField
+                label="Name"
+                fullWidth
+                {...register('name', { required: 'Name is required' })}
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
+
+              <TextField
+                label="Email"
+                type="email"
+                fullWidth
+                {...register('email', { required: 'Email is required' })}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+
+              <TextField
+                label="Password"
+                type="password"
+                fullWidth
+                {...register('password', { required: 'Password is required', minLength: 6 })}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+              />
+
+              <TextField
+                label="Confirm Password"
+                type="password"
+                fullWidth
+                {...register('confirmPassword', {
+                  required: 'Please confirm your password',
+                  validate: (value) =>
+                    value === watch('password') || 'Passwords do not match',
+                })}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={isSubmitting}
+                sx={{ py: 1.5, fontWeight: 600 }}
+              >
+                {isSubmitting ? 'Signing up...' : 'Sign Up'}
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </motion.div>
     </Box>
   );
 }

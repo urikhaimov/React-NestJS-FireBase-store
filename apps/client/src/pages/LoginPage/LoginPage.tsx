@@ -1,3 +1,4 @@
+// src/pages/LoginPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
@@ -209,6 +210,29 @@ const LoginPage = () => {
           >
             Sign in with Google
           </Button>
+
+          {/* ✅ Animated sign-up CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Box mt={3} textAlign="center">
+              <Typography variant="body2" gutterBottom>
+                Don’t have an account?
+              </Typography>
+              <Button
+                component={RouterLink}
+                to="/signup"
+                variant="outlined"
+                color="primary"
+                size="small"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Create an account
+              </Button>
+            </Box>
+          </motion.div>
         </Paper>
       </motion.div>
     </Box>

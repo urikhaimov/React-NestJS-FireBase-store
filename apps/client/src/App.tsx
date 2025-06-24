@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -51,11 +52,13 @@ export default function App() {
   const { theme, isLoading } = useThemeContext();
   const hasRedirected = useRef(false);
 
+  // Initialize Firebase auth listener
   useEffect(() => {
     const unsubscribe = initializeAuth();
     return () => unsubscribe();
   }, [initializeAuth]);
 
+  // Handle redirect if not authenticated
   useEffect(() => {
     if (authInitialized && !user && !hasRedirected.current) {
       const next = consumeRedirect();
@@ -64,17 +67,21 @@ export default function App() {
     }
   }, [authInitialized, user, consumeRedirect, navigate]);
 
+  // Redirect after login if necessary
   useEffect(() => {
-    if (user) {
+    if (user && !hasRedirected.current) {
       const target =
         consumeRedirect() ||
         (['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/');
 
-      setTimeout(() => {
-        navigate(target, { replace: true });
-      }, 300); // Delay for animation
+      if (!location.pathname.startsWith(target)) {
+        setTimeout(() => {
+          navigate(target, { replace: true });
+          hasRedirected.current = true;
+        }, 300); // Add delay to allow animation
+      }
     }
-  }, [user, consumeRedirect, navigate]);
+  }, [user, consumeRedirect, location.pathname, navigate]);
 
   if (isLoading || !theme || !authInitialized) {
     return (
@@ -90,6 +97,11 @@ export default function App() {
       </Box>
     );
   }
+
+  const isAuthPage =
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/signup') ||
+    location.pathname.startsWith('/reset-password');
 
   const appRoutes = (
     <Routes location={location} key={location.pathname}>
@@ -166,14 +178,12 @@ export default function App() {
     </Routes>
   );
 
-  const isAuthPage = location.pathname.startsWith('/login') || location.pathname.startsWith('/signup') || location.pathname.startsWith('/reset-password');
-
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
-      <AnimatePresence mode="wait">{
-        isAuthPage ? appRoutes : <Layout>{appRoutes}</Layout>
-      }</AnimatePresence>
+      <AnimatePresence mode="wait">
+        {isAuthPage ? appRoutes : <Layout>{appRoutes}</Layout>}
+      </AnimatePresence>
     </MuiThemeProvider>
   );
 }
