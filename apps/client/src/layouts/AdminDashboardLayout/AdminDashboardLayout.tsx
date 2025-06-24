@@ -48,7 +48,7 @@ export default function AdminDashboardLayout() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          m: 10,
+          m:5,
           px: { xs: 0, sm: 3 }, // ✅ remove left/right padding on mobile
           py: { xs: 1, sm: 3 },
           width: '100%',

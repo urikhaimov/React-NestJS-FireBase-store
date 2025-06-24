@@ -1,8 +1,26 @@
-import React, { useReducer, useState } from 'react';
+import React, { useReducer, useState, useMemo } from 'react';
 import {
-  Box, Typography, IconButton, List, ListItem, ListItemText,
-  Select, MenuItem, CircularProgress, Dialog, DialogTitle,
-  DialogContent, DialogContentText, DialogActions, Button, TextField
+  Box,
+  Typography,
+  IconButton,
+  List,
+  Card,
+  CardContent,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  TextField,
+  Pagination,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+  CardActions
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
@@ -12,11 +30,15 @@ import type { User } from '../../../types/User';
 import type { Role } from '../../../types/Role';
 
 export default function AdminUsersPage() {
-  
   const { users, isLoading, error, updateUserRole, deleteUser } = useAdminUsersQuery();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [searchText, setSearchText] = useState('');
   const debouncedSearch = useDebounce(searchText, 300);
+  const [page, setPage] = useState(1);
+  const usersPerPage = 10;
 
   const [state, dispatch] = useReducer(
     (state: any, action: any) => {
@@ -38,12 +60,27 @@ export default function AdminUsersPage() {
     dispatch({ type: 'CLOSE_CONFIRM' });
   };
 
-  const filteredUsers = users.filter((user) =>
-    user.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) =>
+        user.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+      ),
+    [users, debouncedSearch]
   );
 
-  if (isLoading) return <Box p={4}><CircularProgress /></Box>;
-  if (error) return <Typography p={4}>❌ Error loading users</Typography>;
+  const paginatedUsers = useMemo(
+    () => filteredUsers.slice((page - 1) * usersPerPage, page * usersPerPage),
+    [filteredUsers, page]
+  );
+
+  if (isLoading)
+    return (
+      <Box p={4}>
+        <CircularProgress />
+      </Box>
+    );
+  if (error)
+    return <Typography p={4}>❌ Error loading users</Typography>;
 
   return (
     <AdminStickyPage title="Manage Users">
@@ -54,46 +91,74 @@ export default function AdminUsersPage() {
           variant="outlined"
           size="small"
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setPage(1); // Reset page on search
+          }}
         />
       </Box>
+
       <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, py: 3, height: '50vh' }}>
         <List>
-          {filteredUsers.map((user) => (
-            <ListItem
-              key={user.id}
-              divider
-              secondaryAction={
-                <>
-                  <Select
-                    size="small"
-                    value={user.role}
-                    onChange={(e) => updateUserRole(user.id, e.target.value as Role)}
-                    sx={{ mr: 2, minWidth: 120 }}
+          {paginatedUsers.map((user) => (
+            <Card key={user.id} sx={{ mb: 2, p: 1 }}>
+              <CardContent sx={{ pb: 0 }}>
+                <Tooltip title={user.email}>
+                  <Typography
+                    variant="subtitle2"
+                    noWrap
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                    }}
                   >
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="superadmin">Superadmin</MenuItem>
-                  </Select>
-                  <IconButton
-                    edge="end"
-                    color="error"
-                    onClick={() =>
-                      dispatch({ type: 'OPEN_CONFIRM', payload: user })
-                    }
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </>
-              }
-            >
-              <ListItemText primary={user.email} secondary={`Role: ${user.role}`} />
-            </ListItem>
+                    {user.email}
+                  </Typography>
+                </Tooltip>
+                <Typography variant="body2" color="text.secondary">
+                  Role: {user.role}
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'space-between', pt: 1 }}>
+                <Select
+                  size="small"
+                  value={user.role}
+                  onChange={(e) => updateUserRole(user.id, e.target.value as Role)}
+                  sx={{ minWidth: 120 }}
+                >
+                  <MenuItem value="user">User</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="superadmin">Superadmin</MenuItem>
+                </Select>
+                <IconButton
+                  edge="end"
+                  color="error"
+                  onClick={() => dispatch({ type: 'OPEN_CONFIRM', payload: user })}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </CardActions>
+            </Card>
+
           ))}
         </List>
       </Box>
 
-      <Dialog open={state.confirmOpen} onClose={() => dispatch({ type: 'CLOSE_CONFIRM' })}>
+      <Box display="flex" justifyContent="center" mt={2}>
+        <Pagination
+          count={Math.ceil(filteredUsers.length / usersPerPage)}
+          page={page}
+          onChange={(_, value) => setPage(value)}
+          color="primary"
+        />
+      </Box>
+
+      <Dialog
+        open={state.confirmOpen}
+        onClose={() => dispatch({ type: 'CLOSE_CONFIRM' })}
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -102,8 +167,12 @@ export default function AdminUsersPage() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => dispatch({ type: 'CLOSE_CONFIRM' })}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
+          <Button onClick={() => dispatch({ type: 'CLOSE_CONFIRM' })}>
+            Cancel
+          </Button>
+          <Button color="error" variant="contained" onClick={handleDelete}>
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </AdminStickyPage>
