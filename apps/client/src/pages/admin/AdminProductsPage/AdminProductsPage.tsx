@@ -10,7 +10,7 @@ import {
   useTheme,
   Pagination,
 } from '@mui/material';
-import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
+import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import { motion } from 'framer-motion';
 
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
@@ -121,15 +121,15 @@ const handleAddProduct = () => {
         </Box>
       ) : (
         <>
-          <VirtualList
+          <VariableSizeList
             style={{ overflowX: 'hidden' }}
             height={isMobile ? 400 : 550}
             width="100%"
             itemCount={paginatedProducts.length}
-            itemSize={isMobile ? 220 : 180}
+            itemSize={() =>isMobile ? 220 : 180}
           >
             {renderRow}
-          </VirtualList>
+          </VariableSizeList>
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination

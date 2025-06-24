@@ -9,7 +9,7 @@ import {
   useTheme,
   Pagination,
 } from '@mui/material';
-import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
+import {VariableSizeList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import ProductFilters from './OrderFilters';
 import { reducer, initialState } from './LocalReducer';
@@ -93,16 +93,17 @@ export default function AdminOrdersPage() {
         </Box>
       ) : (
         <>
-          <Box sx={{ width: '100%', overflowX: 'hidden' }}>
-            <VirtualList
-              height={isMobile ? 560 : 600}
+         
+            <VariableSizeList
+            style={{ overflowX: 'hidden' }}
+              height={isMobile ? 350 : 450}
               width="100%"
               itemCount={paginatedOrders.length}
-              itemSize={isMobile ? 220 : 160}
+              itemSize={() =>isMobile ? 220 : 160}
             >
               {renderRow}
-            </VirtualList>
-          </Box>
+            </VariableSizeList>
+         
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
