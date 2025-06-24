@@ -67,21 +67,18 @@ export default function App() {
     }
   }, [authInitialized, user, consumeRedirect, navigate]);
 
-  // Redirect after login if necessary
-  useEffect(() => {
-    if (user && !hasRedirected.current) {
-      const target =
-        consumeRedirect() ||
-        (['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/');
+ useEffect(() => {
+  if (user && !hasRedirected.current) {
+    const redirect = consumeRedirect();
+    const defaultTarget = ['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/';
 
-      if (!location.pathname.startsWith(target)) {
-        setTimeout(() => {
-          navigate(target, { replace: true });
-          hasRedirected.current = true;
-        }, 300); // Add delay to allow animation
-      }
+    if (redirect && location.pathname !== redirect) {
+      navigate(redirect, { replace: true });
+      hasRedirected.current = true;
     }
-  }, [user, consumeRedirect, location.pathname, navigate]);
+  }
+}, [user, consumeRedirect, location.pathname, navigate]);
+
 
   if (isLoading || !theme || !authInitialized) {
     return (
