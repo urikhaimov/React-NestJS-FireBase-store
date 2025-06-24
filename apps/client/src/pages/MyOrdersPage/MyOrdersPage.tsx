@@ -14,12 +14,12 @@ import {
 } from '@mui/material';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
-import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
+import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
 import OrderFilters from './OrderFilters';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { fetchMyOrders } from '../../api/orderApi';
-
+import LoadingProgress from '../../components/LoadingProgress'
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,7 +83,7 @@ export default function MyOrdersPage() {
             </Typography>
             <Typography variant="body2">Status: {order.status}</Typography>
             <Typography variant="body2">
-           Date:{(order.createdAt as any).toDate?.()?.toLocaleString?.() ?? 'Invalid date'}
+              Date:{(order.createdAt as any).toDate?.()?.toLocaleString?.() ?? 'Invalid date'}
 
             </Typography>
             <Typography variant="body2" gutterBottom>
@@ -110,9 +110,7 @@ export default function MyOrdersPage() {
 
   if (!ready || loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={5}>
-        <CircularProgress />
-      </Box>
+     <LoadingProgress/>
     );
   }
 
@@ -128,14 +126,14 @@ export default function MyOrdersPage() {
         <Typography>No orders found.</Typography>
       ) : (
         <>
-          <VirtualList
-            height={isMobile ? 300 : 350}
+          <VariableSizeList
+            height={600}
             width="100%"
             itemCount={paginatedOrders.length}
-            itemSize={220}
+            itemSize={() => 220}
           >
             {Row}
-          </VirtualList>
+          </VariableSizeList>
 
           <Box display="flex" justifyContent="center" mt={2}>
             <Pagination
