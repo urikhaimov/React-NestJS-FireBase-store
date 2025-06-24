@@ -1,3 +1,4 @@
+// ✅ src/pages/admin/AdminProductsPage/ProductFormPage.tsx
 import {
   Box,
   Button,
@@ -8,19 +9,16 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  IconButton,
-  Grid,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { useDropzone } from 'react-dropzone';
-import { fetchCategories } from '../../../api/categories';
-import { getProductById, updateProduct, createProduct } from '../../../api/products';
+import { useForm } from 'react-hook-form';
 
-import { uploadFilesAndReturnUrls } from '../../../utils/uploadFilesAndReturnUrls';
+import { fetchCategories } from '../../../api/categories';
+import { getProductById, createProduct, updateProduct } from '../../../api/products';
 import type { Category, Product } from '../../../types/firebase';
+import { productFormReducer, initialProductFormState } from './productFormReducer';
+import ProductImageManagerWithDropzone from '../../../components/ProductImageManagerWithDropzone';
 import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 
 type FormState = {
@@ -29,7 +27,6 @@ type FormState = {
   price: string;
   stock: string;
   categoryId: string;
-  imageUrls: string[];
 };
 
 type Props = {
@@ -41,18 +38,15 @@ export default function ProductFormPage({ mode }: Props) {
   const { productId } = useParams();
   const navigate = useNavigate();
 
+  const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
+  const { product, keepImageUrls, newFiles, uploading, success } = state;
+
   const [categories, setCategories] = useState<Category[]>([]);
-  const [product, setProduct] = useState<Product | null | undefined>(isEdit ? undefined : null);
-  const [success, setSuccess] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const {
-    control,
     register,
     handleSubmit,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<FormState>({
     defaultValues: {
@@ -61,7 +55,6 @@ export default function ProductFormPage({ mode }: Props) {
       price: '',
       stock: '',
       categoryId: '',
-      imageUrls: [],
     },
   });
 
@@ -72,67 +65,28 @@ export default function ProductFormPage({ mode }: Props) {
       getProductById(productId)
         .then((prod) => {
           if (prod) {
-            setProduct(prod);
+            dispatch({ type: 'SET_PRODUCT', payload: prod });
             const defaults = {
               name: prod.name,
               description: prod.description,
               price: String(prod.price),
               stock: String(prod.stock),
               categoryId: prod.categoryId,
-              imageUrls: prod.imageUrls || [],
             };
             Object.entries(defaults).forEach(([key, val]) =>
               setValue(key as keyof FormState, val ?? '')
             );
-            setPreviewUrls(prod.imageUrls || []);
           } else {
-            setProduct(null);
+            dispatch({ type: 'SET_PRODUCT', payload: null });
           }
         })
-        .catch(() => setProduct(null));
+        .catch(() => dispatch({ type: 'SET_PRODUCT', payload: null }));
     }
   }, [isEdit, productId, setValue]);
 
-  const onDrop = async (acceptedFiles: File[]) => {
-    const MAX_IMAGES = 5;
-    const MAX_FILE_SIZE = 2 * 1024 * 1024;
-    const currentUrls = getValues('imageUrls');
-
-    if (currentUrls.length + acceptedFiles.length > MAX_IMAGES) {
-      alert('Max 5 images allowed');
-      return;
-    }
-
-    const validFiles = acceptedFiles.filter((file) => {
-      if (!file.type.startsWith('image/')) {
-        alert(`${file.name} is not a valid image.`);
-        return false;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`${file.name} is too large (max 2MB).`);
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
-    setUploading(true);
-    try {
-      const urls = await uploadFilesAndReturnUrls(validFiles, 'products');
-      const updatedUrls = [...currentUrls, ...urls];
-      setValue('imageUrls', updatedUrls);
-      setPreviewUrls(updatedUrls);
-    } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Image upload failed. Try again.');
-    }
-    setUploading(false);
-  };
-
-  const { getRootProps, getInputProps } = useDropzone({ onDrop });
-
   const onSubmit = async (data: FormState) => {
+    dispatch({ type: 'SET_UPLOADING', payload: true });
+
     try {
       const payload = {
         name: data.name,
@@ -140,19 +94,25 @@ export default function ProductFormPage({ mode }: Props) {
         price: Number(data.price),
         stock: Number(data.stock),
         categoryId: data.categoryId,
-        imageUrls: data.imageUrls,
       };
 
       if (isEdit && productId) {
-        await updateProduct(productId, payload);
+        await updateProduct(productId, {
+          data: payload,
+          keepImageUrls,
+          newImages: newFiles,
+        });
       } else {
-        await createProduct({ ...payload, images: [] }); // images already uploaded
+        await createProduct({ ...payload, images: newFiles });
       }
 
-      setSuccess(true);
+      dispatch({ type: 'SET_SUCCESS', payload: true });
       setTimeout(() => navigate('/admin/products'), 1000);
     } catch (err) {
       console.error('Save failed:', err);
+      alert('Failed to save product.');
+    } finally {
+      dispatch({ type: 'SET_UPLOADING', payload: false });
     }
   };
 
@@ -161,11 +121,11 @@ export default function ProductFormPage({ mode }: Props) {
     return <Typography sx={{ mt: 4 }}>❌ Product not found.</Typography>;
 
   return (
-    <PageWithStickyFilters >
-
+    <PageWithStickyFilters>
       <Typography variant="h4" gutterBottom>
         {isEdit ? 'Edit Product' : 'Add Product'}
       </Typography>
+
       <Paper sx={{ p: 3, maxWidth: 700 }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
@@ -219,53 +179,14 @@ export default function ProductFormPage({ mode }: Props) {
           </TextField>
 
           <Box mt={2}>
-            <Typography variant="subtitle1">Product Images</Typography>
-            <Box
-              {...getRootProps()}
-              sx={{
-                border: '1px dashed grey',
-                p: 2,
-                mt: 1,
-                cursor: 'pointer',
-                bgcolor: '#fafafa',
+            <ProductImageManagerWithDropzone
+              initialImageUrls={keepImageUrls}
+              onChange={({ keepImageUrls, newFiles }) => {
+                dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: keepImageUrls });
+                dispatch({ type: 'SET_NEW_FILES', payload: newFiles });
               }}
-            >
-              <input {...getInputProps()} />
-              <Typography>Drag & drop or click to upload (max 5)</Typography>
-            </Box>
+            />
           </Box>
-
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            {previewUrls.map((url, index) => (
-              <Grid item key={url}>
-                <Box position="relative">
-                  <img
-                    src={url}
-                    alt={`preview-${index}`}
-                    width={100}
-                    height={100}
-                    style={{ borderRadius: 8 }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      const filtered = getValues('imageUrls').filter((u) => u !== url);
-                      setValue('imageUrls', filtered);
-                      setPreviewUrls((prev) => prev.filter((p) => p !== url));
-                    }}
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      bgcolor: 'white',
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
 
           <Box mt={3}>
             <Button type="submit" variant="contained" disabled={uploading}>
@@ -275,7 +196,11 @@ export default function ProductFormPage({ mode }: Props) {
         </form>
       </Paper>
 
-      <Snackbar open={success} autoHideDuration={3000} onClose={() => setSuccess(false)}>
+      <Snackbar
+        open={success}
+        autoHideDuration={3000}
+        onClose={() => dispatch({ type: 'SET_SUCCESS', payload: false })}
+      >
         <Alert severity="success" sx={{ width: '100%' }}>
           Product {isEdit ? 'updated' : 'created'} successfully!
         </Alert>
