@@ -29,87 +29,94 @@ export default function OrderFilters({ state, dispatch }: Props) {
       hasFilters={!!hasFilters}
       onClear={() => dispatch({ type: 'RESET_FILTERS' })}
     >
-      <Grid container spacing={2}>
-        <Grid item>
-          <UserFilterTextField
-            label="User Email"
-            value={state.email}
-            onChange={(val) => dispatch({ type: 'setEmail', payload: val })}
-            sx={{ minWidth: 240 }}
-          />
-        </Grid>
+      <Box
+        sx={{
+          maxHeight: 400, // adjust as needed
+          overflowY: 'auto',
+          pr: 1, // space for scrollbar
+        }}
+      >
+        <Grid container spacing={2} sx={{ width: '100%' }}>
+          {/** Wrap each in full-width box to enforce sizing */}
+          <Grid item xs={12}>
+            <UserFilterTextField
+              label="User Email"
+              value={state.email}
+              onChange={(val) => dispatch({ type: 'setEmail', payload: val })}
+              fullWidth
+            />
+          </Grid>
 
-        <Grid item>
-          <UserFilterTextField
-            label="Status"
-            select
-            value={state.status}
-            onChange={(val) => dispatch({ type: 'setStatus', payload: val })}
-            options={statusOptions.map((s) => ({ value: s, label: s }))}
-            sx={{ minWidth: 240 }}
-          />
-        </Grid>
+          <Grid item xs={12}>
+            <UserFilterTextField
+              label="Status"
+              select
+              value={state.status}
+              onChange={(val) => dispatch({ type: 'setStatus', payload: val })}
+              options={statusOptions.map((s) => ({ value: s, label: s }))}
+              fullWidth
+            />
+          </Grid>
 
-        <Grid item>
-          <UserFilterTextField
-            label="Min Total"
-            type="number"
-            value={state.minTotal?.toString() || ''}
-            onChange={(val) => dispatch({ type: 'setMinTotal', payload: parseFloat(val) })}
-            sx={{ minWidth: 240 }}
-          />
-        </Grid>
+          <Grid item xs={12}>
+            <UserFilterTextField
+              label="Min Total"
+              type="number"
+              value={state.minTotal?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMinTotal', payload: parseFloat(val) })}
+              fullWidth
+            />
+          </Grid>
 
-        <Grid item>
-          <UserFilterTextField
-            label="Max Total"
-            type="number"
-            value={state.maxTotal?.toString() || ''}
-            onChange={(val) => dispatch({ type: 'setMaxTotal', payload: parseFloat(val) })}
-            sx={{ minWidth: 240 }}
-          />
-        </Grid>
+          <Grid item xs={12}>
+            <UserFilterTextField
+              label="Max Total"
+              type="number"
+              value={state.maxTotal?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMaxTotal', payload: parseFloat(val) })}
+              fullWidth
+            />
+          </Grid>
 
-        <Grid item>
-          <Box sx={{ minWidth: 240 }}>
+          <Grid item xs={12}>
             <UserFilterDatePicker
               label="Start Date"
               value={state.startDate ? dayjs(state.startDate) : null}
               onChange={(date: Dayjs | null) =>
                 dispatch({ type: 'setStartDate', payload: date?.toDate() || null })
               }
+              fullWidth
             />
-          </Box>
-        </Grid>
+          </Grid>
 
-        <Grid item>
-          <Box sx={{ minWidth: 240 }}>
+          <Grid item xs={12}>
             <UserFilterDatePicker
               label="End Date"
               value={state.endDate ? dayjs(state.endDate) : null}
               onChange={(date: Dayjs | null) =>
                 dispatch({ type: 'setEndDate', payload: date?.toDate() || null })
               }
+              fullWidth
             />
-          </Box>
-        </Grid>
+          </Grid>
 
-        <Grid item>
-          <UserFilterTextField
-            label="Sort By"
-            select
-            value={state.sortDirection}
-            onChange={(val) =>
-              dispatch({ type: 'setSortDirection', payload: val as 'asc' | 'desc' })
-            }
-            options={[
-              { value: 'desc', label: 'Newest' },
-              { value: 'asc', label: 'Oldest' },
-            ]}
-            sx={{ minWidth: 240 }}
-          />
+          <Grid item xs={12}>
+            <UserFilterTextField
+              label="Sort By"
+              select
+              value={state.sortDirection}
+              onChange={(val) =>
+                dispatch({ type: 'setSortDirection', payload: val as 'asc' | 'desc' })
+              }
+              options={[
+                { value: 'desc', label: 'Newest' },
+                { value: 'asc', label: 'Oldest' },
+              ]}
+              fullWidth
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </UserFilterLayout>
   );
 }
