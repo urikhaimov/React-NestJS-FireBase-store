@@ -2,11 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createProduct,
   updateProduct,
-  deleteProduct,
+ 
 } from '../api/products';
 import { reorderProducts } from '../api/productApi';
 import type { Product, NewProduct } from '../types/firebase';
-
+import { deleteProduct } from './deleteProduct';
 type UpdateProductPayload = {
   id: string;
   data: Partial<Omit<Product, 'id'>>;
@@ -23,7 +23,8 @@ export const useProductMutations = () => {
   const queryClient = useQueryClient();
 
   const create = useMutation({
-    mutationFn: (newProduct: NewProduct) => createProduct(newProduct),
+    mutationFn: ({ product, userId }: { product: NewProduct; userId: string }) =>
+  createProduct(product, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },

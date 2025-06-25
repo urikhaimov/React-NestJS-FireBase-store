@@ -7,18 +7,19 @@ export type Category = {
 
 export type Product = {
   id: string;
-   description?: string;
   name: string;
+  description: string;
   price: number;
   stock: number;
-  imageUrls?: string[];
-  imageUrl?: string;
-  createdAt?: any; // Firestore Timestamp if needed
-  categoryId: string; // ✅ ADD THIS
-   images?: File[]; // ✅ add this
-   quantity?: number;
+  categoryId: string;
+  imageUrls: string[];
+  createdAt: any;
+  updatedAt: any;
+  createdBy: string;
 };
 
-export type NewProduct = Omit<Product, 'id' | 'imageUrls'> & {
+export type NewProduct = Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt'> & {
   images: File[];
 };
+
+
