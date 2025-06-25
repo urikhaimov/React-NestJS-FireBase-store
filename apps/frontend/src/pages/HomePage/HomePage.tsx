@@ -12,7 +12,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../store/cartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { reducer, initialState } from './LocalReducer';
-import ProductFilters from './ProductFilters';
+import UserProductFilters from './UserProductFilters';
 import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import SortableProductCard from '../admin/AdminProductsPage/SortableProductCard';
@@ -95,7 +95,7 @@ export default function HomePage() {
       Products
     </Typography>
 
-    <ProductFilters state={state} dispatch={dispatch} categories={categories} />
+    <UserProductFilters state={state} dispatch={dispatch} categories={categories} />
 
     <Box
       sx={{

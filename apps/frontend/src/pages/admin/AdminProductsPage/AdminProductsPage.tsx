@@ -18,7 +18,7 @@ import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import SortableProductCard from './SortableProductCard';
-import ProductFilters from './ProductFilters';
+import AdminProductFilters from './AdminProductFilters';
 import { fetchAllProducts } from '../../../api/productApi';
 import { auth } from '../../../firebase';
 import LoadingProgress from '../../../components/LoadingProgress';
@@ -117,7 +117,7 @@ export default function AdminProductsPage() {
     <AdminStickyPage
       title="Admin Products"
       filters={
-        <ProductFilters
+        <AdminProductFilters
           state={state}
           dispatch={dispatch}
           categories={categories}
