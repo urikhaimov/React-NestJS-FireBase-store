@@ -40,3 +40,15 @@ export function deleteProduct(id: string, token: string) {
     },
   });
 }
+
+// ✅ Add this:
+export function reorderProducts(
+  orderList: { id: string; order: number }[],
+  token: string
+) {
+  return axios.patch('/api/products/reorder', orderList, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
