@@ -13,7 +13,7 @@ interface Props {
   categories: Category[];
 }
 
-export default function ProductFilters({ state, dispatch, categories }: Props) {
+export default function UserProductFilters({ state, dispatch, categories }: Props) {
   const hasFilters =
     state.search || state.selectedCategoryId || state.createdAfter;
 

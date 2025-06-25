@@ -14,7 +14,7 @@ export interface ProductFiltersProps {
   onAddProduct: () => void;
 }
 
-export default function ProductFilters({ state, dispatch, categories, onAddProduct }: ProductFiltersProps) {
+export default function AdminProductFilters({ state, dispatch, categories, onAddProduct }: ProductFiltersProps) {
   const hasFilters = state.searchTerm || state.selectedCategoryId || state.createdAfter;
 
   return (
