@@ -1,16 +1,13 @@
-import React, { useMemo, useReducer, useEffect, useState } from 'react';
+
+import React, { useMemo, useReducer, useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  Button,
   Divider,
-  Pagination,
   CircularProgress,
+  Alert,
+  Snackbar,
 } from '@mui/material';
-import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../store/cartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
@@ -18,11 +15,15 @@ import { reducer, initialState } from './LocalReducer';
 import ProductFilters from './ProductFilters';
 import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
-import LoadingProgress from '../../components/LoadingProgress'
+import SortableProductCard from '../admin/AdminProductsPage/SortableProductCard';
+
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<any[]>([]);
+  const [visibleCount, setVisibleCount] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const observerRef = useRef(null);
   const { user, ready } = useAuthReady();
   const { data: categories = [] } = useCategories();
   const cart = useCartStore();
@@ -43,10 +44,6 @@ export default function HomePage() {
     loadProducts();
   }, [ready, user]);
 
-  const categoryMap = useMemo(() => {
-    return new Map(categories.map((c) => [c.id, c.name]));
-  }, [categories]);
-
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const txt = state.search.toLowerCase();
@@ -63,130 +60,82 @@ export default function HomePage() {
     });
   }, [products, state]);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (state.page - 1) * state.pageSize;
-    return filteredProducts.slice(start, start + state.pageSize);
-  }, [filteredProducts, state.page, state.pageSize]);
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
-  const totalPages = Math.ceil(filteredProducts.length / state.pageSize);
-
-  const flatList = useMemo(() => {
-    const grouped = paginatedProducts.reduce<Record<string, any[]>>((acc, p) => {
-      const name = categoryMap.get(p.categoryId) || 'Uncategorized';
-      if (!acc[name]) acc[name] = [];
-      acc[name].push(p);
-      return acc;
-    }, {});
-
-    const result: { type: 'header' | 'product'; category?: string; product?: any }[] = [];
-    for (const [category, items] of Object.entries(grouped)) {
-      result.push({ type: 'header', category });
-      for (const p of items) {
-        result.push({ type: 'product', product: p });
-      }
+  const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
+    const entry = entries[0];
+    if (entry.isIntersecting && visibleCount < filteredProducts.length) {
+      setVisibleCount((prev) => prev + 10);
     }
-    return result;
-  }, [paginatedProducts, categoryMap]);
+  }, [filteredProducts.length, visibleCount]);
 
-  const getItemSize = (index: number) => {
-    return flatList[index].type === 'header' ? 70 : 190;
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: '100px',
+    });
 
-  const Row = ({ index, style }: ListChildComponentProps) => {
-    const item = flatList[index];
-    if (item.type === 'header') {
-      return (
-        <Box style={style} px={2} py={0.5}>
-          <Divider sx={{ mb: 0.5 }}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              {item.category}
-            </Typography>
-          </Divider>
-        </Box>
-      );
-    }
+    if (observerRef.current) observer.observe(observerRef.current);
 
-    const p = item.product!;
-    return (
-      <Box style={style} px={2}>
-        <Card
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'center',
-            p: 2,
-            flexWrap: 'wrap',
-          }}
-        >
-          <CardMedia
-            component="img"
-            sx={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 1 }}
-            image={p.imageUrls?.[0] || '/placeholder.png'}
-            alt={p.name}
-          />
-          <CardContent sx={{ flex: 1 }}>
-            <Typography variant="h6">{p.name}</Typography>
-            <Typography variant="body2" color="text.secondary" mb={1}>
-              {p.description}
-            </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              ${p.price}
-            </Typography>
-          </CardContent>
-          <Button
-            variant="contained"
-            onClick={() =>
-              cart.addToCart({
-                id: p.id,
-                name: p.name,
-                price: p.price,
-                quantity: p.quantity || 0,
-                stock: p.stock || 100,
-                categoryId: p.categoryId,
-              })
-            }
-          >
-            Add to Cart
-          </Button>
-        </Card>
-      </Box>
-    );
-  };
+    return () => {
+      if (observerRef.current) observer.unobserve(observerRef.current);
+    };
+  }, [handleIntersect]);
 
   if (loading) {
     return (
-      <LoadingProgress />
+      <Box display="flex" justifyContent="center" mt={4}>
+        <CircularProgress />
+      </Box>
     );
   }
 
-  return (
-    <PageWithStickyFilters>
-      <Typography variant="h4" gutterBottom>
-        Products
-      </Typography>
-      <ProductFilters state={state} dispatch={dispatch} categories={categories} />
-      {flatList.length === 0 ? (
+ return (
+  <PageWithStickyFilters>
+    <Typography variant="h4" gutterBottom>
+      Products
+    </Typography>
+
+    <ProductFilters state={state} dispatch={dispatch} categories={categories} />
+
+    <Box
+      sx={{
+        flex: 1,
+        overflowY: 'auto',
+        maxHeight: 'calc(100vh - 240px)', // adjust based on header+filters height
+        px: 1,
+      }}
+    >
+      {visibleProducts.length === 0 ? (
         <Typography>No products found.</Typography>
       ) : (
         <>
-          <VariableSizeList
-            height={600}
-            width="100%"
-            itemCount={flatList.length}
-            itemSize={getItemSize}
-          >
-            {Row}
-          </VariableSizeList>
-          <Box display="flex" justifyContent="center" mt={4}>
-            <Pagination
-              count={totalPages}
-              page={state.page}
-              onChange={(_, val) => dispatch({ type: 'SET_PAGE', payload: val })}
-              color="primary"
-            />
-          </Box>
+          {visibleProducts.map((p) => (
+            <Box mb={2} key={p.id}>
+              <SortableProductCard
+                product={p}
+                disabled={false}
+                onConfirmDelete={() => {}}
+              />
+            </Box>
+          ))}
+          {visibleCount < filteredProducts.length && (
+            <Box ref={observerRef} display="flex" justifyContent="center" mt={2}>
+              <CircularProgress />
+            </Box>
+          )}
         </>
       )}
-    </PageWithStickyFilters>
-  );
+    </Box>
+
+    <Snackbar
+      open={snackbarOpen}
+      autoHideDuration={3000}
+      onClose={() => setSnackbarOpen(false)}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert severity="success" variant="filled">Product added to cart</Alert>
+    </Snackbar>
+  </PageWithStickyFilters>
+);
+
 }
