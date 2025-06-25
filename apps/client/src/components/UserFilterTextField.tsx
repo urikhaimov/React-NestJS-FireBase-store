@@ -8,11 +8,12 @@ interface Option {
 
 interface Props extends Omit<TextFieldProps, 'onChange' | 'value'> {
   label?: string;
-  value: string;
+  value: string | number; // ✅ fixed: supports number or string
   onChange: (val: string) => void;
   select?: boolean;
   options?: Option[];
-  fullWidth?: boolean; // ✅ Add this
+  fullWidth?: boolean;
+  type?: 'text' | 'number'; // optional for number input
 }
 
 export default function UserFilterTextField({
@@ -22,15 +23,17 @@ export default function UserFilterTextField({
   select = false,
   options = [],
   fullWidth = false,
+  type = 'text',
   ...rest
 }: Props) {
   return (
     <TextField
       label={label}
-      value={value}
+      value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
       select={select}
-      fullWidth={fullWidth} // ✅ Apply fullWidth
+      fullWidth={fullWidth}
+      type={type}
       {...rest}
     >
       {select &&

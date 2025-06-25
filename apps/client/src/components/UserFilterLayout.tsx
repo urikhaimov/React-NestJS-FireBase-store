@@ -1,52 +1,21 @@
-import React, { ReactNode } from 'react';
-import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Button, useMediaQuery, useTheme } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import React from 'react';
+import { Box,  Typography } from '@mui/material';
 
-export interface UserFilterLayoutProps {
+interface Props {
   title: string;
-  children: ReactNode;
   collapsedByDefault?: boolean;
-  hasFilters?: boolean;
-  onClear?: () => void;
-  onApply?: () => void;
+  children: React.ReactNode;
+  actions?: React.ReactNode; // ✅ new
 }
 
-export default function UserFilterLayout({
-  title,
-  children,
-  collapsedByDefault = false,
-  hasFilters = false,
-  onClear,
-  onApply,
-}: UserFilterLayoutProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [expanded, setExpanded] = React.useState(!collapsedByDefault);
-
+export default function UserFilterLayout({ title, collapsedByDefault, children, actions }: Props) {
   return (
-    <Box mb={3}>
-      <Box display="flex" justifyContent="space-between" mb={2}>
-        {hasFilters && (
-          <Button variant="outlined" color="warning" onClick={onClear}>
-            Clear Filters
-          </Button>
-        )}
-        {onApply && (
-          <Button variant="contained" color="primary" onClick={onApply}>
-            Apply Filters
-          </Button>
-        )}
+    <Box px={2} py={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">{title}</Typography>
+        {actions}
       </Box>
-      {isMobile ? (
-        <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2">{title}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>{children}</AccordionDetails>
-        </Accordion>
-      ) : (
-        children
-      )}
+      {children}
     </Box>
   );
 }

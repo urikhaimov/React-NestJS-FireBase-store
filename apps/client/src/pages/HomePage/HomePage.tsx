@@ -50,13 +50,22 @@ export default function HomePage() {
       const inText =
         p.name.toLowerCase().includes(txt) ||
         p.description?.toLowerCase().includes(txt);
+
       const inCat =
         !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
+
       const inDate =
         !state.createdAfter ||
         (p.createdAt?.toDate &&
           p.createdAt.toDate().getTime() >= state.createdAfter.toDate().getTime());
-      return inText && inCat && inDate;
+
+      const inStock = !state.inStockOnly || p.stock > 0;
+
+      const inPriceRange =
+        (state.minPrice === null || p.price >= state.minPrice) &&
+        (state.maxPrice === null || p.price <= state.maxPrice);
+
+      return inText && inCat && inDate && inStock && inPriceRange;
     });
   }, [products, state]);
 
@@ -89,53 +98,53 @@ export default function HomePage() {
     );
   }
 
- return (
-  <PageWithStickyFilters>
-    <Typography variant="h4" gutterBottom>
-      Products
-    </Typography>
+  return (
+    <PageWithStickyFilters>
+      <Typography variant="h4" gutterBottom>
+        Products
+      </Typography>
 
-    <UserProductFilters state={state} dispatch={dispatch} categories={categories} />
+      <UserProductFilters state={state} dispatch={dispatch} categories={categories} />
 
-    <Box
-      sx={{
-        flex: 1,
-        overflowY: 'auto',
-        maxHeight: 'calc(100vh - 240px)', // adjust based on header+filters height
-        px: 1,
-      }}
-    >
-      {visibleProducts.length === 0 ? (
-        <Typography>No products found.</Typography>
-      ) : (
-        <>
-          {visibleProducts.map((p) => (
-            <Box mb={2} key={p.id}>
-              <SortableProductCard
-                product={p}
-                disabled={false}
-                onConfirmDelete={() => {}}
-              />
-            </Box>
-          ))}
-          {visibleCount < filteredProducts.length && (
-            <Box ref={observerRef} display="flex" justifyContent="center" mt={2}>
-              <CircularProgress />
-            </Box>
-          )}
-        </>
-      )}
-    </Box>
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          maxHeight: 'calc(100vh - 240px)', // adjust based on header+filters height
+          px: 1,
+        }}
+      >
+        {visibleProducts.length === 0 ? (
+          <Typography>No products found.</Typography>
+        ) : (
+          <>
+            {visibleProducts.map((p) => (
+              <Box mb={2} key={p.id}>
+                <SortableProductCard
+                  product={p}
+                  disabled={false}
+                  onConfirmDelete={() => { }}
+                />
+              </Box>
+            ))}
+            {visibleCount < filteredProducts.length && (
+              <Box ref={observerRef} display="flex" justifyContent="center" mt={2}>
+                <CircularProgress />
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
 
-    <Snackbar
-      open={snackbarOpen}
-      autoHideDuration={3000}
-      onClose={() => setSnackbarOpen(false)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-    >
-      <Alert severity="success" variant="filled">Product added to cart</Alert>
-    </Snackbar>
-  </PageWithStickyFilters>
-);
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled">Product added to cart</Alert>
+      </Snackbar>
+    </PageWithStickyFilters>
+  );
 
 }
