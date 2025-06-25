@@ -16,7 +16,7 @@ import UserProductFilters from './UserProductFilters';
 import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import SortableProductCard from '../admin/AdminProductsPage/SortableProductCard';
-
+import LoadingProgress from '../../components/LoadingProgress'
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<any[]>([]);
@@ -92,9 +92,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <CircularProgress />
-      </Box>
+      <LoadingProgress/>
     );
   }
 

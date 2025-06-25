@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase/firestore'; // for frontend types
+import { Timestamp } from 'firebase/firestore';
 
 export type Order = {
   id: string;
@@ -23,6 +23,9 @@ export type FilterState = {
   sortDirection: 'asc' | 'desc';
   page: number;
   pageSize: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  inStockOnly: boolean;
 };
 
 export type FilterAction =
@@ -34,6 +37,9 @@ export type FilterAction =
   | { type: 'setEndDate'; payload: Date | null }
   | { type: 'setSortDirection'; payload: 'asc' | 'desc' }
   | { type: 'setPage'; payload: number }
+  | { type: 'setMinPrice'; payload: number | null }
+  | { type: 'setMaxPrice'; payload: number | null }
+  | { type: 'setInStockOnly'; payload: boolean }
   | { type: 'RESET_FILTERS' };
 
 export const initialFilterState: FilterState = {
@@ -46,6 +52,9 @@ export const initialFilterState: FilterState = {
   sortDirection: 'desc',
   page: 1,
   pageSize: 5,
+  minPrice: null,
+  maxPrice: null,
+  inStockOnly: false,
 };
 
 export function filterReducer(state: FilterState, action: FilterAction): FilterState {
@@ -64,6 +73,12 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
       return { ...state, endDate: action.payload, page: 1 };
     case 'setSortDirection':
       return { ...state, sortDirection: action.payload, page: 1 };
+    case 'setMinPrice':
+      return { ...state, minPrice: action.payload, page: 1 };
+    case 'setMaxPrice':
+      return { ...state, maxPrice: action.payload, page: 1 };
+    case 'setInStockOnly':
+      return { ...state, inStockOnly: action.payload, page: 1 };
     case 'setPage':
       return { ...state, page: action.payload };
     case 'RESET_FILTERS':
