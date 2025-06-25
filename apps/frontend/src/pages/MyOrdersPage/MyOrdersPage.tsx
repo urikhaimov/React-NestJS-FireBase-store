@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useReducer, useCallback, useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -7,19 +7,19 @@ import {
   List,
   ListItem,
   ListItemText,
-  CircularProgress,
-  Pagination,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
-import { VariableSizeList, ListChildComponentProps } from 'react-window';
+import { FixedSizeList as ListWindow, ListChildComponentProps } from 'react-window';
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
-import OrderFilters from './OrderFilters';
+import UserOrderFilters from './UserOrderFilters';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { fetchMyOrders } from '../../api/orderApi';
-import LoadingProgress from '../../components/LoadingProgress'
+import LoadingProgress from '../../components/LoadingProgress';
+import { Timestamp } from 'firebase/firestore';
+
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,10 +40,18 @@ export default function MyOrdersPage() {
         }
 
         const idToken = await user.getIdToken();
-
         const fetchFn = () => fetchMyOrders(idToken).then(res => res.data);
         const list = await retryWithBackoff(fetchFn);
-        setOrders(list);
+
+        // 🔁 Force-convert createdAt to Timestamp
+        const converted = list.map((order: any) => ({
+          ...order,
+          createdAt: order.createdAt?.seconds
+            ? new Timestamp(order.createdAt.seconds, order.createdAt.nanoseconds)
+            : Timestamp.fromDate(new Date(order.createdAt)),
+        }));
+
+        setOrders(converted);
       } catch (err) {
         console.error('Error loading orders:', err);
       } finally {
@@ -55,36 +63,61 @@ export default function MyOrdersPage() {
   }, [ready, user]);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
-      const matchStatus =
-        filterState.status === 'all' || order.status === filterState.status;
-      const matchStart =
-        !filterState.startDate ||
-        order.createdAt.toDate().getTime() >= filterState.startDate.getTime();
-      return matchStatus && matchStart;
-    });
-  }, [orders, filterState.status, filterState.startDate]);
+    return orders
+      .filter((order) => {
+        const created = order.createdAt.toDate();
+        const matchStatus =
+          filterState.status === 'all' || order.status === filterState.status;
+        const matchStart =
+          !filterState.startDate || created >= filterState.startDate;
+        const matchEnd =
+          !filterState.endDate || created <= filterState.endDate;
+        const matchMin =
+          filterState.minTotal === null || order.amount >= filterState.minTotal;
+        const matchMax =
+          filterState.maxTotal === null || order.amount <= filterState.maxTotal;
+        const matchEmail = !filterState.email || order.email.includes(filterState.email);
+        return matchStatus && matchStart && matchEnd && matchMin && matchMax && matchEmail;
+      })
+      .sort((a, b) => {
+        const aTime = a.createdAt.toMillis();
+        const bTime = b.createdAt.toMillis();
+        return filterState.sortDirection === 'asc' ? aTime - bTime : bTime - aTime;
+      });
+  }, [orders, filterState]);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastItemRef = useCallback(
+    (node: HTMLDivElement) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          dispatch({ type: 'setPage', payload: filterState.page + 1 });
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, filterState.page]
+  );
 
   const paginatedOrders = useMemo(() => {
-    const start = (filterState.page - 1) * filterState.pageSize;
-    return filteredOrders.slice(start, start + filterState.pageSize);
+    return filteredOrders.slice(0, filterState.page * filterState.pageSize);
   }, [filteredOrders, filterState.page, filterState.pageSize]);
-
-  const totalPages = Math.ceil(filteredOrders.length / filterState.pageSize);
 
   const Row = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       const order = paginatedOrders[index];
+      const isLast = index === paginatedOrders.length - 1;
       return (
-        <Box style={style} px={1}>
+        <Box style={style} px={1} ref={isLast ? lastItemRef : undefined}>
           <Paper elevation={3} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold">
               Order #{order.id}
             </Typography>
             <Typography variant="body2">Status: {order.status}</Typography>
             <Typography variant="body2">
-              Date:{(order.createdAt as any).toDate?.()?.toLocaleString?.() ?? 'Invalid date'}
-
+              Date: {order.createdAt.toDate().toLocaleString()}
             </Typography>
             <Typography variant="body2" gutterBottom>
               Total: ${order.amount}
@@ -105,13 +138,11 @@ export default function MyOrdersPage() {
         </Box>
       );
     },
-    [paginatedOrders]
+    [paginatedOrders, lastItemRef]
   );
 
   if (!ready || loading) {
-    return (
-     <LoadingProgress/>
-    );
+    return <LoadingProgress />;
   }
 
   return (
@@ -120,32 +151,19 @@ export default function MyOrdersPage() {
         My Orders
       </Typography>
 
-      <OrderFilters state={filterState} dispatch={dispatch} />
+      <UserOrderFilters state={filterState} dispatch={dispatch} />
 
       {paginatedOrders.length === 0 ? (
         <Typography>No orders found.</Typography>
       ) : (
-        <>
-          <VariableSizeList
-            height={600}
-            width="100%"
-            itemCount={paginatedOrders.length}
-            itemSize={() => 220}
-          >
-            {Row}
-          </VariableSizeList>
-
-          <Box display="flex" justifyContent="center" mt={2}>
-            <Pagination
-              count={totalPages}
-              page={filterState.page}
-              onChange={(_, page) =>
-                dispatch({ type: 'setPage', payload: page })
-              }
-              color="primary"
-            />
-          </Box>
-        </>
+        <ListWindow
+          height={600}
+          width="100%"
+          itemCount={paginatedOrders.length}
+          itemSize={220}
+        >
+          {Row}
+        </ListWindow>
       )}
     </PageWithStickyFilters>
   );
