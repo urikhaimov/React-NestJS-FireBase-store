@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import {VariableSizeList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import ProductFilters from './OrderFilters';
+import OrderFilters from './OrderFilters';
 import { reducer, initialState } from './LocalReducer';
 import { fetchAllOrders } from '../../../api/orderApi';
 import { useAuthReady } from '../../../hooks/useAuthReady';
@@ -83,7 +83,7 @@ export default function AdminOrdersPage() {
   return (
     <AdminStickyPage
       title="Admin Orders"
-      filters={<ProductFilters state={state} dispatch={dispatch} />}
+      filters={<OrderFilters state={state} dispatch={dispatch} />}
     >
       <Divider sx={{ mb: 2 }} />
 
@@ -96,7 +96,7 @@ export default function AdminOrdersPage() {
          
             <VariableSizeList
             style={{ overflowX: 'hidden' }}
-              height={isMobile ? 350 : 450}
+              height={isMobile ? 300 : 350}
               width="100%"
               itemCount={paginatedOrders.length}
               itemSize={() =>isMobile ? 220 : 160}
