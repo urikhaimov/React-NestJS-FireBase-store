@@ -111,3 +111,17 @@ export async function deleteProduct(productId: string): Promise<void> {
     await deleteObject(item);
   }
 }
+export async function reorderProducts(
+  orderList: { id: string; order: number }[],
+  token: string
+): Promise<void> {
+  await fetch('/api/products/reorder', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(orderList),
+  });
+}
+

@@ -1,5 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createProduct, updateProduct, deleteProduct } from '../api/products';
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '../api/products';
+import { reorderProducts } from '../api/productApi';
 import type { Product, NewProduct } from '../types/firebase';
 
 type UpdateProductPayload = {
@@ -7,6 +12,11 @@ type UpdateProductPayload = {
   data: Partial<Omit<Product, 'id'>>;
   keepImageUrls: string[];
   newImages: File[];
+};
+
+type ReorderPayload = {
+  orderList: { id: string; order: number }[];
+  token: string;
 };
 
 export const useProductMutations = () => {
@@ -34,5 +44,13 @@ export const useProductMutations = () => {
     },
   });
 
-  return { create, update, remove };
+  const reorder = useMutation({
+    mutationFn: ({ orderList, token }: ReorderPayload) =>
+      reorderProducts(orderList, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  return { create, update, remove, reorder };
 };
