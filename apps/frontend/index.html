@@ -3,14 +3,12 @@
 
 <head>
   <meta charset="UTF-8" />
-<meta
-  http-equiv="Content-Security-Policy"
-  content="
+  <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' https://js.stripe.com;
     script-src 'self' https://js.stripe.com;
     font-src 'self' https://js.stripe.com;
     style-src 'self' 'unsafe-inline' https://js.stripe.com;
-    img-src 'self' data: https://firebasestorage.googleapis.com https://www.google.com;
+    img-src 'self' data: blob: https://firebasestorage.googleapis.com https://www.google.com;
     connect-src 'self'
       https://identitytoolkit.googleapis.com
       https://securetoken.googleapis.com
@@ -18,9 +16,7 @@
       https://firebase.googleapis.com
       https://www.googleapis.com;
     frame-src https://js.stripe.com;
-  "
-/>
-
+  " />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vite + React + TS</title>

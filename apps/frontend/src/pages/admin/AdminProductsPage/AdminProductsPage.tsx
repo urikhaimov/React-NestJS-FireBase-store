@@ -21,6 +21,7 @@ import ProductFilters from './ProductFilters';
 import { fetchAllProducts } from '../../../api/productApi';
 import { auth } from '../../../firebase'; // 👈 import Firebase auth
 import { useNavigate } from 'react-router-dom';
+import LoadingProgress from '../../../components/LoadingProgress';
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -116,9 +117,7 @@ const handleAddProduct = () => {
       <Divider sx={{ mb: 2 }} />
 
       {state.loading ? (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress />
-        </Box>
+        <LoadingProgress />
       ) : (
         <>
           <VariableSizeList
