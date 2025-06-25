@@ -1,21 +1,36 @@
-// apps/backend/src/products/products.service.ts
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { adminDb } from '../firebase/firebase-admin';
+
+export interface ProductWithOrder {
+  id: string;
+  order?: number;
+  [key: string]: any;
+}
 
 @Injectable()
 export class ProductsService {
   private productsRef = adminDb.collection('products');
-async findById(id: string) {
-  const doc = await this.productsRef.doc(id).get();
-  if (!doc.exists) {
-    throw new NotFoundException('Product not found');
+
+  async findById(id: string) {
+    const doc = await this.productsRef.doc(id).get();
+    if (!doc.exists) {
+      throw new NotFoundException('Product not found');
+    }
+    return { id: doc.id, ...doc.data() };
   }
-  return { id: doc.id, ...doc.data() };
-}
 
   async findAll() {
     const snapshot = await this.productsRef.get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const products: ProductWithOrder[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as ProductWithOrder),
+      id: doc.id,
+    }));
+
+    return products.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
   }
 
   async create(product: { name: string; price: number; stock: number }) {
@@ -27,11 +42,19 @@ async findById(id: string) {
       throw new ConflictException('Product already exists');
     }
 
-    const docRef = await this.productsRef.add(product);
-    return { id: docRef.id, ...product };
+    const all = await this.productsRef.get();
+    const maxOrder = all.empty
+      ? 0
+      : Math.max(...all.docs.map((doc) => doc.data().order ?? 0));
+
+    const docRef = await this.productsRef.add({ ...product, order: maxOrder + 1 });
+    return { id: docRef.id, ...product, order: maxOrder + 1 };
   }
 
-  async update(id: string, updateData: Partial<{ name: string; price: number; stock: number }>) {
+  async update(
+    id: string,
+    updateData: Partial<{ name: string; price: number; stock: number }>,
+  ) {
     const ref = this.productsRef.doc(id);
 
     const doc = await ref.get();
@@ -47,5 +70,17 @@ async findById(id: string) {
     const ref = this.productsRef.doc(id);
     await ref.delete();
     return { message: 'Product deleted' };
+  }
+
+  async reorderProducts(orderList: { id: string; order: number }[]) {
+    const batch = adminDb.batch();
+
+    for (const { id, order } of orderList) {
+      const ref = this.productsRef.doc(id);
+      batch.update(ref, { order });
+    }
+
+    await batch.commit();
+    return { message: 'Product order updated successfully' };
   }
 }
