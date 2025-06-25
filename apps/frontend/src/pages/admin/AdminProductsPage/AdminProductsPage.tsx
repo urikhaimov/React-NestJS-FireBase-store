@@ -1,26 +1,25 @@
-// src/pages/admin/AdminProductsPage/AdminProductsPage.tsx
+// ✅ src/pages/admin/AdminProductsPage/AdminProductsPage.tsx
 import React, { useReducer, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  CircularProgress,
   Divider,
   useMediaQuery,
   useTheme,
   Pagination,
 } from '@mui/material';
-import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { DndContext, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
-import ProductAdminCard from './ProductAdminCard';
+import SortableProductCard from './SortableProductCard';
 import ProductFilters from './ProductFilters';
-import { fetchAllProducts } from '../../../api/productApi';
-import { auth } from '../../../firebase'; // 👈 import Firebase auth
-import { useNavigate } from 'react-router-dom';
+import { fetchAllProducts, reorderProducts } from '../../../api/productApi';
+import { auth } from '../../../firebase';
 import LoadingProgress from '../../../components/LoadingProgress';
 
 export default function AdminProductsPage() {
@@ -28,7 +27,10 @@ export default function AdminProductsPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { data: categories = [] } = useAllCategories();
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
   const filteredProducts = useMemo(() => {
     const term = state.searchTerm.toLowerCase();
     return state.products.filter((p) => {
@@ -50,38 +52,24 @@ const navigate = useNavigate();
     state.page * state.pageSize
   );
 
-  const renderRow = ({ index, style }: ListChildComponentProps) => {
-    const product = paginatedProducts[index];
-    return (
-      <motion.div
-        key={product.id}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={style}
-      >
-        <Paper
-          sx={{
-            p: 2,
-            m: 1,
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper,
-            boxShadow: theme.shadows[2],
-          }}
-        >
-          <ProductAdminCard
-            product={product}
-            onConfirmDelete={(id) =>
-              dispatch({ type: 'REMOVE_PRODUCT', payload: id })
-            }
-          />
-        </Paper>
-      </motion.div>
-    );
+  const handleAddProduct = () => {
+    navigate('/admin/products/add');
   };
-const handleAddProduct = () => {
-  navigate('/admin/products/add'); // 🔁 adjust path to match your router config
-};
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = state.products.findIndex((p) => p.id === active.id);
+    const newIndex = state.products.findIndex((p) => p.id === over.id);
+    const reordered = arrayMove(state.products, oldIndex, newIndex);
+    dispatch({ type: 'SET_PRODUCTS', payload: reordered });
+
+    const orderList = reordered.map((p, i) => ({ id: p.id, order: i }));
+    const token = await auth.currentUser?.getIdToken();
+    if (token) await reorderProducts(orderList, token);
+  };
+
   useEffect(() => {
     async function loadProducts() {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -89,7 +77,6 @@ const handleAddProduct = () => {
         const user = auth.currentUser;
         if (!user) throw new Error('User not authenticated');
         const token = await user.getIdToken();
-
         const { data } = await fetchAllProducts(token);
         dispatch({ type: 'SET_PRODUCTS', payload: data });
       } catch (error) {
@@ -98,7 +85,6 @@ const handleAddProduct = () => {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     }
-
     loadProducts();
   }, []);
 
@@ -119,16 +105,29 @@ const handleAddProduct = () => {
       {state.loading ? (
         <LoadingProgress />
       ) : (
-        <>
-          <VariableSizeList
-            style={{ overflowX: 'hidden' }}
-            height={isMobile ? 350 : 400}
-            width="100%"
-            itemCount={paginatedProducts.length}
-            itemSize={() =>isMobile ? 220 : 180}
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={filteredProducts.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
           >
-            {renderRow}
-          </VariableSizeList>
+            {paginatedProducts.map((product) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Box mb={2}>
+                  <SortableProductCard
+                    product={product}
+                    onConfirmDelete={(id) =>
+                      dispatch({ type: 'REMOVE_PRODUCT', payload: id })
+                    }
+                  />
+                </Box>
+              </motion.div>
+            ))}
+          </SortableContext>
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
@@ -140,7 +139,7 @@ const handleAddProduct = () => {
               color="primary"
             />
           </Box>
-        </>
+        </DndContext>
       )}
     </AdminStickyPage>
   );
