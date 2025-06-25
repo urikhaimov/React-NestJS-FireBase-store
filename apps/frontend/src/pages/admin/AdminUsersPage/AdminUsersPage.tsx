@@ -28,6 +28,7 @@ import useDebounce from '../../../hooks/useDebouncedValue';
 import { useAdminUsersQuery } from '../../../hooks/useAdminUsersQuery';
 import type { User } from '../../../types/User';
 import type { Role } from '../../../types/Role';
+import LoadingProgress from '../../../components/LoadingProgress';
 
 export default function AdminUsersPage() {
   const { users, isLoading, error, updateUserRole, deleteUser } = useAdminUsersQuery();
@@ -75,9 +76,7 @@ export default function AdminUsersPage() {
 
   if (isLoading)
     return (
-      <Box p={4}>
-        <CircularProgress />
-      </Box>
+      <LoadingProgress />
     );
   if (error)
     return <Typography p={4}>❌ Error loading users</Typography>;

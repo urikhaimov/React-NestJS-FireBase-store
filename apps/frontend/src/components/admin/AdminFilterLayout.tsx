@@ -62,17 +62,8 @@ export default function AdminFilterLayout({
           </Box>
         )}
       </Box>
-
-      {isMobile ? (
-        <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2">{title}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>{children}</AccordionDetails>
-        </Accordion>
-      ) : (
-        children
-      )}
+      {children}
+     
     </Box>
   );
 }
