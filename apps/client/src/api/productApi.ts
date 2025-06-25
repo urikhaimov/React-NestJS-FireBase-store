@@ -1,6 +1,6 @@
 // src/api/productApi.ts
 import axios from 'axios';
-
+import { Product } from '../types/firebase';
 export function fetchAllProducts(token: string) {
   return axios.get('/api/products', {
     headers: {
@@ -46,9 +46,10 @@ export function reorderProducts(
   orderList: { id: string; order: number }[],
   token: string
 ) {
-  return axios.patch('/api/products/reorder', orderList, {
+  return axios.put('/api/products/reorder', orderList, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 }
+

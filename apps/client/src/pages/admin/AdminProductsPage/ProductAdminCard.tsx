@@ -22,9 +22,11 @@ import { deleteProduct } from '../../../hooks/deleteProduct';
 type Props = {
   product: Product;
   onConfirmDelete: (id: string) => void;
+  disabled?: boolean; // ✅ add this
 };
 
-export default function ProductAdminCard({ product, onConfirmDelete }: Props) {
+
+export default function ProductAdminCard({ product, onConfirmDelete, disabled =false}: Props) {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,10 +65,10 @@ export default function ProductAdminCard({ product, onConfirmDelete }: Props) {
           </Typography>
         </CardContent>
         <CardActions>
-          <IconButton onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+          <IconButton onClick={() => navigate(`/admin/products/edit/${product.id}`)} disabled={disabled}>
             <EditIcon />
           </IconButton>
-          <IconButton color="error" onClick={handleDeleteClick}>
+          <IconButton color="error" onClick={handleDeleteClick} disabled={disabled}>
             <DeleteIcon />
           </IconButton>
         </CardActions>
