@@ -1,14 +1,9 @@
-import { db, storage } from '../firebase';
 import {
   collection,
   addDoc,
   updateDoc,
   doc,
-  deleteDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
+  getDoc
 } from 'firebase/firestore';
 import {
   ref,
@@ -16,70 +11,39 @@ import {
   deleteObject,
   getDownloadURL,
 } from 'firebase/storage';
-
+import { db, storage } from '../firebase';
 import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
+import { serverTimestamp } from 'firebase/firestore';
 
-type NewProduct = Omit<Product, 'id' | 'imageUrls'> & {
+export type NewProduct = Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt'> & {
   images: File[];
 };
 
-export async function createProduct(product: NewProduct): Promise<void> {
+export type UpdateProductPayload = {
+  data: Partial<Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt' | 'createdBy'>>;
+  keepImageUrls: string[];
+  newImages: File[];
+};
+
+export async function createProduct(product: NewProduct, userId: string): Promise<void> {
   const { name, description, price, stock, categoryId, images } = product;
+
   const docRef = await addDoc(collection(db, 'products'), {
     name,
     description,
     price,
     stock,
     categoryId,
+    createdBy: userId,
     imageUrls: [],
+    createdAt: serverTimestamp(), // ✅
+    updatedAt: serverTimestamp(), // ✅
   });
 
   const imageUrls = await uploadFilesAndReturnUrls(images, `products/${docRef.id}`);
   await updateDoc(docRef, { imageUrls });
 }
-
-export async function fetchProducts(): Promise<Product[]> {
-  const snapshot = await getDocs(collection(db, 'products'));
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Product, 'id'>),
-  }));
-}
-
-export async function fetchProductsByCategory(categoryId: string): Promise<Product[]> {
-  const q = query(collection(db, 'products'), where('categoryId', '==', categoryId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Product, 'id'>),
-    stock: (doc.data() as any).stock ?? 0,
-  }));
-}
-
-export async function getProductById(productId: string): Promise<Product | null> {
-  const refDoc = doc(db, 'products', productId);
-  const snapshot = await getDoc(refDoc);
-  if (!snapshot.exists()) return null;
-
-  const data = snapshot.data();
-  return {
-    id: snapshot.id,
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    stock: data.stock ?? 0,
-    categoryId: data.categoryId,
-    imageUrls: data.imageUrls || [],
-  };
-}
-
-type UpdateProductPayload = {
-  data: Partial<Omit<Product, 'id'>>;
-  keepImageUrls: string[];
-  newImages: File[];
-};
-
 export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
   const { data, keepImageUrls, newImages } = payload;
 
@@ -99,29 +63,26 @@ export async function updateProduct(productId: string, payload: UpdateProductPay
   await updateDoc(refDoc, {
     ...data,
     imageUrls: [...keepImageUrls, ...newImageUrls],
+    updatedAt: serverTimestamp(), // ✅
   });
 }
 
-export async function deleteProduct(productId: string): Promise<void> {
-  await deleteDoc(doc(db, 'products', productId));
+export async function getProductById(productId: string): Promise<Product | null> {
+  const refDoc = doc(db, 'products', productId);
+  const snapshot = await getDoc(refDoc);
+  if (!snapshot.exists()) return null;
 
-  const folderRef = ref(storage, `products/${productId}`);
-  const { items } = await listAll(folderRef);
-  for (const item of items) {
-    await deleteObject(item);
-  }
+  const data = snapshot.data();
+  return {
+    id: snapshot.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    stock: data.stock ?? 0,
+    categoryId: data.categoryId,
+    imageUrls: data.imageUrls || [],
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+    createdBy: data.createdBy,
+  };
 }
-export async function reorderProducts(
-  orderList: { id: string; order: number }[],
-  token: string
-): Promise<void> {
-  await fetch('/api/products/reorder', {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(orderList),
-  });
-}
-

@@ -1,4 +1,3 @@
-// ✅ src/pages/admin/AdminProductsPage/ProductFormPage.tsx
 import {
   Box,
   Button,
@@ -16,10 +15,10 @@ import { useForm } from 'react-hook-form';
 
 import { fetchCategories } from '../../../api/categories';
 import { getProductById, createProduct, updateProduct } from '../../../api/products';
-import type { Category, Product } from '../../../types/firebase';
+import type { Category } from '../../../types/firebase';
 import { productFormReducer, initialProductFormState } from './productFormReducer';
-import ProductImageManagerWithDropzone from '../../../components/ProductImageManagerWithDropzone';
-import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
+import ProductImageManagerWithDropzone from './ProductImageManagerWithDropzone';
+import { useSafeAuth } from '../../../hooks/getSafeAuth';
 
 type FormState = {
   name: string;
@@ -37,10 +36,10 @@ export default function ProductFormPage({ mode }: Props) {
   const isEdit = mode === 'edit';
   const { productId } = useParams();
   const navigate = useNavigate();
+  const { user } = useSafeAuth();
 
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
   const { product, keepImageUrls, newFiles, uploading, success } = state;
-
   const [categories, setCategories] = useState<Category[]>([]);
 
   const {
@@ -59,7 +58,12 @@ export default function ProductFormPage({ mode }: Props) {
   });
 
   useEffect(() => {
-    fetchCategories().then(setCategories);
+    fetchCategories().then((data) => {
+      setCategories(data);
+      if (mode === 'add' && data.length > 0) {
+        setValue('categoryId', ''); // Leave blank initially to allow deselect
+      }
+    });
 
     if (isEdit && productId) {
       getProductById(productId)
@@ -82,9 +86,11 @@ export default function ProductFormPage({ mode }: Props) {
         })
         .catch(() => dispatch({ type: 'SET_PRODUCT', payload: null }));
     }
-  }, [isEdit, productId, setValue]);
+  }, [isEdit, productId, setValue, mode]);
 
   const onSubmit = async (data: FormState) => {
+    if (!data.categoryId) return; // prevent invalid submission
+
     dispatch({ type: 'SET_UPLOADING', payload: true });
 
     try {
@@ -103,7 +109,10 @@ export default function ProductFormPage({ mode }: Props) {
           newImages: newFiles,
         });
       } else {
-        await createProduct({ ...payload, images: newFiles });
+        await createProduct(
+          { ...payload, images: newFiles, createdBy: user?.uid || 'unknown' },
+          user?.uid || 'unknown'
+        );
       }
 
       dispatch({ type: 'SET_SUCCESS', payload: true });
@@ -135,15 +144,7 @@ export default function ProductFormPage({ mode }: Props) {
         {isEdit ? 'Edit Product' : 'Add Product'}
       </Typography>
 
-      <Paper
-        sx={{
-          p: { xs: 2, sm: 3 },
-          maxWidth: 1200,
-          mx: 'auto',
-          mt: 0, // ✅ remove top margin
-          mb: 0, // ✅ remove bottom margin
-        }}
-      >
+      <Paper sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
             label="Product Name"
@@ -182,12 +183,18 @@ export default function ProductFormPage({ mode }: Props) {
           <TextField
             label="Category"
             select
-            {...register('categoryId', { required: true })}
+            {...register('categoryId', {
+              required: 'Category is required',
+              validate: (val) => val !== '' || 'Please select a category',
+            })}
             fullWidth
             margin="normal"
             error={!!errors.categoryId}
-            helperText={errors.categoryId && 'Category is required'}
+            helperText={errors.categoryId?.message}
           >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
             {categories.map((cat) => (
               <MenuItem key={cat.id} value={cat.id}>
                 {cat.name}
@@ -223,6 +230,5 @@ export default function ProductFormPage({ mode }: Props) {
         </Alert>
       </Snackbar>
     </Box>
-
   );
 }

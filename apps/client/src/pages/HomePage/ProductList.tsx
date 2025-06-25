@@ -31,10 +31,7 @@ export default function ProductList({ products, categories }: Props) {
   }, {});
 
   return (
-    <Box
-      component="section"
-     
-    >
+    <Box component="section">
       {Object.entries(grouped).map(([category, items]) => (
         <Box key={category} mb={4}>
           <Divider sx={{ mb: 2 }}>
@@ -52,7 +49,7 @@ export default function ProductList({ products, categories }: Props) {
                   <CardMedia
                     component="img"
                     sx={{ width: 120, height: 120, objectFit: 'cover' }}
-                    image={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
+                    image={p.imageUrls?.[0] || '/placeholder.png'}
                     alt={p.name}
                   />
                   <CardContent sx={{ flex: 1 }}>
@@ -71,9 +68,13 @@ export default function ProductList({ products, categories }: Props) {
                         id: p.id,
                         name: p.name,
                         price: p.price,
-                        quantity: p.quantity || 0,
                         stock: p.stock || 100,
-                        categoryId: category,
+                        imageUrls: p.imageUrls || [],
+                        categoryId: p.categoryId,
+                        createdAt: p.createdAt,
+                        updatedAt: p.updatedAt,
+                        createdBy: p.createdBy,
+                        description: p.description,
                       })
                     }
                   >

@@ -17,6 +17,7 @@ import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import SortableProductCard from '../admin/AdminProductsPage/SortableProductCard';
 import LoadingProgress from '../../components/LoadingProgress'
+import ProductCardContainer from './ProductCardContainer';
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<any[]>([]);
@@ -118,7 +119,7 @@ export default function HomePage() {
           <>
             {visibleProducts.map((p) => (
               <Box mb={2} key={p.id}>
-                <SortableProductCard
+                <ProductCardContainer
                   product={p}
                   disabled={false}
                   onConfirmDelete={() => { }}

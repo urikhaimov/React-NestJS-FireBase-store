@@ -14,28 +14,22 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Product } from '../../../types/firebase';
+
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { deleteProduct } from '../../../hooks/deleteProduct';
-
-type Props = {
-  product: Product;
-  onConfirmDelete: (id: string) => void;
-  disabled?: boolean; // ✅ add this
-};
-
-
-export default function ProductAdminCard({ product, onConfirmDelete, disabled =false}: Props) {
+import { reducer, initialState, Props } from './CardReducer';
+export default function ProductAdminCard({ product, onConfirmDelete, disabled = false }: Props) {
   const navigate = useNavigate();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { dialogOpen, loading } = state;
 
   const handleDeleteClick = () => {
-    setDialogOpen(true);
+    dispatch({ type: 'OPEN_DIALOG' });
   };
+
   const handleConfirm = async () => {
-    setLoading(true);
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
       await deleteProduct(product.id);
       onConfirmDelete(product.id);
@@ -43,17 +37,18 @@ export default function ProductAdminCard({ product, onConfirmDelete, disabled =f
       console.error('Failed to delete product:', err);
       alert('Failed to delete product.');
     } finally {
-      setLoading(false);
-      setDialogOpen(false);
+      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'CLOSE_DIALOG' });
     }
   };
+
   return (
     <>
       <Card sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
         <CardMedia
           component="img"
           sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
-          image={product.imageUrls?.[0] || product.imageUrl || 'https://picsum.photos/seed/fallback/100/100'}
+          image={product.imageUrls?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
           alt={product.name}
         />
         <CardContent sx={{ flex: 1 }}>
@@ -61,11 +56,14 @@ export default function ProductAdminCard({ product, onConfirmDelete, disabled =f
             {product.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            ${product.price.toFixed(2)} • Stock: {product.stock}
+            ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
           </Typography>
         </CardContent>
         <CardActions>
-          <IconButton onClick={() => navigate(`/admin/products/edit/${product.id}`)} disabled={disabled}>
+          <IconButton
+            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+            disabled={disabled}
+          >
             <EditIcon />
           </IconButton>
           <IconButton color="error" onClick={handleDeleteClick} disabled={disabled}>
@@ -74,7 +72,7 @@ export default function ProductAdminCard({ product, onConfirmDelete, disabled =f
         </CardActions>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+      <Dialog open={dialogOpen} onClose={() => dispatch({ type: 'CLOSE_DIALOG' })}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -82,7 +80,9 @@ export default function ProductAdminCard({ product, onConfirmDelete, disabled =f
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={loading}>Cancel</Button>
+          <Button onClick={() => dispatch({ type: 'CLOSE_DIALOG' })} disabled={loading}>
+            Cancel
+          </Button>
           <Button
             onClick={handleConfirm}
             color="error"
