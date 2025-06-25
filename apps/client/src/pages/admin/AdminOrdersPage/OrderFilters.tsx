@@ -5,7 +5,7 @@ import  Grid  from '@mui/material/Grid';
 import { Timestamp, collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { FilterState, Action, Order } from './LocalReducer';
-import FilterLayout from '../../../components/admin/FilterLayout';
+import FilterLayout from '../../../components/admin/AdminFilterLayout';
 import FilterTextField from '../../../components/admin/FilterTextField';
 import FilterDatePicker from '../../../components/admin/FilterDatePicker';
 import { Dayjs } from 'dayjs';
