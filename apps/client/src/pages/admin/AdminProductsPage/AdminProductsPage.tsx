@@ -123,7 +123,7 @@ const handleAddProduct = () => {
         <>
           <VariableSizeList
             style={{ overflowX: 'hidden' }}
-            height={isMobile ? 400 : 550}
+            height={isMobile ? 350 : 400}
             width="100%"
             itemCount={paginatedProducts.length}
             itemSize={() =>isMobile ? 220 : 180}
