@@ -72,15 +72,22 @@ export class ProductsService {
     return { message: 'Product deleted' };
   }
 
-  async reorderProducts(orderList: { id: string; order: number }[]) {
-    const batch = adminDb.batch();
+ async reorderProducts(orderList: { id: string; order: number }[]) {
+  const batch = adminDb.batch();
 
-    for (const { id, order } of orderList) {
-      const ref = this.productsRef.doc(id);
-      batch.update(ref, { order });
-    }
-
-    await batch.commit();
-    return { message: 'Product order updated successfully' };
+  for (const { id, order } of orderList) {
+    const ref = this.productsRef.doc(id);
+    batch.update(ref, { order });
   }
+
+  await batch.commit();
+
+  // Return updated list
+  const snapshot = await this.productsRef.orderBy('order').get();
+  return snapshot.docs.map((doc) => ({
+    ...(doc.data() as ProductWithOrder),
+    id: doc.id,
+  }));
+}
+
 }
