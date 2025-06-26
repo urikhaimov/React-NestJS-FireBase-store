@@ -49,7 +49,7 @@ export default function ProductList({ products, categories }: Props) {
                   <CardMedia
                     component="img"
                     sx={{ width: 120, height: 120, objectFit: 'cover' }}
-                    image={p.imageUrls?.[0] || '/placeholder.png'}
+                    image={p.images?.[0] || '/placeholder.png'}
                     alt={p.name}
                   />
                   <CardContent sx={{ flex: 1 }}>
@@ -69,7 +69,7 @@ export default function ProductList({ products, categories }: Props) {
                         name: p.name,
                         price: p.price,
                         stock: p.stock || 100,
-                        imageUrls: p.imageUrls || [],
+                        images: p.images || [],
                         categoryId: p.categoryId,
                         createdAt: p.createdAt,
                         updatedAt: p.updatedAt,

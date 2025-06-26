@@ -50,7 +50,10 @@ export default function AdminProductsPage() {
       const matchesDate =
         !state.createdAfter ||
         (p.createdAt &&
-          new Date(p.createdAt).getTime() >= state.createdAfter.valueOf());
+          p.createdAt.toDate().getTime() >= state.createdAfter.valueOf()
+
+
+        );
       return matchesText && matchesCategory && matchesDate;
     });
   }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);

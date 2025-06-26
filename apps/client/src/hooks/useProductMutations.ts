@@ -1,38 +1,33 @@
+// src/hooks/useProductMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createProduct,
   updateProduct,
- 
+  deleteProduct,
+  reorderProducts,
 } from '../api/products';
-import { reorderProducts } from '../api/productApi';
 import type { Product, NewProduct } from '../types/firebase';
-import { deleteProduct } from './deleteProduct';
-type UpdateProductPayload = {
-  id: string;
-  data: Partial<Omit<Product, 'id'>>;
-  keepImageUrls: string[];
-  newImages: File[];
-};
-
-type ReorderPayload = {
-  orderList: { id: string; order: number }[];
-  token: string;
-};
+import type { UpdateProductPayload } from '../api/products';
 
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
 
   const create = useMutation({
-    mutationFn: ({ product, userId }: { product: NewProduct; userId: string }) =>
-  createProduct(product, userId),
+    mutationFn: (newProduct: NewProduct) =>
+      createProduct(newProduct, newProduct.createdBy),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data, keepImageUrls, newImages }: UpdateProductPayload) =>
-      updateProduct(id, { data, keepImageUrls, newImages }),
+    mutationFn: ({
+      id,
+      data,
+      keepImageUrls,
+      newImageFiles,
+    }: UpdateProductPayload & { id: string }) =>
+      updateProduct(id, { data, keepImageUrls, newImageFiles }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
@@ -46,8 +41,15 @@ export const useProductMutations = () => {
   });
 
   const reorder = useMutation({
-    mutationFn: ({ orderList, token }: ReorderPayload) =>
-      reorderProducts(orderList, token),
+    mutationFn: async ({
+      orderList,
+      token,
+    }: {
+      orderList: { id: string; order: number }[];
+      token: string;
+    }) => {
+      return await reorderProducts(orderList, token);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
