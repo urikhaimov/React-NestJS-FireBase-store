@@ -5,6 +5,7 @@ import {
   signOut,
   signInWithEmailAndPassword,
   onAuthStateChanged,
+  updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -45,6 +46,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
+
     const role =
       userDoc.exists() && userDoc.data().role
         ? (userDoc.data().role as 'user' | 'admin' | 'superadmin')
@@ -54,6 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       uid: cred.user.uid,
       email: cred.user.email ?? '',
       name: cred.user.displayName ?? '',
+      photoURL: cred.user.photoURL ?? '',
       role,
     };
 
@@ -90,6 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           uid: firebaseUser.uid,
           email: firebaseUser.email ?? '',
           name: firebaseUser.displayName ?? '',
+          photoURL: firebaseUser.photoURL ?? '',
           role,
         };
 
@@ -107,17 +111,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   refreshUser: async () => {
-    const { user } = get();
-    if (!user) return;
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) return;
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    await firebaseUser.reload();
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     const role =
       userDoc.exists() && userDoc.data().role
         ? (userDoc.data().role as 'user' | 'admin' | 'superadmin')
         : 'user';
 
     const refreshedUser: AppUser = {
-      ...user,
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: firebaseUser.displayName ?? '',
+      photoURL: firebaseUser.photoURL ?? '',
       role,
     };
 

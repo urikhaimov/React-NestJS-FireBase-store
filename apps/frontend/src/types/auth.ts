@@ -1,16 +1,15 @@
 import { User, UserCredential } from 'firebase/auth';
 
 import type { Role } from '../constants/roles';
-
-
 export interface AppUser {
   uid: string;
-  name?: string;
   email: string;
-  role?: Role;
-  photoURL?: string;
-
+  name: string;
+  role: Role;
+  photoURL?: string; // ✅ add this line
 }
+
+
 export interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
