@@ -14,12 +14,27 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import { useNavigate } from 'react-router-dom';
 import { useReducer } from 'react';
 import { deleteProduct } from '../../../hooks/deleteProduct';
-import { reducer, initialState, Props } from './CardReducer';
-export default function ProductAdminCard({ product, onConfirmDelete, disabled = false }: Props) {
+import { reducer, initialState } from './CardReducer';
+import type { Product } from '../../../types/firebase';
+
+export type Props = {
+  product: Product;
+  onConfirmDelete: (id: string) => void;
+  disabled?: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+};
+
+export default function ProductAdminCard({
+  product,
+  onConfirmDelete,
+  disabled = false,
+  dragHandleProps,
+}: Props) {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { dialogOpen, loading } = state;
@@ -60,6 +75,11 @@ export default function ProductAdminCard({ product, onConfirmDelete, disabled = 
           </Typography>
         </CardContent>
         <CardActions>
+          <span {...dragHandleProps}>
+            <IconButton disabled={disabled}>
+              <DragIndicatorIcon />
+            </IconButton>
+          </span>
           <IconButton
             onClick={() => navigate(`/admin/products/edit/${product.id}`)}
             disabled={disabled}

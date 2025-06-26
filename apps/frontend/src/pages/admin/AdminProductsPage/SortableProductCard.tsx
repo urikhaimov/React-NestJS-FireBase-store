@@ -14,7 +14,13 @@ export default function SortableProductCard({
   onConfirmDelete,
   disabled = false,
 }: Props) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: product.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: product.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -23,16 +29,15 @@ export default function SortableProductCard({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...(!disabled ? listeners : {})}
-      {...(!disabled ? attributes : {})}
-    >
+    <div ref={setNodeRef} style={style}>
       <ProductAdminCard
         product={product}
         onConfirmDelete={onConfirmDelete}
         disabled={disabled}
+        dragHandleProps={{
+          ...attributes,
+          ...listeners,
+        }}
       />
     </div>
   );
