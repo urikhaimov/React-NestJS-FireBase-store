@@ -121,9 +121,10 @@ export default function LeftMenu() {
           sx={{ cursor: 'pointer' }}
           onClick={handleProfileMenuOpen}
         >
-          <Avatar sx={{ width: 32, height: 32 }}>
-            {user.name?.[0] || user.email?.[0] || 'U'}
-          </Avatar>
+          <Avatar
+            src={user.photoURL || '/default-avatar.png'}
+            sx={{ width: 32, height: 32 }}
+          />
           {showLabel && (
             <Typography variant="subtitle2" noWrap>
               {user.name || user.email}
