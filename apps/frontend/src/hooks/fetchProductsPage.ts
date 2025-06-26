@@ -52,7 +52,7 @@ export async function fetchProductsPage(
       price: data.price,
       stock: data.stock,
       categoryId: data.categoryId,
-      imageUrls: data.imageUrls || [],
+      images: data.images || [],
       description: data.description,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,

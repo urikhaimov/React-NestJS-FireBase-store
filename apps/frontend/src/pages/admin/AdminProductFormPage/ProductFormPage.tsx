@@ -1,3 +1,4 @@
+// src/pages/admin/ProductFormPage/ProductFormPage.tsx
 import {
   Box,
   Button,
@@ -39,7 +40,7 @@ export default function ProductFormPage({ mode }: Props) {
   const { user } = useSafeAuth();
 
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
-  const { product, keepImageUrls, newFiles, uploading, success } = state;
+  const { product, keepImageUrls, newFiles, uploadedUrls, uploading, success } = state;
   const [categories, setCategories] = useState<Category[]>([]);
 
   const {
@@ -61,7 +62,7 @@ export default function ProductFormPage({ mode }: Props) {
     fetchCategories().then((data) => {
       setCategories(data);
       if (mode === 'add' && data.length > 0) {
-        setValue('categoryId', ''); // Leave blank initially to allow deselect
+        setValue('categoryId', '');
       }
     });
 
@@ -89,28 +90,31 @@ export default function ProductFormPage({ mode }: Props) {
   }, [isEdit, productId, setValue, mode]);
 
   const onSubmit = async (data: FormState) => {
-    if (!data.categoryId) return; // prevent invalid submission
+    if (!data.categoryId) return;
 
     dispatch({ type: 'SET_UPLOADING', payload: true });
 
     try {
+      const imageUrls = [...keepImageUrls, ...uploadedUrls]; // ✅ merge both sources
+
       const payload = {
         name: data.name,
         description: data.description,
         price: Number(data.price),
         stock: Number(data.stock),
         categoryId: data.categoryId,
+        images: imageUrls, // ✅ required for list rendering
       };
 
       if (isEdit && productId) {
         await updateProduct(productId, {
           data: payload,
           keepImageUrls,
-          newImages: newFiles,
+          newImageFiles: newFiles,
         });
       } else {
         await createProduct(
-          { ...payload, images: newFiles, createdBy: user?.uid || 'unknown' },
+          { ...payload, createdBy: user?.uid || 'unknown' },
           user?.uid || 'unknown'
         );
       }
@@ -205,9 +209,10 @@ export default function ProductFormPage({ mode }: Props) {
           <Box mt={2}>
             <ProductImageManagerWithDropzone
               initialImageUrls={keepImageUrls}
-              onChange={({ keepImageUrls, newFiles }) => {
+              onChange={({ keepImageUrls, newFiles, uploadedUrls }) => {
                 dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: keepImageUrls });
                 dispatch({ type: 'SET_NEW_FILES', payload: newFiles });
+                dispatch({ type: 'SET_UPLOADED_URLS', payload: uploadedUrls }); // ✅ new
               }}
             />
           </Box>

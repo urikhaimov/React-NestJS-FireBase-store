@@ -3,7 +3,9 @@ import {
   addDoc,
   updateDoc,
   doc,
-  getDoc
+  getDoc,
+  deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import {
   ref,
@@ -14,39 +16,36 @@ import {
 import { db, storage } from '../firebase';
 import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
-import { serverTimestamp } from 'firebase/firestore';
-
-export type NewProduct = Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt'> & {
-  images: File[];
+import { writeBatch } from 'firebase/firestore';
+export type NewProduct = {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  categoryId: string;
+  createdBy: string;
+  images: string[]; // ✅ image URLs from Firebase
 };
 
 export type UpdateProductPayload = {
-  data: Partial<Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt' | 'createdBy'>>;
+  data: Partial<Omit<Product, 'id' | 'images' | 'createdAt' | 'updatedAt' | 'createdBy'>>;
   keepImageUrls: string[];
-  newImages: File[];
+  newImageFiles: File[];
 };
 
-export async function createProduct(product: NewProduct, userId: string): Promise<void> {
-  const { name, description, price, stock, categoryId, images } = product;
-
+export async function createProduct(product: NewProduct, userId: string) {
   const docRef = await addDoc(collection(db, 'products'), {
-    name,
-    description,
-    price,
-    stock,
-    categoryId,
-    createdBy: userId,
-    imageUrls: [],
-    createdAt: serverTimestamp(), // ✅
-    updatedAt: serverTimestamp(), // ✅
+    ...product,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
-
-  const imageUrls = await uploadFilesAndReturnUrls(images, `products/${docRef.id}`);
-  await updateDoc(docRef, { imageUrls });
+  return docRef;
 }
-export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
-  const { data, keepImageUrls, newImages } = payload;
 
+export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
+  const { data, keepImageUrls, newImageFiles } = payload;
+
+  // Delete old images not in keep list
   const folderRef = ref(storage, `products/${productId}`);
   const { items } = await listAll(folderRef);
 
@@ -57,13 +56,13 @@ export async function updateProduct(productId: string, payload: UpdateProductPay
     }
   }
 
-  const newImageUrls = await uploadFilesAndReturnUrls(newImages, `products/${productId}`);
+  const newImageUrls = await uploadFilesAndReturnUrls(newImageFiles, `products/${productId}`);
   const refDoc = doc(db, 'products', productId);
 
   await updateDoc(refDoc, {
     ...data,
-    imageUrls: [...keepImageUrls, ...newImageUrls],
-    updatedAt: serverTimestamp(), // ✅
+    images: [...keepImageUrls, ...newImageUrls],
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -80,9 +79,34 @@ export async function getProductById(productId: string): Promise<Product | null>
     price: data.price,
     stock: data.stock ?? 0,
     categoryId: data.categoryId,
-    imageUrls: data.imageUrls || [],
+    images: data.images || [],
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
     createdBy: data.createdBy,
   };
+}
+
+export async function deleteProduct(productId: string): Promise<void> {
+  const folderRef = ref(storage, `products/${productId}`);
+  const { items } = await listAll(folderRef);
+  for (const item of items) {
+    await deleteObject(item);
+  }
+
+  const refDoc = doc(db, 'products', productId);
+  await deleteDoc(refDoc);
+}
+
+export async function reorderProducts(
+  orderList: { id: string; order: number }[],
+  token: string // If using auth tokens for verification
+): Promise<void> {
+  const batch = writeBatch(db);
+
+  orderList.forEach(({ id, order }) => {
+    const refDoc = doc(db, 'products', id);
+    batch.update(refDoc, { order });
+  });
+
+  await batch.commit();
 }

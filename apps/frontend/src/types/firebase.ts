@@ -12,14 +12,20 @@ export type Product = {
   price: number;
   stock: number;
   categoryId: string;
-  imageUrls: string[];
-  createdAt: any;
-  updatedAt: any;
+  images: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   createdBy: string;
+  order?: number; // ✅ optional, for sorting
 };
-
-export type NewProduct = Omit<Product, 'id' | 'imageUrls' | 'createdAt' | 'updatedAt'> & {
-  images: File[];
+export type NewProduct = {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  categoryId: string;
+  createdBy: string;
+  images: string[]; // ✅ URLs
 };
 
 
