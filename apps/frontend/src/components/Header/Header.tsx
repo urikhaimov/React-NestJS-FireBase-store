@@ -23,7 +23,7 @@ import { useSafeAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../stores/useStoreSettings';
 import { useCartStore } from '../../store/cartStore';
 import { useSidebarStore } from '../../stores/useSidebarStore';
-
+const DEFAULT_AVATAR = '/default-avatar.png';
 const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -89,9 +89,11 @@ const Header: React.FC = () => {
 
           {user && (
             <IconButton onClick={handleMenuClick} color="inherit">
-              <Avatar sx={{ width: 32, height: 32 }}>
-                {user.name?.[0] || user.email?.[0] || 'U'}
-              </Avatar>
+              <Avatar
+                src={user.photoURL || DEFAULT_AVATAR}
+                alt={user.name || user.email || 'User'}
+                sx={{ width: 32, height: 32 }}
+              />
             </IconButton>
           )}
 
