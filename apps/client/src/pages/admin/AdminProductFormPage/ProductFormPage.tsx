@@ -40,7 +40,16 @@ export default function ProductFormPage({ mode }: Props) {
   const { user } = useSafeAuth();
 
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
-  const { product, keepImageUrls, newFiles, uploadedUrls, uploading, success } = state;
+  const {
+    product,
+    keepImageUrls,
+    newFiles,
+    uploadedUrls,
+    uploading,
+    success,
+    isUploadingImages,
+  } = state;
+
   const [categories, setCategories] = useState<Category[]>([]);
 
   const {
@@ -95,7 +104,7 @@ export default function ProductFormPage({ mode }: Props) {
     dispatch({ type: 'SET_UPLOADING', payload: true });
 
     try {
-      const imageUrls = [...keepImageUrls, ...uploadedUrls]; // ✅ merge both sources
+      const imageUrls = [...keepImageUrls, ...uploadedUrls];
 
       const payload = {
         name: data.name,
@@ -103,7 +112,7 @@ export default function ProductFormPage({ mode }: Props) {
         price: Number(data.price),
         stock: Number(data.stock),
         categoryId: data.categoryId,
-        images: imageUrls, // ✅ required for list rendering
+        images: imageUrls,
       };
 
       if (isEdit && productId) {
@@ -209,18 +218,29 @@ export default function ProductFormPage({ mode }: Props) {
           <Box mt={2}>
             <ProductImageManagerWithDropzone
               initialImageUrls={keepImageUrls}
-              onChange={({ keepImageUrls, newFiles, uploadedUrls }) => {
+              onChange={({ keepImageUrls, newFiles, uploadedUrls, isUploadingImages }) => {
                 dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: keepImageUrls });
                 dispatch({ type: 'SET_NEW_FILES', payload: newFiles });
-                dispatch({ type: 'SET_UPLOADED_URLS', payload: uploadedUrls }); // ✅ new
+                dispatch({ type: 'SET_UPLOADED_URLS', payload: uploadedUrls });
+                dispatch({ type: 'SET_IMAGE_UPLOADING', payload: isUploadingImages });
               }}
             />
           </Box>
 
-          <Box mt={3}>
-            <Button type="submit" variant="contained" disabled={uploading}>
-              {uploading ? 'Uploading...' : isEdit ? 'Save Changes' : 'Add Product'}
+          <Box mt={3} display="flex" alignItems="center" gap={2}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={uploading || isUploadingImages}
+            >
+              {uploading || isUploadingImages
+                ? 'Uploading...'
+                : isEdit
+                  ? 'Save Changes'
+                  : 'Add Product'}
             </Button>
+
+            {(uploading || isUploadingImages) && <CircularProgress size={24} />}
           </Box>
         </form>
       </Paper>
