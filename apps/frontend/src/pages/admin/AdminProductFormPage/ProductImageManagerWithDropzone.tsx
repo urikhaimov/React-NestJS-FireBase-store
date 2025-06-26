@@ -1,4 +1,4 @@
-// ✅ src/components/ProductImageManagerWithDropzone.tsx
+// src/components/ProductImageManagerWithDropzone.tsx
 import React, { useReducer } from 'react';
 import {
   Box,
@@ -19,9 +19,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   imageReducer,
   initialImageState,
-  ImageAction,
-  ImageState,
 } from './productImageReducer';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface Props {
   initialImageUrls: string[];
@@ -29,6 +29,7 @@ interface Props {
     keepImageUrls: string[];
     newFiles: File[];
     uploadedUrls: string[];
+    isUploadingImages: boolean;
   }) => void;
 }
 
@@ -41,14 +42,21 @@ export default function ProductImageManagerWithDropzone({
     keepImageUrls: initialImageUrls,
   });
 
+  const emitChange = (overrideProgress?: number[]) => {
+    const progressArray = overrideProgress || state.progress;
+    const isUploadingImages = progressArray.some((p) => p < 100);
+    onChange({
+      keepImageUrls: state.keepImageUrls,
+      newFiles: state.newFiles,
+      uploadedUrls: state.uploadedUrls,
+      isUploadingImages,
+    });
+  };
+
   const handleRemoveExisting = (url: string) => {
     const updated = state.keepImageUrls.filter((img) => img !== url);
     dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: updated });
-    onChange({
-      keepImageUrls: updated,
-      newFiles: state.newFiles,
-      uploadedUrls: state.uploadedUrls,
-    });
+    emitChange();
   };
 
   const handleRemoveNew = (index: number) => {
@@ -67,11 +75,7 @@ export default function ProductImageManagerWithDropzone({
     dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
     dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
 
-    onChange({
-      keepImageUrls: state.keepImageUrls,
-      newFiles: updatedFiles,
-      uploadedUrls: updatedUrls,
-    });
+    emitChange(updatedProgress);
   };
 
   const uploadFileToFirebase = async (file: File, index: number) => {
@@ -83,29 +87,42 @@ export default function ProductImageManagerWithDropzone({
       dispatch({ type: 'UPLOAD_PROGRESS', index, percent: 100 });
       dispatch({ type: 'UPLOAD_SUCCESS', index, url });
 
-      onChange({
-        keepImageUrls: state.keepImageUrls,
-        newFiles: state.newFiles,
-        uploadedUrls: [...state.uploadedUrls.slice(0, index), url],
-      });
+      const updatedProgress = [...state.progress];
+      updatedProgress[index] = 100;
+
+      const updatedUrls = [...state.uploadedUrls];
+      updatedUrls[index] = url;
+      dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
+
+      emitChange(updatedProgress);
     } catch (err) {
       console.error('Upload failed', err);
     }
   };
 
   const onDrop = (acceptedFiles: File[]) => {
-    const newPreviews = acceptedFiles.map((f) => URL.createObjectURL(f));
-    const newProgress = acceptedFiles.map(() => 0);
+    const filteredFiles = acceptedFiles.filter((file) => file.size <= MAX_FILE_SIZE);
+    if (filteredFiles.length !== acceptedFiles.length) {
+      alert('Some files exceeded the 5MB limit and were skipped.');
+    }
+
+    const newPreviews = filteredFiles.map((f) => URL.createObjectURL(f));
+    const newProgress = filteredFiles.map(() => 0);
 
     const startIndex = state.newFiles.length;
-    const updatedFiles = [...state.newFiles, ...acceptedFiles];
+    const updatedFiles = [...state.newFiles, ...filteredFiles];
+    const updatedProgress = [...state.progress, ...newProgress];
+    const updatedPreviews = [...state.previews, ...newPreviews];
+    const updatedUrls = [...state.uploadedUrls, ...filteredFiles.map(() => '')];
 
     dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
-    dispatch({ type: 'SET_PREVIEWS', payload: [...state.previews, ...newPreviews] });
-    dispatch({ type: 'SET_PROGRESS', payload: [...state.progress, ...newProgress] });
-    dispatch({ type: 'SET_UPLOADED_URLS', payload: [...state.uploadedUrls, ...acceptedFiles.map(() => '')] });
+    dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
+    dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
+    dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
 
-    acceptedFiles.forEach((file, i) => uploadFileToFirebase(file, startIndex + i));
+    emitChange(updatedProgress);
+
+    filteredFiles.forEach((file, i) => uploadFileToFirebase(file, startIndex + i));
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -114,6 +131,7 @@ export default function ProductImageManagerWithDropzone({
       'image/*': [],
     },
     multiple: true,
+    maxSize: MAX_FILE_SIZE,
   });
 
   return (
@@ -173,7 +191,7 @@ export default function ProductImageManagerWithDropzone({
         <Typography>
           {isDragActive
             ? 'Drop the files here...'
-            : 'Drag and drop images here, or click to select files'}
+            : 'Drag and drop images here, or click to select files (max 5MB each)'}
         </Typography>
       </Paper>
     </Box>
