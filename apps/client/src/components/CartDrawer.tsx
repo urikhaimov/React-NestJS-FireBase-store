@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Drawer,
+  SwipeableDrawer,
   List,
-  ListItem,
   ListItemText,
   IconButton,
   Typography,
@@ -11,13 +11,112 @@ import {
   Button,
   Divider,
   Fade,
+  Snackbar,
+  Alert,
+  Slide,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useCartStore } from '../store/cartStore';
+import { useSwipeable } from 'react-swipeable';
 
 interface CartDrawerProps {
   open: boolean;
   onClose: () => void;
+}
+
+const SlideTransition = (props: any) => <Slide {...props} direction="up" />;
+
+function SwipeableCartItem({
+  item,
+  onRemove,
+  onUpdate,
+  showToast,
+}: {
+  item: any;
+  onRemove: () => void;
+  onUpdate: (quantity: number) => void;
+  showToast: (msg: string) => void;
+}) {
+  const handlers = useSwipeable({
+    onSwipedLeft: onRemove,
+    delta: 50,
+  });
+
+  return (
+    <Fade in>
+      <Box
+        {...handlers}
+        sx={{
+          mb: 1,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          touchAction: 'pan-y',
+        }}
+      >
+        <ListItemText
+          primary={item.name}
+          secondary={`$${item.price.toFixed(2)} × ${item.quantity}`}
+        />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mt: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            <Button
+              onClick={() => {
+                onUpdate(item.quantity - 1);
+                showToast(`Reduced ${item.name}`);
+              }}
+              disabled={item.quantity <= 1}
+              sx={{ minWidth: 32, px: 0 }}
+            >
+              -
+            </Button>
+            <Typography sx={{ px: 2 }}>{item.quantity}</Typography>
+            <Button
+              onClick={() => {
+                onUpdate(item.quantity + 1);
+                showToast(`Increased ${item.name}`);
+              }}
+              disabled={item.quantity >= item.stock}
+              sx={{ minWidth: 32, px: 0 }}
+            >
+              +
+            </Button>
+          </Box>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={() => {
+              onRemove();
+              showToast(`Removed ${item.name}`);
+            }}
+          >
+            Remove
+          </Button>
+        </Box>
+      </Box>
+    </Fade>
+  );
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
@@ -28,10 +127,22 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   const clearCart = useCartStore((s) => s.clearCart);
   const subtotal = items.reduce((s, i) => s + i.quantity * i.price, 0);
 
+  const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const showToast = (message: string) => setToast({ open: true, message });
+
   return (
-    <Drawer anchor="right" open={open} onClose={onClose}>
+    <SwipeableDrawer anchor="right" open={open} onClose={onClose} onOpen={() => {}}>
       <Box sx={{ width: 350, display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 2,
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
+          }}
+        >
           <Typography variant="h6">Your Cart</Typography>
           <IconButton onClick={onClose} sx={{ color: 'primary.contrastText' }}>
             <CloseIcon />
@@ -41,31 +152,23 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
         <Divider />
 
         <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
-          <List>
-            {items.map((item) => (
-              <Fade in key={item.id}>
-                <ListItem sx={{ mb: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <ListItemText
-                      primary={item.name}
-                      secondary={`$${item.price.toFixed(2)} × ${item.quantity}`}
-                    />
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                      <Button variant="outlined" size="small" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>
-                        -
-                      </Button>
-                      <Button variant="outlined" size="small" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                        +
-                      </Button>
-                      <Button color="error" size="small" onClick={() => removeFromCart(item.id)}>
-                        Remove
-                      </Button>
-                    </Box>
-                  </Box>
-                </ListItem>
-              </Fade>
-            ))}
-          </List>
+          {items.length === 0 ? (
+            <Typography variant="body2" align="center" color="text.secondary">
+              Your cart is empty.
+            </Typography>
+          ) : (
+            <List>
+              {items.map((item) => (
+                <SwipeableCartItem
+                  key={item.id}
+                  item={item}
+                  onRemove={() => removeFromCart(item.id)}
+                  onUpdate={(qty) => updateQuantity(item.id, qty)}
+                  showToast={showToast}
+                />
+              ))}
+            </List>
+          )}
         </Box>
 
         <Divider />
@@ -79,7 +182,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
             color="secondary"
             fullWidth
             sx={{ mb: 1 }}
-            disabled={items.length === 0} // ✅ disable if empty
+            disabled={items.length === 0}
             onClick={() => {
               onClose();
               navigate('/checkout');
@@ -87,12 +190,37 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
           >
             Checkout
           </Button>
-          <Button variant="outlined" color="error" fullWidth onClick={clearCart}>
+          <Button
+            variant="outlined"
+            color="error"
+            fullWidth
+            onClick={() => {
+              clearCart();
+              showToast('Cart cleared');
+            }}
+            disabled={items.length === 0}
+          >
             Clear Cart
+          </Button>
+          <Button variant="text" fullWidth sx={{ mt: 1 }} onClick={onClose}>
+            Close
           </Button>
         </Box>
       </Box>
-    </Drawer>
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={2500}
+        onClose={() => setToast({ open: false, message: '' })}
+        TransitionComponent={SlideTransition}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="info" variant="filled" onClose={() => setToast({ open: false, message: '' })}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </SwipeableDrawer>
   );
 };
+
 export default CartDrawer;

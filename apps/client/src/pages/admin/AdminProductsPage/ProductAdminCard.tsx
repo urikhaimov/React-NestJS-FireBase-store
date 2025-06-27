@@ -56,18 +56,38 @@ export default function ProductAdminCard({
       dispatch({ type: 'CLOSE_DIALOG' });
     }
   };
-  console.log(product, 'ProductAdminCard');
 
   return (
     <>
-      <Card sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+      <Card
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: 'center',
+          p: 1,
+          gap: 1,
+        }}
+      >
         <CardMedia
           component="img"
-          sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: 1,
+            objectFit: 'cover',
+            mx: { xs: 'auto', sm: 0 },
+          }}
           image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
           alt={product.name}
         />
-        <CardContent sx={{ flex: 1 }}>
+
+        <CardContent
+          sx={{
+            flex: 1,
+            textAlign: { xs: 'center', sm: 'left' },
+            px: 1,
+          }}
+        >
           <Typography variant="subtitle1" fontWeight="bold">
             {product.name}
           </Typography>
@@ -75,25 +95,42 @@ export default function ProductAdminCard({
             ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
           </Typography>
         </CardContent>
-        <CardActions>
+
+        <CardActions
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'row', sm: 'row' },
+            justifyContent: { xs: 'center', sm: 'flex-end' },
+            flexWrap: 'wrap',
+            ml: { sm: 'auto' },
+            px: 1,
+            gap: 1,
+          }}
+        >
           <span {...dragHandleProps}>
-            <IconButton disabled={disabled}>
-              <DragIndicatorIcon />
+            <IconButton disabled={disabled} size="small">
+              <DragIndicatorIcon fontSize="small" />
             </IconButton>
           </span>
           <IconButton
             onClick={() => navigate(`/admin/products/edit/${product.id}`)}
             disabled={disabled}
+            size="small"
           >
-            <EditIcon />
+            <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton color="error" onClick={handleDeleteClick} disabled={disabled}>
-            <DeleteIcon />
+          <IconButton
+            color="error"
+            onClick={handleDeleteClick}
+            disabled={disabled}
+            size="small"
+          >
+            <DeleteIcon fontSize="small" />
           </IconButton>
         </CardActions>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => dispatch({ type: 'CLOSE_DIALOG' })}>
+      <Dialog open={dialogOpen} onClose={() => dispatch({ type: 'CLOSE_DIALOG' })} fullWidth>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>

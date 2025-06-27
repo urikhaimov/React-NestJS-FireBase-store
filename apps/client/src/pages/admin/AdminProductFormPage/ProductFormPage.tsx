@@ -8,10 +8,12 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  InputAdornment,
+  Grid,
 } from '@mui/material';
 import { useEffect, useReducer, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { fetchCategories } from '../../../api/categories';
@@ -62,6 +64,7 @@ export default function ProductFormPage({ mode }: Props) {
   const [showSnackbar, setShowSnackbar] = useState(false);
 
   const {
+    control,
     register,
     handleSubmit,
     setValue,
@@ -232,16 +235,7 @@ export default function ProductFormPage({ mode }: Props) {
   };
 
   return (
-     <Box
-    sx={{
-      height: '100vh',
-      overflow: 'auto',
-      px: 2,
-      pt: 2,
-      pb: 4,
-      bgcolor: 'background.default',
-    }}
-  >
+    <Box sx={{ height: '100vh', overflow: 'auto', px: 2, pt: 2, pb: 4, bgcolor: 'background.default' }}>
       <Typography variant="h4" gutterBottom>
         {isEdit ? 'Edit Product' : 'Add Product'}
       </Typography>
@@ -249,63 +243,94 @@ export default function ProductFormPage({ mode }: Props) {
       <Paper sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <fieldset disabled={uploading || isUploadingImages} style={{ border: 'none' }}>
-            <TextField
-              label="Product Name"
-              {...register('name', { required: true })}
-              fullWidth
-              margin="normal"
-              error={!!errors.name}
-              helperText={errors.name && 'Name is required'}
-            />
-            <TextField
-              label="Description"
-              {...register('description', { required: true })}
-              fullWidth
-              margin="normal"
-              error={!!errors.description}
-              helperText={errors.description && 'Description is required'}
-            />
-            <TextField
-              label="Price"
-              type="number"
-              {...register('price', { required: true })}
-              fullWidth
-              margin="normal"
-              error={!!errors.price}
-              helperText={errors.price && 'Price is required'}
-            />
-            <TextField
-              label="Stock"
-              type="number"
-              {...register('stock', { required: true })}
-              fullWidth
-              margin="normal"
-              error={!!errors.stock}
-              helperText={errors.stock && 'Stock is required'}
-            />
-            <TextField
-              label="Category"
-              select
-              {...register('categoryId', {
-                required: 'Category is required',
-                validate: (val) => val !== '' || 'Please select a category',
-              })}
-              fullWidth
-              margin="normal"
-              error={!!errors.categoryId}
-              helperText={errors.categoryId?.message}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Product Name"
+                  {...register('name', { required: true })}
+                  fullWidth
+                  error={!!errors.name}
+                  helperText={errors.name && 'Name is required'}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Stock"
+                  type="number"
+                  {...register('stock', { required: true })}
+                  fullWidth
+                  error={!!errors.stock}
+                  helperText={errors.stock && 'Stock is required'}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  {...register('description', { required: true })}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  error={!!errors.description}
+                  helperText={errors.description && 'Description is required'}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name="price"
+                  control={control}
+                  rules={{
+                    required: 'Price is required',
+                    pattern: {
+                      value: /^\d{1,6}(\.\d{0,2})?$/,
+                      message: 'Invalid price format',
+                    },
+                  }}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Price"
+                      type="number"
+                      fullWidth
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        inputProps: { step: '0.01', min: '0', pattern: '\\d*(\\.\\d{0,2})?' },
+                      }}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Category"
+                  select
+                  {...register('categoryId', {
+                    required: 'Category is required',
+                    validate: (val) => val !== '' || 'Please select a category',
+                  })}
+                  fullWidth
+                  error={!!errors.categoryId}
+                  helperText={errors.categoryId?.message}
+                  InputLabelProps={{ shrink: true }}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
 
-            <Box mt={2}>
+            <Box mt={3}>
               <ImageUploader
                 keepImageUrls={keepImageUrls}
                 previews={previews}
@@ -322,11 +347,7 @@ export default function ProductFormPage({ mode }: Props) {
             </Box>
 
             <Box mt={3} display="flex" alignItems="center" gap={2}>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={uploading || isUploadingImages}
-              >
+              <Button type="submit" variant="contained" disabled={uploading || isUploadingImages}>
                 {uploading || isUploadingImages
                   ? 'Uploading...'
                   : isEdit

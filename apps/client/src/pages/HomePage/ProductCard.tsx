@@ -4,51 +4,72 @@ import {
   CardMedia,
   CardActions,
   Typography,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
+  Box,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { useCartStore } from '../../store/cartStore';
+import type { Props } from './CardReducer';
 
-import { useNavigate } from 'react-router-dom';
-import { useReducer } from 'react';
-import { deleteProduct } from '../../hooks/deleteProduct';
-import { reducer, initialState, Props } from './CardReducer';
-export default function ProductCard({ product}: Props) {
-  const navigate = useNavigate();
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const { dialogOpen, loading } = state;
+export default function ProductCard({ product }: Props) {
+  const addToCart = useCartStore((state) => state.addToCart);
 
+  const handleAddToCart = () => {
+    addToCart(product);
+  };
 
- 
   return (
-    <>
-      <Card sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-        <CardMedia
-          component="img"
-          sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
-          image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
-          alt={product.name}
-        />
-        <CardContent sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {product.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
-          </Typography>
-        </CardContent>
-        <CardActions>
-          
-        </CardActions>
-      </Card>
+    <Card
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: 'center',
+        gap: 1,
+        p: 1,
+      }}
+    >
+      <CardMedia
+        component="img"
+        sx={{
+          width: 80,
+          height: 80,
+          borderRadius: 1,
+          objectFit: 'cover',
+          mx: { xs: 'auto', sm: 0 },
+        }}
+        image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+        alt={product.name}
+      />
 
-     
-    </>
+      <CardContent
+        sx={{
+          flex: 1,
+          textAlign: { xs: 'center', sm: 'left' },
+          px: 1,
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight="bold">
+          {product.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
+        </Typography>
+      </CardContent>
+
+      <CardActions
+        sx={{
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+          px: 1,
+        }}
+      >
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleAddToCart}
+          disabled={product.stock <= 0}
+        >
+          Add to Cart
+        </Button>
+      </CardActions>
+    </Card>
   );
 }
