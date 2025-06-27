@@ -51,3 +51,4 @@ coverage/
 
 **/service-account.json
 **/.env*
+apps/backend/serviceAccountKey.json
