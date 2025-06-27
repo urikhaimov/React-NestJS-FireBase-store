@@ -1,0 +1,282 @@
+[
+  {
+    "name": "Car Wax Kit",
+    "categoryId": "FuILh189y04Vw2k6jUrxx4",
+    "price": 39.99,
+    "stock": 120,
+    "description": "Professional-grade car wax for deep shine and protection.",
+    "images": [
+      "https://placehold.co/400x300?text=Car%20Wax%20Kit+1",
+      "https://placehold.co/400x300?text=Car%20Wax%20Kit+2",
+      "https://placehold.co/400x300?text=Car%20Wax%20Kit+3",
+      "https://placehold.co/400x300?text=Car%20Wax%20Kit+4",
+      "https://placehold.co/400x300?text=Car%20Wax%20Kit+5"
+    ]
+  },
+  {
+    "name": "Engine Oil 5W-30",
+    "categoryId": "FuILh189y04Vw2k6jUrxx4",
+    "price": 24.99,
+    "stock": 75,
+    "description": "Synthetic motor oil for improved performance.",
+    "images": [
+      "https://placehold.co/400x300?text=Engine%20Oil%205W-30+1",
+      "https://placehold.co/400x300?text=Engine%20Oil%205W-30+2",
+      "https://placehold.co/400x300?text=Engine%20Oil%205W-30+3",
+      "https://placehold.co/400x300?text=Engine%20Oil%205W-30+4",
+      "https://placehold.co/400x300?text=Engine%20Oil%205W-30+5"
+    ]
+  },
+  {
+    "name": "Car Seat Cover Set",
+    "categoryId": "FuILh189y04Vw2k6jUrxx4",
+    "price": 59.99,
+    "stock": 50,
+    "description": "Durable and washable seat covers for all seasons.",
+    "images": [
+      "https://placehold.co/400x300?text=Car%20Seat%20Cover%20Set+1",
+      "https://placehold.co/400x300?text=Car%20Seat%20Cover%20Set+2",
+      "https://placehold.co/400x300?text=Car%20Seat%20Cover%20Set+3",
+      "https://placehold.co/400x300?text=Car%20Seat%20Cover%20Set+4",
+      "https://placehold.co/400x300?text=Car%20Seat%20Cover%20Set+5"
+    ]
+  },
+  {
+    "name": "OBD2 Scanner",
+    "categoryId": "FuILh189y04Vw2k6jUrxx4",
+    "price": 45.99,
+    "stock": 30,
+    "description": "Bluetooth diagnostic scanner for car troubleshooting.",
+    "images": [
+      "https://placehold.co/400x300?text=OBD2%20Scanner+1",
+      "https://placehold.co/400x300?text=OBD2%20Scanner+2",
+      "https://placehold.co/400x300?text=OBD2%20Scanner+3",
+      "https://placehold.co/400x300?text=OBD2%20Scanner+4",
+      "https://placehold.co/400x300?text=OBD2%20Scanner+5"
+    ]
+  },
+  {
+    "name": "All-Weather Floor Mats",
+    "categoryId": "FuILh189y04Vw2k6jUrxx4",
+    "price": 34.99,
+    "stock": 85,
+    "description": "Heavy-duty floor mats for front and rear seats.",
+    "images": [
+      "https://placehold.co/400x300?text=All-Weather%20Floor%20Mats+1",
+      "https://placehold.co/400x300?text=All-Weather%20Floor%20Mats+2",
+      "https://placehold.co/400x300?text=All-Weather%20Floor%20Mats+3",
+      "https://placehold.co/400x300?text=All-Weather%20Floor%20Mats+4",
+      "https://placehold.co/400x300?text=All-Weather%20Floor%20Mats+5"
+    ]
+  },
+  {
+    "name": "JavaScript for Beginners",
+    "categoryId": "NzhyX7D0zTDXoFG7qZrP",
+    "price": 19.99,
+    "stock": 200,
+    "description": "A practical guide to learning JavaScript.",
+    "images": [
+      "https://placehold.co/400x300?text=JavaScript%20for%20Beginners+1",
+      "https://placehold.co/400x300?text=JavaScript%20for%20Beginners+2",
+      "https://placehold.co/400x300?text=JavaScript%20for%20Beginners+3",
+      "https://placehold.co/400x300?text=JavaScript%20for%20Beginners+4",
+      "https://placehold.co/400x300?text=JavaScript%20for%20Beginners+5"
+    ]
+  },
+  {
+    "name": "The Art of War",
+    "categoryId": "NzhyX7D0zTDXoFG7qZrP",
+    "price": 14.95,
+    "stock": 130,
+    "description": "Classic military strategy book by Sun Tzu.",
+    "images": [
+      "https://placehold.co/400x300?text=The%20Art%20of%20War+1",
+      "https://placehold.co/400x300?text=The%20Art%20of%20War+2",
+      "https://placehold.co/400x300?text=The%20Art%20of%20War+3",
+      "https://placehold.co/400x300?text=The%20Art%20of%20War+4",
+      "https://placehold.co/400x300?text=The%20Art%20of%20War+5"
+    ]
+  },
+  {
+    "name": "React Explained",
+    "categoryId": "NzhyX7D0zTDXoFG7qZrP",
+    "price": 28.5,
+    "stock": 90,
+    "description": "Learn how to build dynamic UIs with React.",
+    "images": [
+      "https://placehold.co/400x300?text=React%20Explained+1",
+      "https://placehold.co/400x300?text=React%20Explained+2",
+      "https://placehold.co/400x300?text=React%20Explained+3",
+      "https://placehold.co/400x300?text=React%20Explained+4",
+      "https://placehold.co/400x300?text=React%20Explained+5"
+    ]
+  },
+  {
+    "name": "Meditations by Marcus Aurelius",
+    "categoryId": "NzhyX7D0zTDXoFG7qZrP",
+    "price": 11.99,
+    "stock": 60,
+    "description": "Philosophical writings from a Roman emperor.",
+    "images": [
+      "https://placehold.co/400x300?text=Meditations%20by%20Marcus%20Aurelius+1",
+      "https://placehold.co/400x300?text=Meditations%20by%20Marcus%20Aurelius+2",
+      "https://placehold.co/400x300?text=Meditations%20by%20Marcus%20Aurelius+3",
+      "https://placehold.co/400x300?text=Meditations%20by%20Marcus%20Aurelius+4",
+      "https://placehold.co/400x300?text=Meditations%20by%20Marcus%20Aurelius+5"
+    ]
+  },
+  {
+    "name": "Eloquent JavaScript",
+    "categoryId": "NzhyX7D0zTDXoFG7qZrP",
+    "price": 34.99,
+    "stock": 55,
+    "description": "Deep dive into JavaScript for serious developers.",
+    "images": [
+      "https://placehold.co/400x300?text=Eloquent%20JavaScript+1",
+      "https://placehold.co/400x300?text=Eloquent%20JavaScript+2",
+      "https://placehold.co/400x300?text=Eloquent%20JavaScript+3",
+      "https://placehold.co/400x300?text=Eloquent%20JavaScript+4",
+      "https://placehold.co/400x300?text=Eloquent%20JavaScript+5"
+    ]
+  },
+  {
+    "name": "Baby Stroller",
+    "categoryId": "Rmi08rAN7P3M9bG55UsJ3H",
+    "price": 149.99,
+    "stock": 25,
+    "description": "Lightweight and foldable stroller with sunshade.",
+    "images": [
+      "https://placehold.co/400x300?text=Baby%20Stroller+1",
+      "https://placehold.co/400x300?text=Baby%20Stroller+2",
+      "https://placehold.co/400x300?text=Baby%20Stroller+3",
+      "https://placehold.co/400x300?text=Baby%20Stroller+4",
+      "https://placehold.co/400x300?text=Baby%20Stroller+5"
+    ]
+  },
+  {
+    "name": "Diaper Pack",
+    "categoryId": "Rmi08rAN7P3M9bG55UsJ3H",
+    "price": 29.99,
+    "stock": 80,
+    "description": "Super-absorbent disposable diapers, size 3.",
+    "images": [
+      "https://placehold.co/400x300?text=Diaper%20Pack+1",
+      "https://placehold.co/400x300?text=Diaper%20Pack+2",
+      "https://placehold.co/400x300?text=Diaper%20Pack+3",
+      "https://placehold.co/400x300?text=Diaper%20Pack+4",
+      "https://placehold.co/400x300?text=Diaper%20Pack+5"
+    ]
+  },
+  {
+    "name": "Baby Monitor",
+    "categoryId": "Rmi08rAN7P3M9bG55UsJ3H",
+    "price": 89.99,
+    "stock": 35,
+    "description": "WiFi video baby monitor with night vision.",
+    "images": [
+      "https://placehold.co/400x300?text=Baby%20Monitor+1",
+      "https://placehold.co/400x300?text=Baby%20Monitor+2",
+      "https://placehold.co/400x300?text=Baby%20Monitor+3",
+      "https://placehold.co/400x300?text=Baby%20Monitor+4",
+      "https://placehold.co/400x300?text=Baby%20Monitor+5"
+    ]
+  },
+  {
+    "name": "Baby Bottle Set",
+    "categoryId": "Rmi08rAN7P3M9bG55UsJ3H",
+    "price": 21.99,
+    "stock": 60,
+    "description": "BPA-free bottles in assorted sizes.",
+    "images": [
+      "https://placehold.co/400x300?text=Baby%20Bottle%20Set+1",
+      "https://placehold.co/400x300?text=Baby%20Bottle%20Set+2",
+      "https://placehold.co/400x300?text=Baby%20Bottle%20Set+3",
+      "https://placehold.co/400x300?text=Baby%20Bottle%20Set+4",
+      "https://placehold.co/400x300?text=Baby%20Bottle%20Set+5"
+    ]
+  },
+  {
+    "name": "Teething Toys",
+    "categoryId": "Rmi08rAN7P3M9bG55UsJ3H",
+    "price": 9.99,
+    "stock": 100,
+    "description": "Soft silicone teethers for soothing gums.",
+    "images": [
+      "https://placehold.co/400x300?text=Teething%20Toys+1",
+      "https://placehold.co/400x300?text=Teething%20Toys+2",
+      "https://placehold.co/400x300?text=Teething%20Toys+3",
+      "https://placehold.co/400x300?text=Teething%20Toys+4",
+      "https://placehold.co/400x300?text=Teething%20Toys+5"
+    ]
+  },
+  {
+    "name": "Cordless Drill",
+    "categoryId": "caXYeCVL1FyZnxlUVNt1",
+    "price": 99.95,
+    "stock": 45,
+    "description": "Powerful cordless drill with 2 batteries.",
+    "images": [
+      "https://placehold.co/400x300?text=Cordless%20Drill+1",
+      "https://placehold.co/400x300?text=Cordless%20Drill+2",
+      "https://placehold.co/400x300?text=Cordless%20Drill+3",
+      "https://placehold.co/400x300?text=Cordless%20Drill+4",
+      "https://placehold.co/400x300?text=Cordless%20Drill+5"
+    ]
+  },
+  {
+    "name": "Hammer Set",
+    "categoryId": "caXYeCVL1FyZnxlUVNt1",
+    "price": 24.5,
+    "stock": 70,
+    "description": "3-piece hammer set for household use.",
+    "images": [
+      "https://placehold.co/400x300?text=Hammer%20Set+1",
+      "https://placehold.co/400x300?text=Hammer%20Set+2",
+      "https://placehold.co/400x300?text=Hammer%20Set+3",
+      "https://placehold.co/400x300?text=Hammer%20Set+4",
+      "https://placehold.co/400x300?text=Hammer%20Set+5"
+    ]
+  },
+  {
+    "name": "Socket Wrench Kit",
+    "categoryId": "caXYeCVL1FyZnxlUVNt1",
+    "price": 74.99,
+    "stock": 40,
+    "description": "Complete socket wrench kit in a sturdy box.",
+    "images": [
+      "https://placehold.co/400x300?text=Socket%20Wrench%20Kit+1",
+      "https://placehold.co/400x300?text=Socket%20Wrench%20Kit+2",
+      "https://placehold.co/400x300?text=Socket%20Wrench%20Kit+3",
+      "https://placehold.co/400x300?text=Socket%20Wrench%20Kit+4",
+      "https://placehold.co/400x300?text=Socket%20Wrench%20Kit+5"
+    ]
+  },
+  {
+    "name": "Tape Measure",
+    "categoryId": "caXYeCVL1FyZnxlUVNt1",
+    "price": 8.99,
+    "stock": 150,
+    "description": "25-foot retractable tape with lock feature.",
+    "images": [
+      "https://placehold.co/400x300?text=Tape%20Measure+1",
+      "https://placehold.co/400x300?text=Tape%20Measure+2",
+      "https://placehold.co/400x300?text=Tape%20Measure+3",
+      "https://placehold.co/400x300?text=Tape%20Measure+4",
+      "https://placehold.co/400x300?text=Tape%20Measure+5"
+    ]
+  },
+  {
+    "name": "Toolbox Organizer",
+    "categoryId": "caXYeCVL1FyZnxlUVNt1",
+    "price": 29.99,
+    "stock": 90,
+    "description": "Multi-compartment toolbox with secure latches.",
+    "images": [
+      "https://placehold.co/400x300?text=Toolbox%20Organizer+1",
+      "https://placehold.co/400x300?text=Toolbox%20Organizer+2",
+      "https://placehold.co/400x300?text=Toolbox%20Organizer+3",
+      "https://placehold.co/400x300?text=Toolbox%20Organizer+4",
+      "https://placehold.co/400x300?text=Toolbox%20Organizer+5"
+    ]
+  }
+]
