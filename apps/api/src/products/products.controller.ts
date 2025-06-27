@@ -11,10 +11,10 @@ import {
   Patch,
 } from '@nestjs/common';
 import { ProductsService, ProductWithOrder } from './products.service';
-
+import { ReorderProductsDto } from './dto/reorder-products.dto';
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Get()
   getAllProducts(): Promise<ProductWithOrder[]> {
@@ -51,14 +51,7 @@ export class ProductsController {
   }
 
   @Patch('reorder')
-  async reorderProducts(
-    @Body()
-    body: { id: string; order: number }[],
-  ) {
-    if (!Array.isArray(body) || body.some((item) => !item.id || item.order == null)) {
-      throw new BadRequestException('Invalid reorder payload');
-    }
-
-    return this.productsService.reorderProducts(body);
+  async reorderProducts(@Body() dto: ReorderProductsDto) {
+    return this.productsService.reorderProducts(dto.orderList);
   }
 }
