@@ -1,3 +1,4 @@
+// src/orders/orders.controller.ts
 import {
   Controller,
   Get,
@@ -24,7 +25,6 @@ export class OrdersController {
   }
 
   @Get()
-  //@UseGuards(RolesGuard)
   @Roles('admin', 'superadmin')
   getAllOrders() {
     return this.ordersService.getAllOrders();
@@ -41,7 +41,12 @@ export class OrdersController {
   createOrder(@Req() req, @Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder({
       ...dto,
-      userId: req.user.uid, // ⛔ override client-sent userId
+      userId: req.user.uid,
     });
+  }
+
+  @Post('create-payment-intent') // ✅ Add this
+  createPaymentIntent(@Body() body: { amount: number }) {
+    return this.ordersService.createPaymentIntent(body.amount);
   }
 }
