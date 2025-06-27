@@ -72,7 +72,7 @@ export class ProductsService {
     return { message: 'Product deleted' };
   }
 
- async reorderProducts(orderList: { id: string; order: number }[]) {
+async reorderProducts(orderList: { id: string; order: number }[]) {
   const batch = adminDb.batch();
 
   for (const { id, order } of orderList) {
@@ -82,7 +82,6 @@ export class ProductsService {
 
   await batch.commit();
 
-  // Return updated list
   const snapshot = await this.productsRef.orderBy('order').get();
   return snapshot.docs.map((doc) => ({
     ...(doc.data() as ProductWithOrder),

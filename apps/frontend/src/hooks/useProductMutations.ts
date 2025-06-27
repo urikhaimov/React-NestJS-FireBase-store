@@ -1,4 +1,3 @@
-// src/hooks/useProductMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createProduct,
@@ -9,6 +8,11 @@ import {
 import type { Product, NewProduct } from '../types/firebase';
 import type { UpdateProductPayload } from '../api/products';
 
+interface ReorderPayload {
+  orderList: { id: string; order: number }[];
+  token: string;
+}
+
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
 
@@ -17,6 +21,9 @@ export const useProductMutations = () => {
       createProduct(newProduct, newProduct.createdBy),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error) => {
+      console.error('Create product failed:', error);
     },
   });
 
@@ -31,6 +38,9 @@ export const useProductMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
+    onError: (error) => {
+      console.error('Update product failed:', error);
+    },
   });
 
   const remove = useMutation({
@@ -38,22 +48,27 @@ export const useProductMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
+    onError: (error) => {
+      console.error('Delete product failed:', error);
+    },
   });
 
   const reorder = useMutation({
-    mutationFn: async ({
-      orderList,
-      token,
-    }: {
-      orderList: { id: string; order: number }[];
-      token: string;
-    }) => {
-      return await reorderProducts(orderList, token);
+    mutationFn: async ({ orderList, token }: ReorderPayload) => {
+      return reorderProducts(orderList, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
+    onError: (error) => {
+      console.error('Reorder products failed:', error);
+    },
   });
 
-  return { create, update, remove, reorder };
+  return {
+    create,
+    update,
+    remove,
+    reorder,
+  };
 };
