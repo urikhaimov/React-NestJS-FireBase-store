@@ -1,4 +1,8 @@
-// src/stripe/StripeProvider.tsx
+/**
+ * StripeProvider wraps Stripe's <Elements> context for payment forms.
+ * Must be wrapped around any component using useStripe or CardElement.
+ * Loads public key from VITE_STRIPE_PUBLIC_KEY.
+ */
 import React from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';

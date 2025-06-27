@@ -1,10 +1,26 @@
-import { Injectable } from '@nestjs/common';
+// apps/backend/src/orders/orders.service.ts
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { adminDb } from '../firebase/firebase-admin';
-import { query, where, getDocs, collection } from 'firebase/firestore'; // optional if using frontend SDK
+import Stripe from 'stripe';
 
 @Injectable()
 export class OrdersService {
+  private stripe: Stripe;
+
+  constructor(private readonly config: ConfigService) {
+    const secretKey = this.config.get<string>('STRIPE_SECRET_KEY');
+
+    if (!secretKey) {
+      throw new Error('Missing STRIPE_SECRET_KEY in environment');
+    }
+
+    this.stripe = new Stripe(secretKey, {
+      apiVersion: '2025-05-28.basil',
+    });
+  }
+
   async createOrder(dto: CreateOrderDto) {
     const order = {
       ...dto,
@@ -44,5 +60,22 @@ export class OrdersService {
       id: doc.id,
       ...doc.data(),
     }));
+  }
+
+  async createPaymentIntent(amount: number) {
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true },
+      });
+
+      return {
+        clientSecret: paymentIntent.client_secret,
+      };
+    } catch (error) {
+      console.error('Stripe error:', error);
+      throw new InternalServerErrorException('Failed to create payment intent');
+    }
   }
 }

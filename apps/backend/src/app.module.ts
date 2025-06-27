@@ -10,12 +10,20 @@ import { ImageProxyController } from './image-proxy/image-proxy.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // ✅ Loads environment variables from `.env` and makes ConfigService globally available
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env', // Optional: specify custom path if needed
+    }),
+
+    // ✅ Feature modules
     ProductsModule,
     OrdersModule,
     UsersModule,
     CategoriesModule,
   ],
-  controllers: [ImageProxyController], // ✅ move controller registration here
+
+  // ✅ Global controllers (if not scoped to specific modules)
+  controllers: [ImageProxyController],
 })
 export class AppModule {}
