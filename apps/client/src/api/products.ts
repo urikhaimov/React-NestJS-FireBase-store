@@ -17,6 +17,7 @@ import { db, storage } from '../firebase';
 import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
 import { writeBatch } from 'firebase/firestore';
+import axios from '../api/axios';
 export type NewProduct = {
   name: string;
   description: string;
@@ -97,16 +98,17 @@ export async function deleteProduct(productId: string): Promise<void> {
   await deleteDoc(refDoc);
 }
 
-export async function reorderProducts(
+export const reorderProducts = (
   orderList: { id: string; order: number }[],
-  token: string // If using auth tokens for verification
-): Promise<void> {
-  const batch = writeBatch(db);
-
-  orderList.forEach(({ id, order }) => {
-    const refDoc = doc(db, 'products', id);
-    batch.update(refDoc, { order });
-  });
-
-  await batch.commit();
-}
+  token: string
+) => {
+  return axios.patch(
+    '/api/products/reorder',
+    { orderList },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};

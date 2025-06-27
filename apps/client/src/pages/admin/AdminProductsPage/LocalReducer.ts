@@ -63,7 +63,10 @@ export function resetPagination(state: State): State {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_PRODUCTS':
-      return { ...state, products: action.payload };
+      return {
+        ...state,
+        products: [...action.payload].sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999)),
+      };
     case 'ADD_PRODUCTS':
       return { ...state, products: [...state.products, ...action.payload] };
     case 'REMOVE_PRODUCT':

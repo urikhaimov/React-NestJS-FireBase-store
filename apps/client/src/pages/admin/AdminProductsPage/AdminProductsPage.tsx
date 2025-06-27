@@ -68,12 +68,31 @@ export default function AdminProductsPage() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = state.products.findIndex((p) => p.id === active.id);
-    const newIndex = state.products.findIndex((p) => p.id === over.id);
-    const reordered = arrayMove(state.products, oldIndex, newIndex);
-    dispatch({ type: 'SET_PRODUCTS', payload: reordered });
+    const oldIndex = visibleProducts.findIndex((p) => p.id === active.id);
+    const newIndex = visibleProducts.findIndex((p) => p.id === over.id);
 
-    const orderList = reordered.map((p, i) => ({ id: p.id, order: i }));
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedVisible = arrayMove(visibleProducts, oldIndex, newIndex);
+
+    // Now, update the full list based on new visible order
+    const updatedProducts = [...state.products];
+    reorderedVisible.forEach((product, idx) => {
+      const globalIndex = updatedProducts.findIndex((p) => p.id === product.id);
+      if (globalIndex !== -1) {
+        updatedProducts.splice(globalIndex, 1); // remove old
+        updatedProducts.splice(idx + state.products.indexOf(visibleProducts[0]), 0, product); // insert at new
+      }
+    });
+
+    // Remove duplicates after splicing (safe fallback)
+    const uniqueUpdated = Array.from(
+      new Map(updatedProducts.map((p) => [p.id, p])).values()
+    );
+
+    dispatch({ type: 'SET_PRODUCTS', payload: uniqueUpdated });
+
+    const orderList = uniqueUpdated.map((p, i) => ({ id: p.id, order: i }));
     const token = await auth.currentUser?.getIdToken();
 
     if (token) {
@@ -82,31 +101,36 @@ export default function AdminProductsPage() {
         await reorder.mutateAsync({ orderList, token });
         setSnackbarOpen(true);
       } catch (error) {
-        console.error('Reorder failed', error);
+        console.error('❌ Reorder failed', error);
       } finally {
         setReorderPending(false);
       }
     }
   };
 
+
   useEffect(() => {
     async function loadProducts() {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
         const user = auth.currentUser;
-        if (!user) throw new Error('User not authenticated');
+        if (!user) {
+          console.error('❌ No user found — make sure user is logged in before fetching products');
+          return;
+        }
+
         const token = await user.getIdToken();
         const { data } = await fetchAllProducts(token);
         dispatch({ type: 'SET_PRODUCTS', payload: data });
       } catch (error) {
-        console.error('Failed to fetch products', error);
+        console.error('❌ Failed to fetch products:', error);
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     }
+
     loadProducts();
   }, []);
-
   useEffect(() => {
     if (inView && visibleCount < filteredProducts.length) {
       const timeout = setTimeout(() => {
@@ -143,26 +167,23 @@ export default function AdminProductsPage() {
         >
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
-              items={filteredProducts.map((p) => p.id)}
+              items={visibleProducts.map((p) => p.id)} // ✅ Fix here
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts.map((product) => (
-                <motion.div
+                <Box
                   key={product.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  mb={2}
+                  sx={{ opacity: reorderPending ? 0.4 : 1 }}
                 >
-                  <Box mb={2} sx={{ opacity: reorderPending ? 0.4 : 1 }}>
-                    <SortableProductCard
-                      product={product}
-                      disabled={reorderPending}
-                      onConfirmDelete={(id) =>
-                        dispatch({ type: 'REMOVE_PRODUCT', payload: id })
-                      }
-                    />
-                  </Box>
-                </motion.div>
+                  <SortableProductCard
+                    product={product}
+                    disabled={reorderPending}
+                    onConfirmDelete={(id) =>
+                      dispatch({ type: 'REMOVE_PRODUCT', payload: id })
+                    }
+                  />
+                </Box>
               ))}
 
               <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
@@ -170,6 +191,7 @@ export default function AdminProductsPage() {
               </Box>
             </SortableContext>
           </DndContext>
+
         </Box>
       )}
 

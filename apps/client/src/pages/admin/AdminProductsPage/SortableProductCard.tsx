@@ -20,12 +20,15 @@ export default function SortableProductCard({
     setNodeRef,
     transform,
     transition,
+    isDragging, // optional for style feedback
   } = useSortable({ id: product.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     touchAction: 'manipulation',
+    opacity: isDragging ? 0.5 : 1, // ✨ optional visual cue
+    cursor: 'grab',
   };
 
   return (
