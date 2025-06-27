@@ -1,3 +1,4 @@
+// src/pages/admin/ProductFormPage/productFormReducer.ts
 import type { Product } from '../../../types/firebase';
 
 export type ProductFormAction =
@@ -5,28 +6,34 @@ export type ProductFormAction =
   | { type: 'SET_KEEP_IMAGE_URLS'; payload: string[] }
   | { type: 'SET_NEW_FILES'; payload: File[] }
   | { type: 'SET_UPLOADED_URLS'; payload: string[] }
+  | { type: 'SET_PREVIEWS'; payload: string[] }
+  | { type: 'SET_PROGRESS'; payload: number[] }
   | { type: 'SET_UPLOADING'; payload: boolean }
   | { type: 'SET_SUCCESS'; payload: boolean }
-  | { type: 'SET_IMAGE_UPLOADING'; payload: boolean }; // ✅ added
+  | { type: 'SET_IMAGE_UPLOADING'; payload: boolean };
 
 export interface ProductFormState {
   keepImageUrls: string[];
   newFiles: File[];
+  previews: string[];
   uploadedUrls: string[];
+  progress: number[];
   uploading: boolean;
   success: boolean;
   product: Product | null | undefined;
-  isUploadingImages: boolean; // ✅ added
+  isUploadingImages: boolean;
 }
 
 export const initialProductFormState: ProductFormState = {
   keepImageUrls: [],
   newFiles: [],
+  previews: [],
   uploadedUrls: [],
+  progress: [],
   uploading: false,
   success: false,
   product: undefined,
-  isUploadingImages: false, // ✅ added
+  isUploadingImages: false,
 };
 
 export function productFormReducer(
@@ -46,11 +53,15 @@ export function productFormReducer(
       return { ...state, newFiles: action.payload };
     case 'SET_UPLOADED_URLS':
       return { ...state, uploadedUrls: action.payload };
+    case 'SET_PREVIEWS':
+      return { ...state, previews: action.payload };
+    case 'SET_PROGRESS':
+      return { ...state, progress: action.payload };
     case 'SET_UPLOADING':
       return { ...state, uploading: action.payload };
     case 'SET_SUCCESS':
       return { ...state, success: action.payload };
-    case 'SET_IMAGE_UPLOADING': // ✅ added
+    case 'SET_IMAGE_UPLOADING':
       return { ...state, isUploadingImages: action.payload };
     default:
       return state;
