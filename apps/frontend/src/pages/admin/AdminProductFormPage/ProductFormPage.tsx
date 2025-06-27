@@ -1,4 +1,3 @@
-// src/pages/admin/ProductFormPage/ProductFormPage.tsx
 import {
   Box,
   Button,
@@ -13,12 +12,18 @@ import {
 import { useEffect, useReducer, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { fetchCategories } from '../../../api/categories';
 import { getProductById, createProduct, updateProduct } from '../../../api/products';
+import { storage } from '../../../firebase';
 import type { Category } from '../../../types/firebase';
-import { productFormReducer, initialProductFormState } from './productFormReducer';
-import ProductImageManagerWithDropzone from './ProductImageManagerWithDropzone';
+import {
+  productFormReducer,
+  initialProductFormState,
+} from './productFormReducer';
+
+import ImageUploader from '../../../components/ImageUploader';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
 
 type FormState = {
@@ -44,13 +49,17 @@ export default function ProductFormPage({ mode }: Props) {
     product,
     keepImageUrls,
     newFiles,
+    previews,
     uploadedUrls,
+    progress,
     uploading,
     success,
     isUploadingImages,
   } = state;
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   const {
     register,
@@ -98,13 +107,97 @@ export default function ProductFormPage({ mode }: Props) {
     }
   }, [isEdit, productId, setValue, mode]);
 
+  const handleImageDrop = (acceptedFiles: File[]) => {
+    const filteredFiles = acceptedFiles.filter((file) => file.size <= 5 * 1024 * 1024);
+    if (filteredFiles.length !== acceptedFiles.length) {
+      setErrorMessage('Some files exceeded 5MB limit.');
+      setShowSnackbar(true);
+      return;
+    }
+
+    const newPreviews = filteredFiles.map((f) => URL.createObjectURL(f));
+    const newProgress = filteredFiles.map(() => 0);
+    const startIndex = newFiles.length;
+
+    const updatedFiles = [...newFiles, ...filteredFiles];
+    const updatedPreviews = [...previews, ...newPreviews];
+    const updatedProgress = [...progress, ...newProgress];
+    const updatedUrls = [...uploadedUrls];
+
+    dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
+    dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
+    dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
+    dispatch({ type: 'SET_IMAGE_UPLOADING', payload: true });
+
+    filteredFiles.forEach((file, i) => {
+      const index = startIndex + i;
+      const fileRef = ref(storage, `products/${file.name}-${Date.now()}`);
+      uploadBytes(fileRef, file)
+        .then((snap) => getDownloadURL(snap.ref))
+        .then((url) => {
+          updatedUrls[index] = url;
+          updatedProgress[index] = 100;
+
+          dispatch({ type: 'SET_UPLOADED_URLS', payload: [...updatedUrls] });
+          dispatch({ type: 'SET_PROGRESS', payload: [...updatedProgress] });
+
+          const stillUploading = updatedProgress.some((p) => p < 100);
+          dispatch({ type: 'SET_IMAGE_UPLOADING', payload: stillUploading });
+        })
+        .catch((err) => {
+          console.error('Upload failed', err);
+          setErrorMessage('Image upload failed. Please try again.');
+          setShowSnackbar(true);
+        });
+    });
+  };
+
+  const handleRemoveExisting = (url: string) => {
+    const updated = keepImageUrls.filter((img) => img !== url);
+    dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: updated });
+  };
+
+  const handleRemoveNew = (index: number) => {
+    const updatedFiles = [...newFiles];
+    const updatedPreviews = [...previews];
+    const updatedProgress = [...progress];
+    const updatedUrls = [...uploadedUrls];
+
+    updatedFiles.splice(index, 1);
+    updatedPreviews.splice(index, 1);
+    updatedProgress.splice(index, 1);
+    updatedUrls.splice(index, 1);
+
+    dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
+    dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
+    dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
+    dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
+
+    const stillUploading = updatedProgress.some((p) => p < 100);
+    dispatch({ type: 'SET_IMAGE_UPLOADING', payload: stillUploading });
+  };
+
   const onSubmit = async (data: FormState) => {
+    if (uploading || isUploadingImages) {
+      alert('Please wait for the current upload to finish.');
+      return;
+    }
+
     if (!data.categoryId) return;
 
     dispatch({ type: 'SET_UPLOADING', payload: true });
 
     try {
-      const imageUrls = [...keepImageUrls, ...uploadedUrls];
+      const allImages = [...keepImageUrls, ...uploadedUrls];
+      const imageUrls = allImages.filter(
+        (url) => typeof url === 'string' && url.startsWith('http')
+      );
+
+      if (imageUrls.length === 0) {
+        alert('Please upload at least one product image.');
+        dispatch({ type: 'SET_UPLOADING', payload: false });
+        return;
+      }
 
       const payload = {
         name: data.name,
@@ -138,110 +231,111 @@ export default function ProductFormPage({ mode }: Props) {
     }
   };
 
-  if (isEdit && product === undefined) return <CircularProgress sx={{ mt: 4 }} />;
-  if (isEdit && product === null)
-    return <Typography sx={{ mt: 4 }}>❌ Product not found.</Typography>;
-
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        overflowY: 'auto',
-        px: 2,
-        pt: { xs: 0.5, sm: 3 },
-        pb: { xs: 1, sm: 3 },
-        bgcolor: 'background.default',
-      }}
-    >
+     <Box
+    sx={{
+      height: '100vh',
+      overflow: 'auto',
+      px: 2,
+      pt: 2,
+      pb: 4,
+      bgcolor: 'background.default',
+    }}
+  >
       <Typography variant="h4" gutterBottom>
         {isEdit ? 'Edit Product' : 'Add Product'}
       </Typography>
 
-      <Paper sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+      <Paper sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField
-            label="Product Name"
-            {...register('name', { required: true })}
-            fullWidth
-            margin="normal"
-            error={!!errors.name}
-            helperText={errors.name && 'Name is required'}
-          />
-          <TextField
-            label="Description"
-            {...register('description', { required: true })}
-            fullWidth
-            margin="normal"
-            error={!!errors.description}
-            helperText={errors.description && 'Description is required'}
-          />
-          <TextField
-            label="Price"
-            type="number"
-            {...register('price', { required: true })}
-            fullWidth
-            margin="normal"
-            error={!!errors.price}
-            helperText={errors.price && 'Price is required'}
-          />
-          <TextField
-            label="Stock"
-            type="number"
-            {...register('stock', { required: true })}
-            fullWidth
-            margin="normal"
-            error={!!errors.stock}
-            helperText={errors.stock && 'Stock is required'}
-          />
-          <TextField
-            label="Category"
-            select
-            {...register('categoryId', {
-              required: 'Category is required',
-              validate: (val) => val !== '' || 'Please select a category',
-            })}
-            fullWidth
-            margin="normal"
-            error={!!errors.categoryId}
-            helperText={errors.categoryId?.message}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {categories.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <Box mt={2}>
-            <ProductImageManagerWithDropzone
-              initialImageUrls={keepImageUrls}
-              onChange={({ keepImageUrls, newFiles, uploadedUrls, isUploadingImages }) => {
-                dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: keepImageUrls });
-                dispatch({ type: 'SET_NEW_FILES', payload: newFiles });
-                dispatch({ type: 'SET_UPLOADED_URLS', payload: uploadedUrls });
-                dispatch({ type: 'SET_IMAGE_UPLOADING', payload: isUploadingImages });
-              }}
+          <fieldset disabled={uploading || isUploadingImages} style={{ border: 'none' }}>
+            <TextField
+              label="Product Name"
+              {...register('name', { required: true })}
+              fullWidth
+              margin="normal"
+              error={!!errors.name}
+              helperText={errors.name && 'Name is required'}
             />
-          </Box>
-
-          <Box mt={3} display="flex" alignItems="center" gap={2}>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={uploading || isUploadingImages}
+            <TextField
+              label="Description"
+              {...register('description', { required: true })}
+              fullWidth
+              margin="normal"
+              error={!!errors.description}
+              helperText={errors.description && 'Description is required'}
+            />
+            <TextField
+              label="Price"
+              type="number"
+              {...register('price', { required: true })}
+              fullWidth
+              margin="normal"
+              error={!!errors.price}
+              helperText={errors.price && 'Price is required'}
+            />
+            <TextField
+              label="Stock"
+              type="number"
+              {...register('stock', { required: true })}
+              fullWidth
+              margin="normal"
+              error={!!errors.stock}
+              helperText={errors.stock && 'Stock is required'}
+            />
+            <TextField
+              label="Category"
+              select
+              {...register('categoryId', {
+                required: 'Category is required',
+                validate: (val) => val !== '' || 'Please select a category',
+              })}
+              fullWidth
+              margin="normal"
+              error={!!errors.categoryId}
+              helperText={errors.categoryId?.message}
             >
-              {uploading || isUploadingImages
-                ? 'Uploading...'
-                : isEdit
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Box mt={2}>
+              <ImageUploader
+                keepImageUrls={keepImageUrls}
+                previews={previews}
+                progress={progress}
+                uploadedUrls={uploadedUrls}
+                uploading={isUploadingImages}
+                onDrop={handleImageDrop}
+                onRemoveExisting={handleRemoveExisting}
+                onRemoveNew={handleRemoveNew}
+                errorMessage={errorMessage}
+                showSnackbar={showSnackbar}
+                onCloseSnackbar={() => setShowSnackbar(false)}
+              />
+            </Box>
+
+            <Box mt={3} display="flex" alignItems="center" gap={2}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={uploading || isUploadingImages}
+              >
+                {uploading || isUploadingImages
+                  ? 'Uploading...'
+                  : isEdit
                   ? 'Save Changes'
                   : 'Add Product'}
-            </Button>
-
-            {(uploading || isUploadingImages) && <CircularProgress size={24} />}
-          </Box>
+              </Button>
+              {(uploading || isUploadingImages) && <CircularProgress size={24} />}
+            </Box>
+          </fieldset>
         </form>
       </Paper>
 
