@@ -22,7 +22,7 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ThankYouPage from './pages/ThankYouPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-
+import CheckoutSuccessPage from './pages/CheckoutPage/CheckoutSuccessPage';
 import Layout from './layouts/MainLayout';
 import AdminDashboardLayout from './layouts/AdminDashboardLayout';
 import AdminThemePage from './pages/admin/AdminThemePage';
@@ -67,17 +67,17 @@ export default function App() {
     }
   }, [authInitialized, user, consumeRedirect, navigate]);
 
- useEffect(() => {
-  if (user && !hasRedirected.current) {
-    const redirect = consumeRedirect();
-    const defaultTarget = ['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/';
+  useEffect(() => {
+    if (user && !hasRedirected.current) {
+      const redirect = consumeRedirect();
+      const defaultTarget = ['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/';
 
-    if (redirect && location.pathname !== redirect) {
-      navigate(redirect, { replace: true });
-      hasRedirected.current = true;
+      if (redirect && location.pathname !== redirect) {
+        navigate(redirect, { replace: true });
+        hasRedirected.current = true;
+      }
     }
-  }
-}, [user, consumeRedirect, location.pathname, navigate]);
+  }, [user, consumeRedirect, location.pathname, navigate]);
 
 
   if (isLoading || !theme || !authInitialized) {
@@ -119,6 +119,18 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/checkout/success"
+        element={
+          <ProtectedRoute>
+            <StripeProvider>
+              <CheckoutSuccessPage />
+            </StripeProvider>
+          </ProtectedRoute>
+        }
+      />
+
+
       <Route
         path="/order/:id"
         element={

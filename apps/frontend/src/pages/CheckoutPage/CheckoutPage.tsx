@@ -1,62 +1,84 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
+import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { auth } from '../../firebase'; // ✅ adjust path if needed
+
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchClientSecret = async () => {
-    try {
-      const user = auth.currentUser;
-      const token = user ? await user.getIdToken() : '';
+  useEffect(() => {
+    const fetchClientSecret = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
 
-      const res = await fetch('/api/orders/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: 1999 }), // example: 19.99 USD
-      });
+        const token = await user.getIdToken();
 
-      const data = await res.json();
-      setClientSecret(data.clientSecret);
-    } catch (error) {
-      console.error('Error fetching client secret:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const res = await fetch('/api/orders/create-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ amount: 1999 }), // in cents
+        });
 
-  fetchClientSecret();
-}, []);
+        if (!res.ok) {
+          throw new Error(`Error fetching client secret: ${res.statusText}`);
+        }
 
+        const data = await res.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching clientSecret:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (loading || !clientSecret) {
-    return (
-      <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+    fetchClientSecret();
+  }, []);
 
   return (
-    <Box sx={{ maxWidth: 480, mx: 'auto', mt: 6, px: 2 }}>
+    <Box
+      sx={{
+        maxWidth: 480,
+        mx: 'auto',
+        mt: 6,
+        px: 2,
+        height: 'calc(100vh - 100px)',
+        overflow: 'auto',
+      }}
+    >
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" gutterBottom>
           Checkout
         </Typography>
 
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <StripeCheckoutForm />
-        </Elements>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress />
+          </Box>
+        ) : clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <StripeCheckoutForm />
+          </Elements>
+        ) : (
+          <Typography color="error">
+            Failed to load payment form. Please try again later.
+          </Typography>
+        )}
       </Paper>
     </Box>
   );
