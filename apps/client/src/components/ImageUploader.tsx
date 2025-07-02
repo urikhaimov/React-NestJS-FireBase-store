@@ -14,7 +14,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useDropzone } from 'react-dropzone';
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -53,6 +53,20 @@ export default function ImageUploader({
     maxSize: MAX_FILE_SIZE,
   });
 
+  const createdPreviewsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const newBlobs = previews.filter((url) => url.startsWith('blob:'));
+    createdPreviewsRef.current.push(...newBlobs);
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      createdPreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      createdPreviewsRef.current = [];
+    };
+  }, []);
+
   return (
     <Box>
       <Typography variant="subtitle1">Product Images</Typography>
@@ -79,7 +93,10 @@ export default function ImageUploader({
                 sx={{ mx: 1, mb: 1 }}
               />
               <CardActions>
-                <IconButton onClick={() => onRemoveNew(idx)}>
+                <IconButton onClick={() => {
+                  URL.revokeObjectURL(url); // immediate cleanup
+                  onRemoveNew(idx);
+                }}>
                   <DeleteIcon />
                 </IconButton>
               </CardActions>
@@ -105,7 +122,9 @@ export default function ImageUploader({
         <input {...getInputProps()} />
         <CloudUploadIcon fontSize="large" />
         <Typography mt={1}>
-          {isDragActive ? 'Drop the files here...' : 'Drag and drop images here or click to upload (max 5MB)'}
+          {isDragActive
+            ? 'Drop the files here...'
+            : 'Drag and drop images here or click to upload (max 5MB)'}
         </Typography>
         {errorMessage && (
           <Typography color="error" variant="body2" mt={1}>

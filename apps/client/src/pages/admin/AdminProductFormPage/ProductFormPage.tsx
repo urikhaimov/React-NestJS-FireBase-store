@@ -160,25 +160,31 @@ export default function ProductFormPage({ mode }: Props) {
     dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: updated });
   };
 
-  const handleRemoveNew = (index: number) => {
-    const updatedFiles = [...newFiles];
-    const updatedPreviews = [...previews];
-    const updatedProgress = [...progress];
-    const updatedUrls = [...uploadedUrls];
+ const handleRemoveNew = (index: number) => {
+  const updatedFiles = [...newFiles];
+  const updatedPreviews = [...previews];
+  const updatedProgress = [...progress];
+  const updatedUrls = [...uploadedUrls];
 
-    updatedFiles.splice(index, 1);
-    updatedPreviews.splice(index, 1);
-    updatedProgress.splice(index, 1);
-    updatedUrls.splice(index, 1);
+  const removedPreview = updatedPreviews[index];
+  if (removedPreview?.startsWith('blob:')) {
+    URL.revokeObjectURL(removedPreview);
+  }
 
-    dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
-    dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
-    dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
-    dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
+  updatedFiles.splice(index, 1);
+  updatedPreviews.splice(index, 1);
+  updatedProgress.splice(index, 1);
+  updatedUrls.splice(index, 1);
 
-    const stillUploading = updatedProgress.some((p) => p < 100);
-    dispatch({ type: 'SET_IMAGE_UPLOADING', payload: stillUploading });
-  };
+  dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
+  dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
+  dispatch({ type: 'SET_PROGRESS', payload: updatedProgress });
+  dispatch({ type: 'SET_UPLOADED_URLS', payload: updatedUrls });
+
+  const stillUploading = updatedProgress.some((p) => p < 100);
+  dispatch({ type: 'SET_IMAGE_UPLOADING', payload: stillUploading });
+};
+
 
   const onSubmit = async (data: FormState) => {
     if (uploading || isUploadingImages) {
