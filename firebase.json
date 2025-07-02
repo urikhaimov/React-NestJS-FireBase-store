@@ -1,16 +1,19 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "apps/backend"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
-    "public": "apps/frontend/dist", 
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "Content-Security-Policy",
-            "value": "default-src 'self'; img-src 'self' https://firebasestorage.googleapis.com https://picsum.photos; script-src 'self'; style-src 'self' 'unsafe-inline';"
-          }
-        ]
-      }
+    "public": "dist/frontend",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
     ],
     "rewrites": [
       {
@@ -18,5 +21,19 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "emulators": {
+    "functions": {
+      "port": 5101
+    },
+    "hosting": {
+      "port": 5100
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    }
   }
 }

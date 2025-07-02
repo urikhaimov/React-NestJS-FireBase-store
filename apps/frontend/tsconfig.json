@@ -1,5 +1,6 @@
 {
-    "compilerOptions": {
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
@@ -10,9 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "outDir": "dist",
-     "types": ["node", "express"]
+    "types": ["vite/client"],
+    "outDir": "dist"
   },
-  "include": ["src", "functions/src/seedAdminUser.js", "functions/src/seedThemes.js"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }
