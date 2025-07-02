@@ -1,5 +1,11 @@
-
-import React, { useMemo, useReducer, useEffect, useState, useRef, useCallback } from 'react';
+import React, {
+  useMemo,
+  useReducer,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from 'react';
 import {
   Box,
   Typography,
@@ -15,12 +21,13 @@ import { reducer, initialState } from './LocalReducer';
 import UserProductFilters from './UserProductFilters';
 import { fetchAllProducts } from '../../api/productApi';
 import { useAuthReady } from '../../hooks/useAuthReady';
-import SortableProductCard from '../admin/AdminProductsPage/SortableProductCard';
-import LoadingProgress from '../../components/LoadingProgress'
 import ProductCardContainer from './ProductCardContainer';
+import LoadingProgress from '../../components/LoadingProgress';
+import type { Product } from '../../types/firebase'; // Adjust this import path as needed
+
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [loading, setLoading] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -35,17 +42,27 @@ export default function HomePage() {
       try {
         const token = await user.getIdToken();
         const res = await fetchAllProducts(token);
+
+        if (!Array.isArray(res.data)) {
+          console.error('❌ Invalid product response (not an array):', res.data);
+          setProducts([]);
+          return;
+        }
+
         setProducts(res.data);
       } catch (err) {
-        console.error('Failed to load products:', err);
+        console.error('❌ Failed to load products:', err);
       } finally {
         setLoading(false);
       }
     };
+
     loadProducts();
   }, [ready, user]);
 
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
     return products.filter((p) => {
       const txt = state.search.toLowerCase();
       const inText =
@@ -58,7 +75,8 @@ export default function HomePage() {
       const inDate =
         !state.createdAfter ||
         (p.createdAt?.toDate &&
-          p.createdAt.toDate().getTime() >= state.createdAfter.toDate().getTime());
+          p.createdAt.toDate().getTime() >=
+            state.createdAfter.toDate().getTime());
 
       const inStock = !state.inStockOnly || p.stock > 0;
 
@@ -72,12 +90,15 @@ export default function HomePage() {
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
-  const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
-    const entry = entries[0];
-    if (entry.isIntersecting && visibleCount < filteredProducts.length) {
-      setVisibleCount((prev) => prev + 10);
-    }
-  }, [filteredProducts.length, visibleCount]);
+  const handleIntersect = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const entry = entries[0];
+      if (entry.isIntersecting && visibleCount < filteredProducts.length) {
+        setVisibleCount((prev) => prev + 10);
+      }
+    },
+    [filteredProducts.length, visibleCount]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersect, {
@@ -91,11 +112,7 @@ export default function HomePage() {
     };
   }, [handleIntersect]);
 
-  if (loading) {
-    return (
-      <LoadingProgress/>
-    );
-  }
+  if (loading) return <LoadingProgress />;
 
   return (
     <PageWithStickyFilters>
@@ -103,13 +120,17 @@ export default function HomePage() {
         Products
       </Typography>
 
-      <UserProductFilters state={state} dispatch={dispatch} categories={categories} />
+      <UserProductFilters
+        state={state}
+        dispatch={dispatch}
+        categories={categories}
+      />
 
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
-          maxHeight: 'calc(100vh - 240px)', // adjust based on header+filters height
+          maxHeight: 'calc(100vh - 240px)',
           px: 1,
         }}
       >
@@ -122,7 +143,7 @@ export default function HomePage() {
                 <ProductCardContainer
                   product={p}
                   disabled={false}
-                  onConfirmDelete={() => { }}
+                  onConfirmDelete={() => {}}
                 />
               </Box>
             ))}
@@ -141,9 +162,10 @@ export default function HomePage() {
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity="success" variant="filled">Product added to cart</Alert>
+        <Alert severity="success" variant="filled">
+          Product added to cart
+        </Alert>
       </Snackbar>
     </PageWithStickyFilters>
   );
-
 }

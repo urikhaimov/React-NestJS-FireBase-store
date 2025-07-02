@@ -92,29 +92,39 @@ export default function UserProfilePage() {
     dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: true });
   };
 
-  const handleUploadCroppedImage = async () => {
-    if (!imageSrc || !state.croppedAreaPixels || !auth.currentUser) return;
-    dispatch({ type: 'SET_UPLOADING', payload: true });
-    try {
-      const croppedBlob = await getCroppedImg(imageSrc, state.croppedAreaPixels, state.zoom);
-      const uid = auth.currentUser.uid;
-      const storageRef = ref(storage, `avatars/${uid}`);
-      await uploadBytes(storageRef, croppedBlob!);
-      const photoURL = await getDownloadURL(storageRef);
+ const handleUploadCroppedImage = async () => {
+  console.log("Uploading as:", auth.currentUser?.uid);
 
-      await updateProfile(auth.currentUser, { photoURL });
-      await updateDoc(doc(db, 'users', uid), { photoURL });
-      await refreshUser();
+  if (!imageSrc || !state.croppedAreaPixels || !auth.currentUser) return;
 
-      setToastOpen(true);
-      dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
-    } catch (err) {
-      console.error('Upload failed', err);
-      setErrorMsg('❌ Upload failed. Please try again.');
-    } finally {
-      dispatch({ type: 'SET_UPLOADING', payload: false });
-    }
-  };
+  dispatch({ type: 'SET_UPLOADING', payload: true });
+
+  try {
+    const croppedBlob = await getCroppedImg(imageSrc, state.croppedAreaPixels, state.zoom);
+
+    console.log("Blob size:", croppedBlob?.size);
+    console.log("Blob type:", croppedBlob?.type);
+
+    const uid = auth.currentUser.uid;
+    const storageRef = ref(storage, `avatars/${uid}`);
+    await uploadBytes(storageRef, croppedBlob!);
+    const photoURL = await getDownloadURL(storageRef);
+
+    console.log("✅ Uploaded avatar URL:", photoURL);
+
+    await updateProfile(auth.currentUser, { photoURL });
+    await updateDoc(doc(db, 'users', uid), { photoURL });
+    await refreshUser();
+
+    setToastOpen(true);
+    dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
+  } catch (err) {
+    console.error('❌ Upload failed', err);
+  setErrorMsg((err as any)?.message || '❌ Upload failed. Please try again.');
+  } finally {
+    dispatch({ type: 'SET_UPLOADING', payload: false });
+  }
+};
 
   const handleAvatarDelete = async () => {
     if (!auth.currentUser) return;
