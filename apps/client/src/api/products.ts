@@ -6,6 +6,7 @@ import {
   getDoc,
   deleteDoc,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import {
   ref,
@@ -16,8 +17,11 @@ import {
 import { db, storage } from '../firebase';
 import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
-import { writeBatch } from 'firebase/firestore';
 import axios from '../api/axios';
+
+// -------------------------
+// Types
+// -------------------------
 export type NewProduct = {
   name: string;
   description: string;
@@ -25,15 +29,18 @@ export type NewProduct = {
   stock: number;
   categoryId: string;
   createdBy: string;
-  images: string[]; // ✅ image URLs from Firebase
+  images: string[]; // ✅ URLs from Firebase
 };
 
 export type UpdateProductPayload = {
   data: Partial<Omit<Product, 'id' | 'images' | 'createdAt' | 'updatedAt' | 'createdBy'>>;
   keepImageUrls: string[];
-  newImageFiles: File[];
+  newImageFiles?: File[]; // ✅ Files to upload
 };
 
+// -------------------------
+// Create Product
+// -------------------------
 export async function createProduct(product: NewProduct, userId: string) {
   const docRef = await addDoc(collection(db, 'products'), {
     ...product,
@@ -43,8 +50,11 @@ export async function createProduct(product: NewProduct, userId: string) {
   return docRef;
 }
 
+// -------------------------
+// Update Product (with file upload & cleanup)
+// -------------------------
 export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
-  const { data, keepImageUrls, newImageFiles } = payload;
+  const { data, keepImageUrls, newImageFiles = [] } = payload;
   const refDoc = doc(db, 'products', productId);
   const existingSnap = await getDoc(refDoc);
 
@@ -54,14 +64,12 @@ export async function updateProduct(productId: string, payload: UpdateProductPay
 
   const noFieldChanges = Object.entries(data).every(([key, value]) => value === existingData[key]);
   const noImageChanges = arraysEqual(existingData.images ?? [], [...keepImageUrls]);
-console.log('noImageChanges:', noImageChanges);
-console.log('noFieldChanges:', noFieldChanges);
+
   if (noFieldChanges && noImageChanges && newImageFiles.length === 0) {
-    // Nothing changed, skip update
-    return;
+    return; // Nothing changed
   }
 
-  // Delete old images not in keep list
+  // Delete any old images that are not kept
   const folderRef = ref(storage, `products/${productId}`);
   const { items } = await listAll(folderRef);
 
@@ -72,15 +80,18 @@ console.log('noFieldChanges:', noFieldChanges);
     }
   }
 
-  const newImageUrls = await uploadFilesAndReturnUrls(newImageFiles, `products/${productId}`);
+  const uploadedUrls = await uploadFilesAndReturnUrls(newImageFiles, `products/${productId}`);
 
   await updateDoc(refDoc, {
     ...data,
-    images: [...keepImageUrls, ...newImageUrls],
+    images: [...keepImageUrls, ...uploadedUrls],
     updatedAt: serverTimestamp(),
   });
 }
 
+// -------------------------
+// Get Single Product by ID
+// -------------------------
 export async function getProductById(productId: string): Promise<Product | null> {
   const refDoc = doc(db, 'products', productId);
   const snapshot = await getDoc(refDoc);
@@ -101,6 +112,9 @@ export async function getProductById(productId: string): Promise<Product | null>
   };
 }
 
+// -------------------------
+// Delete Product + Images
+// -------------------------
 export async function deleteProduct(productId: string): Promise<void> {
   const folderRef = ref(storage, `products/${productId}`);
   const { items } = await listAll(folderRef);
@@ -112,6 +126,9 @@ export async function deleteProduct(productId: string): Promise<void> {
   await deleteDoc(refDoc);
 }
 
+// -------------------------
+// Reorder Products via API
+// -------------------------
 export const reorderProducts = (
   orderList: { id: string; order: number }[],
   token: string
@@ -127,14 +144,9 @@ export const reorderProducts = (
   );
 };
 
-
+// -------------------------
+// Utility: Array equality check
+// -------------------------
 export function arraysEqual(arr1: string[], arr2: string[]): boolean {
-  if (arr1.length !== arr2.length) return false;
-  const set1 = new Set(arr1);
-  const set2 = new Set(arr2);
-  for (const val of set1) {
-    if (!set2.has(val)) return false;
-  }
-  return true;
+  return arr1.length === arr2.length && arr1.every((val) => arr2.includes(val));
 }
-

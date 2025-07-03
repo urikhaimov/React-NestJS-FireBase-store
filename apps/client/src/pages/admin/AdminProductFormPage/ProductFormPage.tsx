@@ -10,7 +10,8 @@ import {
 } from '@mui/material';
 import { useEffect, useReducer, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import ReactQuill from 'react-quill';
 import {
   getProductById,
   createProduct,
@@ -25,7 +26,7 @@ import {
   productFormReducer,
   initialProductFormState,
 } from './productFormReducer';
-import { generateId } from '../../../utils/generateId'; // helper to create random IDs
+import { generateId } from '../../../utils/generateId';
 
 type FormState = {
   name: string;
@@ -46,11 +47,13 @@ export default function ProductFormPage({ mode }: Props) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
-  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+  const [showLimitSnackbar, setShowLimitSnackbar] = useState(false);
 
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { isSubmitting },
   } = useForm<FormState>();
@@ -72,7 +75,6 @@ export default function ProductFormPage({ mode }: Props) {
             categoryId: validCategory ? validCategory.id : '',
           });
 
-          // initialize images
           const images: CombinedImage[] = product.images.map((url) => ({
             id: url,
             url,
@@ -86,6 +88,12 @@ export default function ProductFormPage({ mode }: Props) {
   }, [mode, productId, categories, reset]);
 
   const handleImageDrop = (acceptedFiles: File[]) => {
+    const currentCount = state.combinedImages.length;
+    if (currentCount + acceptedFiles.length > 4) {
+      setShowLimitSnackbar(true);
+      return;
+    }
+
     const newImages: CombinedImage[] = acceptedFiles.map((file) => ({
       id: generateId(),
       url: URL.createObjectURL(file),
@@ -140,7 +148,7 @@ export default function ProductFormPage({ mode }: Props) {
         newFiles.length > 0;
 
       if (!formChanged && !imageChanged) {
-        setShowSnackbar(true);
+        setShowSuccessSnackbar(true);
         setTimeout(() => {
           navigate('/admin/products');
         }, 1500);
@@ -150,10 +158,13 @@ export default function ProductFormPage({ mode }: Props) {
       await updateProduct(productId, {
         data: formChanged ? payload : {},
         keepImageUrls,
-        newImageFiles: newFiles,
+        newImageFiles: newFiles, // updated from file uploads before calling updateProduct
       });
 
-      navigate('/admin/products');
+      setShowSuccessSnackbar(true);
+      setTimeout(() => {
+        navigate('/admin/products');
+      }, 1500);
     }
   };
 
@@ -164,10 +175,39 @@ export default function ProductFormPage({ mode }: Props) {
       </Typography>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <TextField label="Name" fullWidth margin="normal" {...register('name', { required: true })} />
-        <TextField label="Description" fullWidth margin="normal" {...register('description')} />
-        <TextField label="Price" fullWidth margin="normal" type="number" {...register('price', { required: true })} />
-        <TextField label="Stock" fullWidth margin="normal" type="number" {...register('stock')} />
+        <TextField
+          label="Name"
+          fullWidth
+          margin="normal"
+          {...register('name', { required: true })}
+        />
+
+        <Controller
+          control={control}
+          name="description"
+          defaultValue=""
+          render={({ field }) => (
+            <Box mt={2}>
+              <Typography variant="subtitle2" gutterBottom>Description</Typography>
+              <ReactQuill theme="snow" value={field.value} onChange={field.onChange}  style={{ height: '250px' }} />
+            </Box>
+          )}
+        />
+
+        <TextField
+          label="Price"
+          fullWidth
+          margin="normal"
+          type="number"
+          {...register('price', { required: true })}
+        />
+        <TextField
+          label="Stock"
+          fullWidth
+          margin="normal"
+          type="number"
+          {...register('stock')}
+        />
 
         <TextField label="Category" select fullWidth margin="normal" {...register('categoryId')}>
           {categories.map((cat) => (
@@ -189,8 +229,8 @@ export default function ProductFormPage({ mode }: Props) {
           onReorderAll={(newOrder) =>
             dispatch({ type: 'SET_COMBINED_IMAGES', payload: newOrder })
           }
-          showSnackbar={showSnackbar}
-          onCloseSnackbar={() => setShowSnackbar(false)}
+          showSnackbar={false}
+          onCloseSnackbar={() => {}}
         />
 
         <Box display="flex" justifyContent="flex-end" px={3}>
@@ -204,6 +244,30 @@ export default function ProductFormPage({ mode }: Props) {
           </Button>
         </Box>
       </form>
+
+      {/* ✅ Success Snackbar */}
+      <Snackbar
+        open={showSuccessSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowSuccessSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowSuccessSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          Product saved successfully
+        </Alert>
+      </Snackbar>
+
+      {/* ❌ Limit Snackbar */}
+      <Snackbar
+        open={showLimitSnackbar}
+        autoHideDuration={4000}
+        onClose={() => setShowLimitSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowLimitSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+          You can only upload up to 4 images.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
