@@ -10,7 +10,11 @@ export type ProductFormAction =
   | { type: 'SET_PROGRESS'; payload: number[] }
   | { type: 'SET_UPLOADING'; payload: boolean }
   | { type: 'SET_SUCCESS'; payload: boolean }
-  | { type: 'SET_IMAGE_UPLOADING'; payload: boolean };
+  | { type: 'SET_IMAGE_UPLOADING'; payload: boolean }
+  | { type: 'ADD_NEW_IMAGES'; payload: { files: File[]; previews: string[] } }
+  | { type: 'REMOVE_EXISTING_IMAGE'; payload: string }
+  | { type: 'REMOVE_NEW_IMAGE'; payload: number }
+  | { type: 'SET_EXISTING_IMAGES'; payload: string[] };
 
 export interface ProductFormState {
   keepImageUrls: string[];
@@ -63,6 +67,29 @@ export function productFormReducer(
       return { ...state, success: action.payload };
     case 'SET_IMAGE_UPLOADING':
       return { ...state, isUploadingImages: action.payload };
+    case 'ADD_NEW_IMAGES':
+      return {
+        ...state,
+        newFiles: [...state.newFiles, ...action.payload.files],
+        previews: [...state.previews, ...action.payload.previews],
+      };
+    case 'REMOVE_EXISTING_IMAGE':
+      return {
+        ...state,
+        keepImageUrls: state.keepImageUrls.filter((url) => url !== action.payload),
+      };
+    case 'REMOVE_NEW_IMAGE':
+      return {
+        ...state,
+        newFiles: state.newFiles.filter((_, i) => i !== action.payload),
+        previews: state.previews.filter((_, i) => i !== action.payload),
+        progress: state.progress.filter((_, i) => i !== action.payload),
+      };
+    case 'SET_EXISTING_IMAGES':
+      return {
+        ...state,
+        keepImageUrls: action.payload,
+      };
     default:
       return state;
   }
