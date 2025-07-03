@@ -14,7 +14,7 @@ import { useStoreSettings } from './stores/useStoreSettings';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import './index.css';
-
+import 'react-quill/dist/quill.snow.css';
 const storeId = localStorage.getItem('storeId') || 'store1'; // fallback to useStoreSettings not possible in module scope
 const storeConfig = loadStoreConfig(storeId) ?? defaultConfig;
 
