@@ -45,7 +45,6 @@ export default function ImageUploader({
   showSnackbar,
   onCloseSnackbar,
 }: ImageUploaderProps) {
-  const [shakeBox, setShakeBox] = React.useState(false);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/*': [] },
@@ -53,13 +52,20 @@ export default function ImageUploader({
     maxSize: MAX_FILE_SIZE,
   });
 
+  // Keep track of previews created in this component for cleanup
   const createdPreviewsRef = useRef<string[]>([]);
 
+  // Track which previews were created locally (blob:) to revoke them on unmount
   useEffect(() => {
     const newBlobs = previews.filter((url) => url.startsWith('blob:'));
-    createdPreviewsRef.current.push(...newBlobs);
+    for (const blob of newBlobs) {
+      if (!createdPreviewsRef.current.includes(blob)) {
+        createdPreviewsRef.current.push(blob);
+      }
+    }
   }, [previews]);
 
+  // Revoke blob URLs when component unmounts
   useEffect(() => {
     return () => {
       createdPreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -69,8 +75,12 @@ export default function ImageUploader({
 
   return (
     <Box>
-      <Typography variant="subtitle1">Product Images</Typography>
+      <Typography variant="subtitle1" fontWeight={600}>
+        Product Images
+      </Typography>
+
       <Grid container spacing={2} sx={{ mb: 2 }}>
+        {/* Existing images */}
         {keepImageUrls.map((url) => (
           <Grid item xs={4} sm={3} key={url}>
             <Card>
@@ -83,6 +93,8 @@ export default function ImageUploader({
             </Card>
           </Grid>
         ))}
+
+        {/* New previews with progress */}
         {previews.map((url, idx) => (
           <Grid item xs={4} sm={3} key={url}>
             <Card>
@@ -93,10 +105,15 @@ export default function ImageUploader({
                 sx={{ mx: 1, mb: 1 }}
               />
               <CardActions>
-                <IconButton onClick={() => {
-                  URL.revokeObjectURL(url); // immediate cleanup
-                  onRemoveNew(idx);
-                }}>
+                <IconButton
+                  onClick={() => {
+                    if (url.startsWith('blob:')) {
+                      URL.revokeObjectURL(url);
+                      createdPreviewsRef.current = createdPreviewsRef.current.filter((b) => b !== url);
+                    }
+                    onRemoveNew(idx);
+                  }}
+                >
                   <DeleteIcon />
                 </IconButton>
               </CardActions>
@@ -105,6 +122,7 @@ export default function ImageUploader({
         ))}
       </Grid>
 
+      {/* Dropzone */}
       <Paper
         {...getRootProps()}
         elevation={3}
@@ -112,11 +130,11 @@ export default function ImageUploader({
           py: 3,
           px: 2,
           border: '2px dashed',
-          borderColor: shakeBox ? 'error.main' : isDragActive ? 'primary.main' : 'grey.400',
-          animation: shakeBox ? 'shake 0.3s' : undefined,
+          borderColor: isDragActive ? 'primary.main' : 'grey.400',
           transition: 'border-color 0.3s',
           textAlign: 'center',
           color: isDragActive ? 'primary.main' : 'grey.600',
+          cursor: 'pointer',
         }}
       >
         <input {...getInputProps()} />
@@ -133,6 +151,7 @@ export default function ImageUploader({
         )}
       </Paper>
 
+      {/* Snackbar error */}
       <Snackbar open={showSnackbar} autoHideDuration={5000} onClose={onCloseSnackbar}>
         <Alert severity="error" onClose={onCloseSnackbar}>
           {errorMessage}

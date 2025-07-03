@@ -4,14 +4,15 @@ import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
+  
 } from 'firebase/storage';
-import { firebaseApp } from '../firebase';
+import { storage } from '../firebase';
 
 export async function uploadFilesAndReturnUrls(
   files: File[],
   folderPath: string
 ): Promise<string[]> {
-  const storage = getStorage(firebaseApp);
+  
 
   // Generate an array of upload promises
   const uploadPromises = files.map((file) => {

@@ -45,6 +45,21 @@ export async function createProduct(product: NewProduct, userId: string) {
 
 export async function updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
   const { data, keepImageUrls, newImageFiles } = payload;
+  const refDoc = doc(db, 'products', productId);
+  const existingSnap = await getDoc(refDoc);
+
+  if (!existingSnap.exists()) return;
+
+  const existingData = existingSnap.data();
+
+  const noFieldChanges = Object.entries(data).every(([key, value]) => value === existingData[key]);
+  const noImageChanges = arraysEqual(existingData.images ?? [], [...keepImageUrls]);
+console.log('noImageChanges:', noImageChanges);
+console.log('noFieldChanges:', noFieldChanges);
+  if (noFieldChanges && noImageChanges && newImageFiles.length === 0) {
+    // Nothing changed, skip update
+    return;
+  }
 
   // Delete old images not in keep list
   const folderRef = ref(storage, `products/${productId}`);
@@ -58,7 +73,6 @@ export async function updateProduct(productId: string, payload: UpdateProductPay
   }
 
   const newImageUrls = await uploadFilesAndReturnUrls(newImageFiles, `products/${productId}`);
-  const refDoc = doc(db, 'products', productId);
 
   await updateDoc(refDoc, {
     ...data,
@@ -112,3 +126,15 @@ export const reorderProducts = (
     }
   );
 };
+
+
+export function arraysEqual(arr1: string[], arr2: string[]): boolean {
+  if (arr1.length !== arr2.length) return false;
+  const set1 = new Set(arr1);
+  const set2 = new Set(arr2);
+  for (const val of set1) {
+    if (!set2.has(val)) return false;
+  }
+  return true;
+}
+
