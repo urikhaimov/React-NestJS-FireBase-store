@@ -15,16 +15,17 @@ import {
   getProductById,
   createProduct,
   updateProduct,
+  arraysEqual,
 } from '../../../api/products';
 import { fetchCategories } from '../../../api/categories';
-import ImageUploader from '../../../components/ImageUploader';
+import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
-import { arraysEqual } from '../../../api/products';
 import type { Category } from '../../../types/firebase';
 import {
   productFormReducer,
   initialProductFormState,
 } from './productFormReducer';
+import { generateId } from '../../../utils/generateId'; // helper to create random IDs
 
 type FormState = {
   name: string;
@@ -44,10 +45,7 @@ export default function ProductFormPage({ mode }: Props) {
   const { user } = useSafeAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [state, dispatch] = useReducer(
-    productFormReducer,
-    initialProductFormState
-  );
+  const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
   const [showSnackbar, setShowSnackbar] = useState(false);
 
   const {
@@ -73,20 +71,33 @@ export default function ProductFormPage({ mode }: Props) {
             stock: product.stock.toString(),
             categoryId: validCategory ? validCategory.id : '',
           });
+
+          // initialize images
+          const images: CombinedImage[] = product.images.map((url) => ({
+            id: url,
+            url,
+            type: 'existing',
+          }));
           dispatch({ type: 'SET_PRODUCT', payload: product });
+          dispatch({ type: 'SET_COMBINED_IMAGES', payload: images });
         }
       });
     }
   }, [mode, productId, categories, reset]);
 
   const handleImageDrop = (acceptedFiles: File[]) => {
-    const previews = acceptedFiles.map((file) => URL.createObjectURL(file));
-    dispatch({ type: 'SET_NEW_FILES', payload: acceptedFiles });
-    dispatch({ type: 'SET_PREVIEWS', payload: previews });
+    const newImages: CombinedImage[] = acceptedFiles.map((file) => ({
+      id: generateId(),
+      url: URL.createObjectURL(file),
+      type: 'new',
+      file,
+      progress: 0,
+    }));
+
+    dispatch({ type: 'ADD_COMBINED_IMAGES', payload: newImages });
   };
 
   const onSubmit = async (data: FormState) => {
-    console.log('Form submitted:', data);
     const payload = {
       name: data.name.trim(),
       description: data.description.trim(),
@@ -94,9 +105,16 @@ export default function ProductFormPage({ mode }: Props) {
       stock: Number(data.stock),
       categoryId: data.categoryId,
     };
-    console.log('Form payload:', payload);
-    console.log('user:', user);
+
     if (!user) return;
+
+    const keepImageUrls = state.combinedImages
+      .filter((img) => img.type === 'existing')
+      .map((img) => img.url);
+
+    const newFiles = state.combinedImages
+      .filter((img) => img.type === 'new' && img.file)
+      .map((img) => img.file!);
 
     if (mode === 'add') {
       await createProduct({
@@ -106,13 +124,10 @@ export default function ProductFormPage({ mode }: Props) {
       }, user.uid);
       navigate('/admin/products');
     }
-    console.log('mode:', mode);
-    console.log('productId:', productId);
-    console.log('state.product:', state.product);
 
     if (mode === 'edit' && productId && state.product) {
       const existing = state.product;
-      console.log('edit prodtuct:', existing);
+
       const formChanged =
         payload.name !== existing.name ||
         payload.description !== existing.description ||
@@ -121,22 +136,21 @@ export default function ProductFormPage({ mode }: Props) {
         payload.categoryId !== existing.categoryId;
 
       const imageChanged =
-        !arraysEqual(existing.images, state.keepImageUrls) ||
-        state.newFiles.length > 0;
-      console.log(imageChanged, 'imageChanged')
-      console.log(formChanged, 'formChanged')
+        !arraysEqual(existing.images, keepImageUrls) ||
+        newFiles.length > 0;
+
       if (!formChanged && !imageChanged) {
         setShowSnackbar(true);
         setTimeout(() => {
           navigate('/admin/products');
-        }, 1500); // allow snackbar to appear briefly before navigation
+        }, 1500);
         return;
       }
 
       await updateProduct(productId, {
         data: formChanged ? payload : {},
-        keepImageUrls: state.keepImageUrls,
-        newImageFiles: state.newFiles,
+        keepImageUrls,
+        newImageFiles: newFiles,
       });
 
       navigate('/admin/products');
@@ -164,21 +178,17 @@ export default function ProductFormPage({ mode }: Props) {
         </TextField>
 
         <ImageUploader
-          keepImageUrls={state.keepImageUrls}
-          previews={state.previews}
-          progress={state.progress}
-          uploadedUrls={state.uploadedUrls}
-          uploading={state.uploading}
+          images={state.combinedImages}
           onDrop={handleImageDrop}
-          onRemoveExisting={(url) => dispatch({ type: 'SET_KEEP_IMAGE_URLS', payload: state.keepImageUrls.filter(u => u !== url) })}
-          onRemoveNew={(index) => {
-            const updatedFiles = [...state.newFiles];
-            updatedFiles.splice(index, 1);
-            const updatedPreviews = [...state.previews];
-            updatedPreviews.splice(index, 1);
-            dispatch({ type: 'SET_NEW_FILES', payload: updatedFiles });
-            dispatch({ type: 'SET_PREVIEWS', payload: updatedPreviews });
-          }}
+          onRemove={(id) =>
+            dispatch({
+              type: 'SET_COMBINED_IMAGES',
+              payload: state.combinedImages.filter((img) => img.id !== id),
+            })
+          }
+          onReorderAll={(newOrder) =>
+            dispatch({ type: 'SET_COMBINED_IMAGES', payload: newOrder })
+          }
           showSnackbar={showSnackbar}
           onCloseSnackbar={() => setShowSnackbar(false)}
         />
