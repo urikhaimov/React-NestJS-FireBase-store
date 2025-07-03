@@ -1,32 +1,25 @@
-// src/pages/admin/AdminProductFormPage/ProductFormPage.tsx
 import {
   Box,
   Button,
-  TextField,
-  Typography,
   MenuItem,
   Snackbar,
   Alert,
+  Typography,
+  Paper,
+  Stack,
 } from '@mui/material';
 import { useEffect, useReducer, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
-import {
-  getProductById,
-  createProduct,
-  updateProduct,
-  arraysEqual,
-} from '../../../api/products';
+import { getProductById, createProduct, updateProduct, arraysEqual } from '../../../api/products';
 import { fetchCategories } from '../../../api/categories';
 import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
 import type { Category } from '../../../types/firebase';
-import {
-  productFormReducer,
-  initialProductFormState,
-} from './productFormReducer';
+import { productFormReducer, initialProductFormState } from './productFormReducer';
 import { generateId } from '../../../utils/generateId';
+import FormTextField from '../../../components/FormTextField';
 
 type FormState = {
   name: string;
@@ -55,7 +48,7 @@ export default function ProductFormPage({ mode }: Props) {
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<FormState>();
 
   useEffect(() => {
@@ -66,13 +59,12 @@ export default function ProductFormPage({ mode }: Props) {
     if (mode === 'edit' && productId && categories.length) {
       getProductById(productId).then((product) => {
         if (product) {
-          const validCategory = categories.find((c) => c.id === product.categoryId);
           reset({
             name: product.name,
             description: product.description,
             price: product.price.toString(),
             stock: product.stock.toString(),
-            categoryId: validCategory ? validCategory.id : '',
+            categoryId: product.categoryId,
           });
 
           const images: CombinedImage[] = product.images.map((url) => ({
@@ -80,6 +72,7 @@ export default function ProductFormPage({ mode }: Props) {
             url,
             type: 'existing',
           }));
+
           dispatch({ type: 'SET_PRODUCT', payload: product });
           dispatch({ type: 'SET_COMBINED_IMAGES', payload: images });
         }
@@ -116,136 +109,156 @@ export default function ProductFormPage({ mode }: Props) {
 
     if (!user) return;
 
-    const keepImageUrls = state.combinedImages
-      .filter((img) => img.type === 'existing')
-      .map((img) => img.url);
-
-    const newFiles = state.combinedImages
-      .filter((img) => img.type === 'new' && img.file)
-      .map((img) => img.file!);
+    const keepImageUrls = state.combinedImages.filter((img) => img.type === 'existing').map((img) => img.url);
+    const newFiles = state.combinedImages.filter((img) => img.type === 'new' && img.file).map((img) => img.file!);
 
     if (mode === 'add') {
-      await createProduct({
-        ...payload,
-        images: [],
-        createdBy: user.uid,
-      }, user.uid);
+      await createProduct({ ...payload, images: [], createdBy: user.uid }, user.uid);
       navigate('/admin/products');
     }
 
     if (mode === 'edit' && productId && state.product) {
       const existing = state.product;
-
-      const formChanged =
-        payload.name !== existing.name ||
-        payload.description !== existing.description ||
-        payload.price !== existing.price ||
-        payload.stock !== existing.stock ||
-        payload.categoryId !== existing.categoryId;
-
-      const imageChanged =
-        !arraysEqual(existing.images, keepImageUrls) ||
-        newFiles.length > 0;
+      const formChanged = Object.keys(payload).some(
+        (key) => payload[key as keyof typeof payload] !== existing[key as keyof typeof payload]
+      );
+      const imageChanged = !arraysEqual(existing.images, keepImageUrls) || newFiles.length > 0;
 
       if (!formChanged && !imageChanged) {
         setShowSuccessSnackbar(true);
-        setTimeout(() => {
-          navigate('/admin/products');
-        }, 1500);
+        setTimeout(() => navigate('/admin/products'), 1500);
         return;
       }
 
       await updateProduct(productId, {
         data: formChanged ? payload : {},
         keepImageUrls,
-        newImageFiles: newFiles, // updated from file uploads before calling updateProduct
+        newImageFiles: newFiles,
       });
 
       setShowSuccessSnackbar(true);
-      setTimeout(() => {
-        navigate('/admin/products');
-      }, 1500);
+      setTimeout(() => navigate('/admin/products'), 1500);
     }
   };
 
   return (
     <Box p={3} height="100%" overflow="auto">
-      <Typography variant="h6" mb={2}>
-        {mode === 'add' ? 'Add New Product' : 'Edit Product'}
-      </Typography>
+      <Paper elevation={1} sx={{ p: 3, maxWidth: 700, mx: 'auto' }}>
+        <Typography variant="h6" mb={2}>
+          {mode === 'add' ? 'Add New Product' : 'Edit Product'}
+        </Typography>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <TextField
-          label="Name"
-          fullWidth
-          margin="normal"
-          {...register('name', { required: true })}
-        />
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Stack spacing={2}>
+            <FormTextField
+              label="Name"
+              register={register('name', { required: 'Name is required' })}
+              errorObject={errors.name}
+            />
 
-        <Controller
-          control={control}
-          name="description"
-          defaultValue=""
-          render={({ field }) => (
-            <Box mt={2}>
-              <Typography variant="subtitle2" gutterBottom>Description</Typography>
-              <ReactQuill theme="snow" value={field.value} onChange={field.onChange}  style={{ height: '250px' }} />
+            <Controller
+              control={control}
+              name="description"
+              defaultValue=""
+              render={({ field }) => (
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Description
+                  </Typography>
+                  <Box
+                    sx={{
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      '& .ql-toolbar': {
+                        bgcolor: 'background.paper',
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                      },
+                      '& .ql-container': {
+                        bgcolor: 'background.default',
+                        color: 'text.primary',
+                        minHeight: 200,
+                      },
+                      '& .ql-editor': {
+                        fontFamily: 'inherit',
+                        fontSize: '1rem',
+                        px: 2,
+                        py: 1,
+                      },
+                    }}
+                  >
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </Box>
+                </Box>
+              )}
+            />
+
+
+            <FormTextField
+              label="Price"
+              type="number"
+              register={register('price', { required: 'Price is required' })}
+              errorObject={errors.price}
+            />
+
+            <FormTextField
+              label="Stock"
+              type="number"
+              register={register('stock')}
+              errorObject={errors.stock}
+            />
+
+            <FormTextField
+              label="Category"
+              select
+              register={register('categoryId', { required: 'Category is required' })}
+              errorObject={errors.categoryId}
+            >
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </FormTextField>
+
+            <Box>
+              <Typography variant="subtitle2" mb={1}>Product Images</Typography>
+              <ImageUploader
+                images={state.combinedImages}
+                onDrop={handleImageDrop}
+                onRemove={(id) =>
+                  dispatch({
+                    type: 'SET_COMBINED_IMAGES',
+                    payload: state.combinedImages.filter((img) => img.id !== id),
+                  })
+                }
+                onReorderAll={(newOrder) =>
+                  dispatch({ type: 'SET_COMBINED_IMAGES', payload: newOrder })
+                }
+                showSnackbar={false}
+                onCloseSnackbar={() => { }}
+              />
             </Box>
-          )}
-        />
 
-        <TextField
-          label="Price"
-          fullWidth
-          margin="normal"
-          type="number"
-          {...register('price', { required: true })}
-        />
-        <TextField
-          label="Stock"
-          fullWidth
-          margin="normal"
-          type="number"
-          {...register('stock')}
-        />
+            <Box textAlign="right">
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting || state.isUploadingImages}
+              >
+                Save
+              </Button>
+            </Box>
+          </Stack>
+        </form>
+      </Paper>
 
-        <TextField label="Category" select fullWidth margin="normal" {...register('categoryId')}>
-          {categories.map((cat) => (
-            <MenuItem key={cat.id} value={cat.id}>
-              {cat.name}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <ImageUploader
-          images={state.combinedImages}
-          onDrop={handleImageDrop}
-          onRemove={(id) =>
-            dispatch({
-              type: 'SET_COMBINED_IMAGES',
-              payload: state.combinedImages.filter((img) => img.id !== id),
-            })
-          }
-          onReorderAll={(newOrder) =>
-            dispatch({ type: 'SET_COMBINED_IMAGES', payload: newOrder })
-          }
-          showSnackbar={false}
-          onCloseSnackbar={() => {}}
-        />
-
-        <Box display="flex" justifyContent="flex-end" px={3}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSubmitting || state.isUploadingImages}
-            sx={{ mt: 3 }}
-          >
-            Save
-          </Button>
-        </Box>
-      </form>
-
-      {/* ✅ Success Snackbar */}
       <Snackbar
         open={showSuccessSnackbar}
         autoHideDuration={3000}
@@ -257,7 +270,6 @@ export default function ProductFormPage({ mode }: Props) {
         </Alert>
       </Snackbar>
 
-      {/* ❌ Limit Snackbar */}
       <Snackbar
         open={showLimitSnackbar}
         autoHideDuration={4000}
