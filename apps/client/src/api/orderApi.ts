@@ -1,4 +1,3 @@
-// src/api/orderApi.ts
 import axios from 'axios';
 
 export function fetchMyOrders(token: string) {
@@ -14,5 +13,15 @@ export function fetchAllOrders(token: string) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+}
+
+export function fetchOrderById(id: string, token?: string) {
+  return axios.get(`/api/orders/${id}`, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {},
   });
 }

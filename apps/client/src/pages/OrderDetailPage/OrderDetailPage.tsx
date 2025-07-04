@@ -1,5 +1,5 @@
-// src/pages/OrderDetailPage/OrderDetailPage.tsx
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -10,93 +10,140 @@ import {
   ListItemText,
   CircularProgress,
   Button,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { fetchOrderById } from '../../api/orderApi';
+import { formatCurrency } from '../../utils/format';
 import { useAuthReady } from '../../hooks/useAuthReady';
-import { Order } from '../MyOrdersPage/LocalReducer'; // ✅ same type
+import { Timestamp } from 'firebase/firestore';
+import LoadingProgress from '../../components/LoadingProgress';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user, ready } = useAuthReady();
-
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const handleDownloadInvoice = async () => {
+    const input = document.getElementById('invoice-content');
+    if (!input) return;
+
+    const canvas = await html2canvas(input);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF();
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`invoice-${order.id}.pdf`);
+  };
 
   useEffect(() => {
-    if (!ready || !id) return;
-
-    const fetchOrder = async () => {
+    const loadOrder = async () => {
       try {
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
+        if (!user || !id) return;
         const token = await user.getIdToken();
-
-        const res = await fetch(`/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error('Order not found');
-
-        const data = await res.json();
-        setOrder(data);
+        const res = await fetchOrderById(id, token);
+        setOrder(res.data);
       } catch (err) {
-        console.error('Error loading order:', err);
+        console.error('Failed to fetch order', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrder();
-  }, [ready, user, id]);
+    if (ready) loadOrder();
+  }, [id, user, ready]);
 
-  if (!ready || loading) {
+  if (loading) return <LoadingProgress />;
+  if (!order)
     return (
-      <Box display="flex" justifyContent="center" mt={5}>
-        <CircularProgress />
+      <Box mt={4} textAlign="center">
+        <Typography>Order not found.</Typography>
       </Box>
     );
-  }
 
-  if (!order) {
-    return (
-      <Box textAlign="center" mt={5}>
-        <Typography variant="h6">Order not found</Typography>
-        <Button onClick={() => navigate('/orders')} variant="contained" sx={{ mt: 2 }}>
-          Back to Orders
-        </Button>
-      </Box>
-    );
-  }
+  const createdAt =
+    order.createdAt?.seconds != null
+      ? new Timestamp(order.createdAt.seconds, order.createdAt.nanoseconds).toDate()
+      : new Date(order.createdAt);
 
   return (
-    <Box maxWidth="md" mx="auto" mt={4} px={2}>
-      <Typography variant="h4" gutterBottom>
-        Order #{order.id}
-      </Typography>
+    <PageWithStickyFilters>
+      <Box
+        id="invoice-content"
+        sx={{
+          maxWidth: 600,
+          mx: 'auto',
+          mt: 3,
+          px: isMobile ? 1 : 3,
+          overflowX: 'hidden',
+        }}
+      >
+        <Typography variant="h5" gutterBottom textAlign="center">
+          Order #{order.id}
+        </Typography>
 
-      <Paper sx={{ p: 3 }}>
-        <Typography>Status: {order.status}</Typography>
-        <Typography>Date: {order.createdAt.toDate().toLocaleString()}</Typography>
-        <Typography>Total: ${order.amount}</Typography>
+        <Paper elevation={3} sx={{ p: isMobile ? 2 : 3, borderRadius: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            <strong>Status:</strong> {order.status}
+          </Typography>
+          <Typography><strong>Customer:</strong> {order.ownerName}</Typography>
+          <Typography><strong>Date:</strong> {createdAt.toLocaleString()}</Typography>
+          <Typography><strong>Total:</strong> {formatCurrency(order.amount)}</Typography>
+          <Typography><strong>Payment:</strong> Visa ending in 4242</Typography>
+          <Typography><strong>Shipping Address:</strong> 123 Main St, Tel Aviv, Israel</Typography>
+          <Typography><strong>ETA:</strong> July 8, 2025</Typography>
 
-        <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" gutterBottom>Items</Typography>
-        <List dense disablePadding>
-          {order.items.map((item, idx) => (
-            <ListItem key={idx}>
-              <ListItemText
-                primary={`${item.name} × ${item.quantity}`}
-                secondary={`$${item.price}`}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
-    </Box>
+          <Typography variant="h6" gutterBottom>
+            Items
+          </Typography>
+          <List dense disablePadding>
+            {order.items.map((item: any, idx: number) => (
+              <ListItem key={idx} disablePadding sx={{ py: 1 }}>
+                <ListItemText
+                  primary={`${item.name} × ${item.quantity}`}
+                  secondary={`Price: ${formatCurrency(item.price)}`}
+                  sx={{ pl: 1 }}
+                />
+              </ListItem>
+            ))}
+          </List>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="h6" gutterBottom>
+            Order Timeline
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            • Order placed: {createdAt.toLocaleString()} <br />
+            • Payment confirmed <br />
+            • Packed for shipping <br />
+            • Estimated delivery: July 8, 2025
+          </Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Button
+            onClick={handleDownloadInvoice}
+            variant="outlined"
+            fullWidth
+            sx={{ mt: 1 }}
+          >
+            Download Invoice (PDF)
+          </Button>
+        </Paper>
+      </Box>
+    </PageWithStickyFilters>
   );
 }

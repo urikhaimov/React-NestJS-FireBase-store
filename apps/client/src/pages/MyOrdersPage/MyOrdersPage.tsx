@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useReducer, useCallback, useState, useRef } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useReducer,
+  useCallback,
+  useState,
+  useRef,
+} from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +16,7 @@ import {
   ListItemText,
   useMediaQuery,
   useTheme,
+  Chip,
 } from '@mui/material';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
@@ -19,6 +27,24 @@ import { useAuthReady } from '../../hooks/useAuthReady';
 import { fetchMyOrders } from '../../api/orderApi';
 import LoadingProgress from '../../components/LoadingProgress';
 import { Timestamp } from 'firebase/firestore';
+import { formatCurrency } from '../../utils/format';
+import { Link as RouterLink } from 'react-router-dom';
+import { Link } from '@mui/material'; // MUI version
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'processing':
+      return 'warning';
+    case 'shipped':
+      return 'info';
+    case 'delivered':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+}
 
 export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
@@ -43,7 +69,6 @@ export default function MyOrdersPage() {
         const fetchFn = () => fetchMyOrders(idToken).then(res => res.data);
         const list = await retryWithBackoff(fetchFn);
 
-        // 🔁 Force-convert createdAt to Timestamp
         const converted = list.map((order: any) => ({
           ...order,
           createdAt: order.createdAt?.seconds
@@ -64,7 +89,7 @@ export default function MyOrdersPage() {
 
   const filteredOrders = useMemo(() => {
     return orders
-      .filter((order) => {
+      .filter(order => {
         const created = order.createdAt.toDate();
         const matchStatus =
           filterState.status === 'all' || order.status === filterState.status;
@@ -91,7 +116,7 @@ export default function MyOrdersPage() {
     (node: HTMLDivElement) => {
       if (loading) return;
       if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
+      observer.current = new IntersectionObserver(entries => {
         if (entries[0].isIntersecting) {
           dispatch({ type: 'setPage', payload: filterState.page + 1 });
         }
@@ -111,16 +136,37 @@ export default function MyOrdersPage() {
       const isLast = index === paginatedOrders.length - 1;
       return (
         <Box style={style} px={1} ref={isLast ? lastItemRef : undefined}>
-          <Paper elevation={3} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 3 }}>
             <Typography variant="subtitle1" fontWeight="bold">
-              Order #{order.id}
+              <Link
+                component={RouterLink}
+                to={`/order/${order.id}`}
+                underline="hover"
+                sx={{ cursor: 'pointer' }}
+              >
+                Order #{order.id}
+              </Link>
             </Typography>
-            <Typography variant="body2">Status: {order.status}</Typography>
+            <Chip
+              label={order.status}
+              color={getStatusColor(order.status)}
+              size="small"
+              sx={{ my: 1 }}
+            />
             <Typography variant="body2">
               Date: {order.createdAt.toDate().toLocaleString()}
             </Typography>
+            <Typography variant="body2">
+              Paid with: Visa ending in 4242
+            </Typography>
+            <Typography variant="body2">
+              Shipping: Express Delivery
+            </Typography>
+            <Typography variant="body2">
+              Delivery ETA: July 8, 2025
+            </Typography>
             <Typography variant="body2" gutterBottom>
-              Total: ${order.amount}
+              Total: {formatCurrency(order.amount)}
             </Typography>
             <Divider sx={{ my: 1 }} />
             <List dense disablePadding>
@@ -128,7 +174,7 @@ export default function MyOrdersPage() {
                 <ListItem key={idx} disablePadding>
                   <ListItemText
                     primary={`${item.name} × ${item.quantity}`}
-                    secondary={`Price: $${item.price}`}
+                    secondary={`Price: ${formatCurrency(item.price)}`}
                     sx={{ pl: 1 }}
                   />
                 </ListItem>
@@ -160,7 +206,7 @@ export default function MyOrdersPage() {
           height={600}
           width="100%"
           itemCount={paginatedOrders.length}
-          itemSize={220}
+          itemSize={280}
         >
           {Row}
         </ListWindow>
