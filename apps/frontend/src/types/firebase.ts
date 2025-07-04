@@ -17,6 +17,7 @@ export type Product = {
   updatedAt: Timestamp;
   createdBy: string;
   order?: number; // ✅ optional, for sorting
+  imageUrl?: string; // ✅ Add this line
 };
 export type NewProduct = {
   name: string;

@@ -1,3 +1,4 @@
+// AdminLandingPage.tsx
 import {
   Box,
   Button,
@@ -35,16 +36,14 @@ export default function AdminLandingPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const uploadedPathsRef = useRef<string[]>([]);
 
-  // 🔄 Load landing page data on mount
+  // 🔄 Load landing page data
   useEffect(() => {
     const fetchData = async () => {
       const refDoc = doc(db, 'landingPages', 'default');
       const snap = await getDoc(refDoc);
-
       if (snap.exists()) {
         const data = snap.data() as LandingPageData;
         dispatch({ type: 'SET_FORM', payload: data });
-
         if (data.bannerImageUrl) {
           dispatch({
             type: 'SET_IMAGE_STATE',
@@ -62,13 +61,12 @@ export default function AdminLandingPage() {
     fetchData();
   }, []);
 
-  // 🧹 Cleanup abandoned images on unmount
+  // 🧹 Cleanup abandoned images
   useEffect(() => {
     return () => {
       uploadedPathsRef.current.forEach(async (path) => {
         try {
           await deleteObject(ref(storage, path));
-          console.log('Deleted abandoned image:', path);
         } catch (err) {
           console.warn('Failed to delete abandoned image:', err);
         }
@@ -76,14 +74,12 @@ export default function AdminLandingPage() {
     };
   }, []);
 
-  // 🔧 Handle text input change
   const handleChange =
     (field: keyof LandingPageData) =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        dispatch({ type: 'SET_FORM', payload: { [field]: e.target.value } });
-      };
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      dispatch({ type: 'SET_FORM', payload: { [field]: e.target.value } });
+    };
 
-  // 📥 Handle image drop
   const handleDrop = (files: File[]) => {
     const file = files[0];
     if (!file) return;
@@ -103,12 +99,10 @@ export default function AdminLandingPage() {
     });
   };
 
-  // 🗑️ Handle image removal
   const handleRemove = () => {
     dispatch({ type: 'SET_IMAGE_STATE', payload: [] });
   };
 
-  // 💾 Save form and image to Firestore
   const handleSave = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
 
@@ -116,7 +110,6 @@ export default function AdminLandingPage() {
     const existingImage = state.images.find((img) => img.type === 'existing');
     let finalBannerUrl = '';
 
-    // Delete previous image if replaced
     if (newImage && existingImage?.url) {
       try {
         const path = decodeURIComponent(new URL(existingImage.url).pathname.split('/o/')[1].split('?')[0]);
@@ -126,7 +119,6 @@ export default function AdminLandingPage() {
       }
     }
 
-    // Upload new image if exists
     if (newImage?.file) {
       try {
         const fileRef = ref(storage, `landing/banner-${Date.now()}`);
@@ -134,24 +126,20 @@ export default function AdminLandingPage() {
         finalBannerUrl = await getDownloadURL(uploadTask.ref);
         uploadedPathsRef.current.push(uploadTask.ref.fullPath);
       } catch (err) {
-        console.error('Upload failed', err);
         dispatch({ type: 'SET_ERROR', payload: 'Image upload failed. Please try again.' });
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
     }
 
-    // Fallback to existing image if new not uploaded
     if (!newImage && existingImage) {
       finalBannerUrl = existingImage.url;
     }
 
-    // Clear banner if all images are removed
     if (state.images.length === 0) {
       finalBannerUrl = '';
     }
 
-    // Update Firestore document
     await updateDoc(doc(db, 'landingPages', 'default'), {
       ...state.form,
       bannerImageUrl: finalBannerUrl,
@@ -160,6 +148,7 @@ export default function AdminLandingPage() {
 
     uploadedPathsRef.current = [];
     dispatch({ type: 'SET_LOADING', payload: false });
+    dispatch({ type: 'SET_SUCCESS', payload: 'Landing page updated successfully!' });
   };
 
   return (
@@ -172,7 +161,7 @@ export default function AdminLandingPage() {
       <Box
         mt={2}
         sx={{
-          maxHeight: 'calc(100vh - 360px)', // adjust based on your sticky header/footer height
+          maxHeight: 'calc(100vh - 400px)',
           overflowY: 'auto',
           pr: 1,
         }}
@@ -194,7 +183,7 @@ export default function AdminLandingPage() {
               images={state.images}
               onDrop={handleDrop}
               onRemove={handleRemove}
-              onReorderAll={() => { }}
+              onReorderAll={() => {}}
               errorMessage={state.errorMessage}
               showSnackbar={state.showSnackbar}
               onCloseSnackbar={() => dispatch({ type: 'CLOSE_SNACKBAR' })}
@@ -213,7 +202,9 @@ export default function AdminLandingPage() {
 
             <SectionsEditor
               sections={state.form.sections || []}
-              onChange={(updated) => dispatch({ type: 'SET_SECTIONS', payload: updated })}
+              onChange={(updated) =>
+                dispatch({ type: 'SET_SECTIONS', payload: updated })
+              }
             />
 
             <Box textAlign="right">
@@ -231,14 +222,17 @@ export default function AdminLandingPage() {
 
       <Snackbar
         open={state.showSnackbar}
-        autoHideDuration={5000}
+        autoHideDuration={4000}
         onClose={() => dispatch({ type: 'CLOSE_SNACKBAR' })}
       >
-        <Alert severity="error" onClose={() => dispatch({ type: 'CLOSE_SNACKBAR' })}>
-          {state.errorMessage}
+        <Alert
+          onClose={() => dispatch({ type: 'CLOSE_SNACKBAR' })}
+          severity={state.errorMessage ? 'error' : 'success'}
+          sx={{ width: '100%' }}
+        >
+          {state.errorMessage || state.successMessage}
         </Alert>
       </Snackbar>
     </AdminStickyPage>
-
   );
 }
