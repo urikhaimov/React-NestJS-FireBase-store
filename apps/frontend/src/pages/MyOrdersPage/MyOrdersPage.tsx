@@ -30,7 +30,7 @@ import { Timestamp } from 'firebase/firestore';
 import { formatCurrency } from '../../utils/format';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material'; // MUI version
-
+import MyOrdersScrollContainer from '../../components/ScrollContainer';
 function getStatusColor(status: string) {
   switch (status) {
     case 'processing':
@@ -203,13 +203,16 @@ export default function MyOrdersPage() {
         <Typography>No orders found.</Typography>
       ) : (
         <ListWindow
-          height={600}
+          height={paginatedOrders.length * 280}
           width="100%"
           itemCount={paginatedOrders.length}
           itemSize={280}
+          outerElementType={MyOrdersScrollContainer}
         >
           {Row}
         </ListWindow>
+
+
       )}
     </PageWithStickyFilters>
   );

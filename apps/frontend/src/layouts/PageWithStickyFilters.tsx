@@ -7,16 +7,14 @@ export default function PageWithStickyFilters({ children }: { children: React.Re
     <Box
       sx={{
         width: '100%',
-        maxWidth: '1200px',
-        mx: 'auto',
-        px: 2,
-        mt: 10,
+        px: { xs: 2, md: 4 },
         py: 4,
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '80vh',
-        overflowY: 'auto',
+        minHeight: '100vh',
         overflowX: 'hidden',
+        mx: 'auto',
+        mt: 10,
         position: 'relative',
         scrollbarWidth: 'thin', // Firefox
         scrollbarColor: '#888 #2c2c2c', // Firefox

@@ -71,7 +71,7 @@ const Header: React.FC = () => {
             </IconButton>
           )}
           <Typography variant="h6" fontWeight="bold" noWrap component="div">
-            My Online Store
+            Bunder Shop
           </Typography>
         </Box>
 
