@@ -27,6 +27,7 @@ import CheckoutSuccessPage from './pages/CheckoutPage/CheckoutSuccessPage';
 import Layout from './layouts/MainLayout';
 import AdminDashboardLayout from './layouts/AdminDashboardLayout';
 import AdminThemePage from './pages/admin/AdminThemePage';
+import AdminLandingPage from './pages/admin/AdminLandingPage/AdminLandingPage';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -176,6 +177,7 @@ export default function App() {
         }
       >
         <Route index element={<AdminHomePage />} />
+        <Route path="landindPage" element={<AdminLandingPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="users" element={<AdminUsersPage />} />
