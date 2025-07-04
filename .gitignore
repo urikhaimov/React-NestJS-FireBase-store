@@ -1,55 +1,81 @@
-# Logs
-logs
+# --- Node ---
+node_modules/
+.pnp/
+.pnp.js
+
+# --- Build Outputs ---
+dist/
+build/
+functions/lib/
+out/
+dist-ssr/
+.vite/
+.svelte-kit/
+.next/
+
+# --- Logs ---
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Node modules
-**/node_modules/
-**/.pnp/
-.pnp.js
-
-# TypeScript build output
-**/dist/
-**/build/
-
-# Vite cache
-**/.vite/
-
-# Env files
-.env
-.env.*.local
-
-
-# Firebase
+# --- Firebase ---
 .firebase/
 .firebaserc
 firebase-debug.log
 firestore-debug.log
+**/service-account.json
+apps/backend/serviceAccountKey.json
 
-# IDEs and tools
-.idea/
+# --- Environment Variables ---
+.env
+.env.*
+.env.*.local
+functions/.env
+functions/.env.*.local
+
+# --- Coverage ---
+coverage/
+.nyc_output/
+
+# --- TypeScript ---
+tsconfig.tsbuildinfo
+
+# --- IDEs / Editors ---
 .vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
+*.sw?
 
-# Coverage
-coverage/
+# --- OS Files ---
+.DS_Store
+Thumbs.db
 
-# Mac system files
-*.DS_Store
+# --- Browser Save Artifacts ---
+*_files/
 
-# Optional: ignore React/Vite production build if handled by Firebase only
-# client/dist/
+# --- Temporary Files ---
+.tmp/
+.temp/
+*.tmp
+*.bak
+*.seed
+*.pid
+*.pid.lock
 
-**/service-account.json
-**/.env*
-apps/backend/serviceAccountKey.json
-apps/backend/serviceAccountKey.json
+# --- Diagnostic Reports ---
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# --- Archives ---
+*.tgz
+*.zip
