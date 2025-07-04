@@ -29,14 +29,14 @@ const HomePage: React.FC = () => {
 
   if (!landingData) {
     return (
-      
+     
         <LoadingProgress />
      
     );
   }
 
   return (
-    <PageWithStickyFilters>
+    <>
       <Box textAlign="center" mt={4} mb={6}>
         {landingData.title && (
           <Typography variant="h4" gutterBottom>
@@ -107,7 +107,7 @@ const HomePage: React.FC = () => {
           View All Products
         </Button>
       </Box>
-    </PageWithStickyFilters>
+    </>
   );
 };
 
