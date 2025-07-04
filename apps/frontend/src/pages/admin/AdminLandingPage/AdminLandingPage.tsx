@@ -79,9 +79,9 @@ export default function AdminLandingPage() {
   // 🔧 Handle text input change
   const handleChange =
     (field: keyof LandingPageData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      dispatch({ type: 'SET_FORM', payload: { [field]: e.target.value } });
-    };
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        dispatch({ type: 'SET_FORM', payload: { [field]: e.target.value } });
+      };
 
   // 📥 Handle image drop
   const handleDrop = (files: File[]) => {
@@ -169,8 +169,15 @@ export default function AdminLandingPage() {
         description="Customize your store's homepage layout, banners, and sections"
       />
 
-      <Box mt={2}>
-        <Paper sx={{ p: 2 }}>
+      <Box
+        mt={2}
+        sx={{
+          maxHeight: 'calc(100vh - 360px)', // adjust based on your sticky header/footer height
+          overflowY: 'auto',
+          pr: 1,
+        }}
+      >
+        <Paper sx={{ p: 2, minHeight: 600 }}>
           <Stack spacing={2}>
             <FormTextField
               label="Title"
@@ -187,7 +194,7 @@ export default function AdminLandingPage() {
               images={state.images}
               onDrop={handleDrop}
               onRemove={handleRemove}
-              onReorderAll={() => {}}
+              onReorderAll={() => { }}
               errorMessage={state.errorMessage}
               showSnackbar={state.showSnackbar}
               onCloseSnackbar={() => dispatch({ type: 'CLOSE_SNACKBAR' })}
@@ -232,5 +239,6 @@ export default function AdminLandingPage() {
         </Alert>
       </Snackbar>
     </AdminStickyPage>
+
   );
 }
