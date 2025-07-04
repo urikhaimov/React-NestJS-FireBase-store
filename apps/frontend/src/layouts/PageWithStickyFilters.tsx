@@ -12,7 +12,8 @@ export default function PageWithStickyFilters({ children }: { children: React.Re
         py: 10,
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100%', // ✅ allow scrollable growth
+        minHeight: '100vh', // ✅ Ensures full page height
+        overflowY: 'auto',  // ✅ Enables scroll when content exceeds height
       }}
     >
       {children}
