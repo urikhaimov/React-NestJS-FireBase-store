@@ -71,21 +71,21 @@ export default function LeftMenu() {
     setAnchorEl(event.currentTarget);
 
   const handleProfileMenuClose = () => setAnchorEl(null);
-
-  const storeLinks = [
-    { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
-    {
-      label: 'Cart',
-      icon: (
-        <Badge badgeContent={cartCount} color="secondary">
-          <ShoppingCartIcon />
-        </Badge>
-      ),
-      action: () => openCartDrawer(),
-    },
-    { label: 'My Orders', icon: <InventoryIcon />, action: () => navigate('/my-orders') },
-    { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
-  ];
+const storeLinks = [
+  { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
+  {
+    label: 'Cart',
+    icon: (
+      <Badge badgeContent={cartCount} color="secondary">
+        <ShoppingCartIcon />
+      </Badge>
+    ),
+    action: () => openCartDrawer(),
+  },
+  { label: 'Products', icon: <InventoryIcon />, action: () => navigate('/products') }, // ✅ New Link
+  { label: 'My Orders', icon: <ReceiptIcon />, action: () => navigate('/my-orders') },
+  { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
+];
 
   const adminLinks = [
     { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },

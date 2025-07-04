@@ -10,7 +10,8 @@ import {
 import { AnimatePresence } from 'framer-motion';
 
 import { ProtectedRoute, AdminProtectedRoute } from './components/ProtectedRoutes';
-import HomePage from './pages/HomePage/HomePage';
+import HomePage from './pages/HomePage';
+import ProductsPage  from './pages/ProductsPage'
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -38,6 +39,7 @@ import { useAuthStore } from './stores/useAuthStore';
 import { useThemeContext } from './context/ThemeContext';
 import { StripeProvider } from './stripe/StripeProvider';
 import './App.css';
+
 
 export default function App() {
   const navigate = useNavigate();
@@ -103,6 +105,7 @@ export default function App() {
   const appRoutes = (
     <Routes location={location} key={location.pathname}>
       <Route path="/" element={<HomePage />} />
+      <Route path="/products" element={<ProductsPage />} />
       <Route path="/product/:id" element={<ProductPage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/login" element={<LoginPage />} />

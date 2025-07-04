@@ -1,171 +1,84 @@
-import React, {
-  useMemo,
-  useReducer,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
-import {
-  Box,
-  Typography,
-  Divider,
-  CircularProgress,
-  Alert,
-  Snackbar,
-} from '@mui/material';
-import { useCategories } from '../../hooks/useCategories';
-import { useCartStore } from '../../store/cartStore';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore'; // You missed this import
+import { db } from '../../firebase'; // Adjust path as needed
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import { reducer, initialState } from './LocalReducer';
-import UserProductFilters from './UserProductFilters';
-import { fetchAllProducts } from '../../api/productApi';
-import { useAuthReady } from '../../hooks/useAuthReady';
-import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
-import type { Product } from '../../types/firebase'; // Adjust this import path as needed
 
-export default function HomePage() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [visibleCount, setVisibleCount] = useState(10);
-  const [loading, setLoading] = useState(true);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const observerRef = useRef(null);
-  const { user, ready } = useAuthReady();
-  const { data: categories = [] } = useCategories();
-  const cart = useCartStore();
+const HomePage: React.FC = () => {
+  const [landingData, setLandingData] = useState<any>(null);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      if (!ready || !user) return;
-      try {
-        const token = await user.getIdToken();
-        const res = await fetchAllProducts(token);
-
-        if (!Array.isArray(res.data)) {
-          console.error('❌ Invalid product response (not an array):', res.data);
-          setProducts([]);
-          return;
-        }
-
-        setProducts(res.data);
-      } catch (err) {
-        console.error('❌ Failed to load products:', err);
-      } finally {
-        setLoading(false);
+    const fetchLanding = async () => {
+      const ref = doc(db, 'landingPages', 'default');
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        setLandingData(snap.data());
       }
     };
-
-    loadProducts();
-  }, [ready, user]);
-
-  const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-
-    return products.filter((p) => {
-      const txt = state.search.toLowerCase();
-      const inText =
-        p.name.toLowerCase().includes(txt) ||
-        p.description?.toLowerCase().includes(txt);
-
-      const inCat =
-        !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
-
-      const inDate =
-        !state.createdAfter ||
-        (p.createdAt?.toDate &&
-          p.createdAt.toDate().getTime() >=
-            state.createdAfter.toDate().getTime());
-
-      const inStock = !state.inStockOnly || p.stock > 0;
-
-      const inPriceRange =
-        (state.minPrice === null || p.price >= state.minPrice) &&
-        (state.maxPrice === null || p.price <= state.maxPrice);
-
-      return inText && inCat && inDate && inStock && inPriceRange;
-    });
-  }, [products, state]);
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-
-  const handleIntersect = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0];
-      if (entry.isIntersecting && visibleCount < filteredProducts.length) {
-        setVisibleCount((prev) => prev + 10);
-      }
-    },
-    [filteredProducts.length, visibleCount]
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleIntersect, {
-      rootMargin: '100px',
-    });
-
-    if (observerRef.current) observer.observe(observerRef.current);
-
-    return () => {
-      if (observerRef.current) observer.unobserve(observerRef.current);
-    };
-  }, [handleIntersect]);
-
-  if (loading) return <LoadingProgress />;
+    fetchLanding();
+  }, []);
 
   return (
     <PageWithStickyFilters>
-      <Typography variant="h4" gutterBottom>
-        Products
-      </Typography>
-
-      <UserProductFilters
-        state={state}
-        dispatch={dispatch}
-        categories={categories}
-      />
-
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          maxHeight: 'calc(100vh - 240px)',
-          px: 1,
-        }}
-      >
-        {visibleProducts.length === 0 ? (
-          <Typography>No products found.</Typography>
-        ) : (
+      <Box textAlign="center" mt={4} mb={2}>
+        {landingData ? (
           <>
-            {visibleProducts.map((p) => (
-              <Box mb={2} key={p.id}>
-                <ProductCardContainer
-                  product={p}
-                  disabled={false}
-                  onConfirmDelete={() => {}}
+            <Typography variant="h4" align="center" gutterBottom>
+              {landingData.title}
+            </Typography>
+
+            <Typography variant="subtitle1" align="center" gutterBottom>
+              {landingData.subtitle}
+            </Typography>
+
+            {landingData.bannerImageUrl && (
+              <Box my={2}>
+                <img
+                  src={landingData.bannerImageUrl}
+                  alt="Banner"
+                  style={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
                 />
               </Box>
-            ))}
-            {visibleCount < filteredProducts.length && (
-              <Box ref={observerRef} display="flex" justifyContent="center" mt={2}>
-                <CircularProgress />
+            )}
+
+            {landingData.ctaButtonText && (
+              <Box mt={2}>
+                <Button
+                  variant="contained"
+                  component={Link}
+                  to={landingData.ctaButtonLink || '/'}
+                >
+                  {landingData.ctaButtonText}
+                </Button>
               </Box>
             )}
+
+            {/* Add spacing before best sellers section */}
+            <Box mt={6}>
+              <Typography variant="h4" gutterBottom>
+                🛍️ Best Sellers
+              </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                component={Link}
+                to="/products"
+              >
+                View All Products
+              </Button>
+            </Box>
           </>
+        ) : (
+          <LoadingProgress />
         )}
       </Box>
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="success" variant="filled">
-          Product added to cart
-        </Alert>
-      </Snackbar>
+      {/* 🔻 Future: Render actual best sellers component */}
+      {/* <BestSellers /> */}
     </PageWithStickyFilters>
   );
-}
+};
+
+export default HomePage;
