@@ -62,20 +62,25 @@ export class OrdersService {
     }));
   }
 
-  async createPaymentIntent(amount: number) {
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        automatic_payment_methods: { enabled: true },
-      });
+async createPaymentIntent(amount: number, ownerName: string, passportId: string) {
+  try {
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        ownerName,
+        passportId,
+      },
+    });
 
-      return {
-        clientSecret: paymentIntent.client_secret,
-      };
-    } catch (error) {
-      console.error('Stripe error:', error);
-      throw new InternalServerErrorException('Failed to create payment intent');
-    }
+    return {
+      clientSecret: paymentIntent.client_secret,
+    };
+  } catch (error) {
+    console.error('Stripe error:', error);
+    throw new InternalServerErrorException('Failed to create payment intent');
   }
+}
+
 }

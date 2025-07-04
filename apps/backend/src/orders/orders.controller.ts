@@ -45,8 +45,8 @@ export class OrdersController {
     });
   }
 
-  @Post('create-payment-intent') // ✅ Add this
-  createPaymentIntent(@Body() body: { amount: number }) {
-    return this.ordersService.createPaymentIntent(body.amount);
-  }
+@Post('create-payment-intent')
+createPaymentIntent(@Body() body: { amount: number; ownerName: string; passportId: string }) {
+  return this.ordersService.createPaymentIntent(body.amount, body.ownerName, body.passportId);
+}
 }
