@@ -1,13 +1,6 @@
-// src/components/ProductCard.tsx
-import {
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  CardActions,
-  Button,
-} from '@mui/material';
-import type { Product } from '../types/firebase';
+import React from 'react';
+import { Card, CardMedia, CardContent, Typography, CardActions, Button } from '@mui/material';
+import type { Product } from '../types/firebase'; // Adjust if needed
 
 type Props = {
   product: Product;
@@ -15,28 +8,25 @@ type Props = {
 
 export default function ProductCard({ product }: Props) {
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card>
       {product.imageUrl && (
         <CardMedia
           component="img"
           height="180"
           image={product.imageUrl}
           alt={product.name}
-          sx={{ objectFit: 'cover' }}
         />
       )}
-
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
           {product.name}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           ${product.price?.toFixed(2)}
         </Typography>
       </CardContent>
-
       <CardActions>
-        <Button size="small" variant="outlined" fullWidth>
+        <Button size="small" variant="contained">
           View
         </Button>
       </CardActions>
