@@ -94,6 +94,7 @@ const storeLinks = [
     { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
     { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' },
     { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
+     { label: 'Landing Page', icon: <HomeIcon />, path: '/admin/landingPage' }, 
   ];
 
   const drawerContent = (

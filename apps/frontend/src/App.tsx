@@ -177,7 +177,7 @@ export default function App() {
         }
       >
         <Route index element={<AdminHomePage />} />
-        <Route path="landindPage" element={<AdminLandingPage />} />
+        <Route path="landingPage" element={<AdminLandingPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="users" element={<AdminUsersPage />} />
