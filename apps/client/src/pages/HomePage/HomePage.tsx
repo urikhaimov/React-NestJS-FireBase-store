@@ -6,7 +6,6 @@ import {
   useTheme,
   useMediaQuery,
   Divider,
-  Container,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
@@ -45,15 +44,9 @@ export default function HomePage() {
 
   return (
     <PageWithStickyFilters>
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ py: 4, px: isMobile ? 2 : 6 }}>
         {/* Header Content */}
-        <Box
-          textAlign="center"
-          sx={{
-            px: isMobile ? 1 : 3,
-            overflowX: 'hidden',
-          }}
-        >
+        <Box textAlign="center">
           {landingData.title && (
             <Typography variant="h4" fontWeight="bold" gutterBottom>
               {landingData.title}
@@ -61,7 +54,11 @@ export default function HomePage() {
           )}
 
           {landingData.subtitle && (
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              gutterBottom
+            >
               {landingData.subtitle}
             </Typography>
           )}
@@ -70,9 +67,11 @@ export default function HomePage() {
             <Box
               mt={2}
               sx={{
-                maxHeight: { xs: 200, md: 300 },
-                overflow: 'hidden',
+                width: '100%',
+                height: { xs: 180, sm: 240, md: 300 },
                 borderRadius: 2,
+                overflow: 'hidden',
+                position: 'relative',
               }}
             >
               <img
@@ -80,24 +79,30 @@ export default function HomePage() {
                 alt="Banner"
                 style={{
                   width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: 8,
                 }}
               />
-            </Box>
-          )}
 
-          {landingData.ctaButtonText && (
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              sx={{ mt: 3 }}
-              component={Link}
-              to={landingData.ctaButtonLink || '/products'}
-            >
-              {landingData.ctaButtonText}
-            </Button>
+              {landingData.ctaButtonText && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  component={Link}
+                  to={landingData.ctaButtonLink || '/products'}
+                  sx={{
+                    position: 'absolute',
+                    bottom: 16,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    boxShadow: 3,
+                  }}
+                >
+                  {landingData.ctaButtonText}
+                </Button>
+              )}
+            </Box>
           )}
         </Box>
 
@@ -152,7 +157,7 @@ export default function HomePage() {
         <Box mt={6}>
           <BestSellers />
         </Box>
-      </Container>
+      </Box>
     </PageWithStickyFilters>
   );
 }

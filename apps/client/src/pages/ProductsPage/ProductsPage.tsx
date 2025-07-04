@@ -76,7 +76,7 @@ export default function ProductsPage() {
         !state.createdAfter ||
         (p.createdAt?.toDate &&
           p.createdAt.toDate().getTime() >=
-            state.createdAfter.toDate().getTime());
+          state.createdAfter.toDate().getTime());
 
       const inStock = !state.inStockOnly || p.stock > 0;
 
@@ -132,6 +132,22 @@ export default function ProductsPage() {
           overflowY: 'auto',
           maxHeight: 'calc(100vh - 240px)',
           px: 1,
+          position: 'relative',
+          scrollbarWidth: 'thin', // Firefox
+          scrollbarColor: '#888 #2c2c2c', // Firefox
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: '#2c2c2c',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#888',
+            borderRadius: '8px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: '#aaa',
+          },
         }}
       >
         {visibleProducts.length === 0 ? (
@@ -143,7 +159,7 @@ export default function ProductsPage() {
                 <ProductCardContainer
                   product={p}
                   disabled={false}
-                  onConfirmDelete={() => {}}
+                  onConfirmDelete={() => { }}
                 />
               </Box>
             ))}
