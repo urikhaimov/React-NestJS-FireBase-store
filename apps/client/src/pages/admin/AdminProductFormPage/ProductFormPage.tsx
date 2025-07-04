@@ -7,16 +7,25 @@ import {
   Typography,
   Paper,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
 } from '@mui/material';
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
-import { getProductById, createProduct, updateProduct, arraysEqual } from '../../../api/products';
+
+import {
+  getProductById,
+  createProduct,
+  updateProduct,
+  arraysEqual,
+} from '../../../api/products';
 import { fetchCategories } from '../../../api/categories';
 import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
-import type { Category } from '../../../types/firebase';
 import { productFormReducer, initialProductFormState } from './productFormReducer';
 import { generateId } from '../../../utils/generateId';
 import FormTextField from '../../../components/FormTextField';
@@ -37,11 +46,7 @@ export default function ProductFormPage({ mode }: Props) {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { user } = useSafeAuth();
-
-  const [categories, setCategories] = useState<Category[]>([]);
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
-  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
-  const [showLimitSnackbar, setShowLimitSnackbar] = useState(false);
 
   const {
     register,
@@ -49,41 +54,60 @@ export default function ProductFormPage({ mode }: Props) {
     control,
     reset,
     formState: { isSubmitting, errors },
-  } = useForm<FormState>();
+  } = useForm<FormState>({
+    defaultValues: {
+      name: '',
+      description: '',
+      price: '',
+      stock: '',
+      categoryId: '',
+    },
+  });
 
   useEffect(() => {
-    fetchCategories().then(setCategories);
+    fetchCategories().then((categories) =>
+      dispatch({ type: 'SET_CATEGORIES', payload: categories })
+    );
   }, []);
 
   useEffect(() => {
-    if (mode === 'edit' && productId && categories.length) {
-      getProductById(productId).then((product) => {
-        if (product) {
-          reset({
-            name: product.name,
-            description: product.description,
-            price: product.price.toString(),
-            stock: product.stock.toString(),
-            categoryId: product.categoryId,
-          });
+    const load = async () => {
+      if (mode === 'edit' && productId && state.categories.length > 0) {
+        const product = await getProductById(productId);
+        if (!product) return;
 
-          const images: CombinedImage[] = product.images.map((url) => ({
-            id: url,
-            url,
-            type: 'existing',
-          }));
+        dispatch({ type: 'SET_PRODUCT', payload: product });
 
-          dispatch({ type: 'SET_PRODUCT', payload: product });
-          dispatch({ type: 'SET_COMBINED_IMAGES', payload: images });
-        }
-      });
-    }
-  }, [mode, productId, categories, reset]);
+        reset({
+          name: product.name,
+          description: product.description,
+          price: product.price.toString(),
+          stock: product.stock.toString(),
+          categoryId: product.categoryId ?? '',
+        });
+
+        const images: CombinedImage[] = product.images.map((url) => ({
+          id: url,
+          url,
+          type: 'existing',
+        }));
+
+        dispatch({ type: 'SET_COMBINED_IMAGES', payload: images });
+        dispatch({ type: 'SET_READY', payload: true });
+      }
+
+      if (mode === 'add' && state.categories.length > 0) {
+        dispatch({ type: 'SET_READY', payload: true });
+      }
+    };
+
+    load();
+  }, [mode, productId, state.categories.length, reset]);
 
   const handleImageDrop = (acceptedFiles: File[]) => {
     const currentCount = state.combinedImages.length;
     if (currentCount + acceptedFiles.length > 4) {
-      setShowLimitSnackbar(true);
+      dispatch({ type: 'SET_SHOW_LIMIT_SNACKBAR', payload: true });
       return;
     }
 
@@ -109,23 +133,33 @@ export default function ProductFormPage({ mode }: Props) {
 
     if (!user) return;
 
-    const keepImageUrls = state.combinedImages.filter((img) => img.type === 'existing').map((img) => img.url);
-    const newFiles = state.combinedImages.filter((img) => img.type === 'new' && img.file).map((img) => img.file!);
+    const keepImageUrls = state.combinedImages
+      .filter((img) => img.type === 'existing')
+      .map((img) => img.url);
+    const newFiles = state.combinedImages
+      .filter((img) => img.type === 'new' && img.file)
+      .map((img) => img.file!);
 
     if (mode === 'add') {
-      await createProduct({ ...payload, images: [], createdBy: user.uid }, user.uid);
+      await createProduct(
+        { ...payload, images: [], createdBy: user.uid },
+        user.uid
+      );
       navigate('/admin/products');
     }
 
     if (mode === 'edit' && productId && state.product) {
       const existing = state.product;
       const formChanged = Object.keys(payload).some(
-        (key) => payload[key as keyof typeof payload] !== existing[key as keyof typeof payload]
+        (key) =>
+          payload[key as keyof typeof payload] !==
+          existing[key as keyof typeof payload]
       );
-      const imageChanged = !arraysEqual(existing.images, keepImageUrls) || newFiles.length > 0;
+      const imageChanged =
+        !arraysEqual(existing.images, keepImageUrls) || newFiles.length > 0;
 
       if (!formChanged && !imageChanged) {
-        setShowSuccessSnackbar(true);
+        dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: true });
         setTimeout(() => navigate('/admin/products'), 1500);
         return;
       }
@@ -136,10 +170,18 @@ export default function ProductFormPage({ mode }: Props) {
         newImageFiles: newFiles,
       });
 
-      setShowSuccessSnackbar(true);
+      dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: true });
       setTimeout(() => navigate('/admin/products'), 1500);
     }
   };
+
+  if (!state.ready) {
+    return (
+      <Box p={3}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box p={3} height="100%" overflow="auto">
@@ -189,16 +231,11 @@ export default function ProductFormPage({ mode }: Props) {
                       },
                     }}
                   >
-                    <ReactQuill
-                      theme="snow"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    <ReactQuill theme="snow" value={field.value} onChange={field.onChange} />
                   </Box>
                 </Box>
               )}
             />
-
 
             <FormTextField
               label="Price"
@@ -213,22 +250,23 @@ export default function ProductFormPage({ mode }: Props) {
               register={register('stock')}
               errorObject={errors.stock}
             />
-
             <FormTextField
               label="Category"
-              select
-              register={register('categoryId', { required: 'Category is required' })}
+              name="categoryId"
+              control={control}
               errorObject={errors.categoryId}
-            >
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </MenuItem>
-              ))}
-            </FormTextField>
+              isSelect
+              required
+              selectOptions={state.categories.map((cat) => ({
+                label: cat.name,
+                value: cat.id,
+              }))}
+            />
 
             <Box>
-              <Typography variant="subtitle2" mb={1}>Product Images</Typography>
+              <Typography variant="subtitle2" mb={1}>
+                Product Images
+              </Typography>
               <ImageUploader
                 images={state.combinedImages}
                 onDrop={handleImageDrop}
@@ -260,23 +298,39 @@ export default function ProductFormPage({ mode }: Props) {
       </Paper>
 
       <Snackbar
-        open={showSuccessSnackbar}
+        open={state.showSuccessSnackbar}
         autoHideDuration={3000}
-        onClose={() => setShowSuccessSnackbar(false)}
+        onClose={() =>
+          dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: false })
+        }
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setShowSuccessSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() =>
+            dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: false })
+          }
+          severity="success"
+          sx={{ width: '100%' }}
+        >
           Product saved successfully
         </Alert>
       </Snackbar>
 
       <Snackbar
-        open={showLimitSnackbar}
+        open={state.showLimitSnackbar}
         autoHideDuration={4000}
-        onClose={() => setShowLimitSnackbar(false)}
+        onClose={() =>
+          dispatch({ type: 'SET_SHOW_LIMIT_SNACKBAR', payload: false })
+        }
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setShowLimitSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() =>
+            dispatch({ type: 'SET_SHOW_LIMIT_SNACKBAR', payload: false })
+          }
+          severity="error"
+          sx={{ width: '100%' }}
+        >
           You can only upload up to 4 images.
         </Alert>
       </Snackbar>
