@@ -80,7 +80,7 @@ export default function HomePage() {
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover',
+                  objectFit: 'contain', // ✅ shows full image
                 }}
               />
 
