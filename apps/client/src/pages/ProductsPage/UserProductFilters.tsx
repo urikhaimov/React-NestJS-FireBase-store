@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { Dayjs } from 'dayjs';
 import { Category } from '../../types/firebase';
-import { State, Action } from './LocalReducer';
+import { State, Action } from '../ProductsPage/LocalReducer';
 import UserFilterLayout from '../../components/UserFilterLayout';
 import UserFilterTextField from '../../components/UserFilterTextField';
 import UserFilterDatePicker from '../../components/UserFilterDatePicker';
