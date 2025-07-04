@@ -1,3 +1,4 @@
+// PageWithStickyFilters.tsx
 import React from 'react';
 import { Box } from '@mui/material';
 
@@ -5,17 +6,36 @@ export default function PageWithStickyFilters({ children }: { children: React.Re
   return (
     <Box
       sx={{
-        mx: 'auto',
         width: '100%',
         maxWidth: '1200px',
+        mx: 'auto',
         px: 2,
-        py: 10,
+        mt: 10,
+        py: 4,
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh', // ✅ Ensures full page height
-        overflowY: 'auto',  // ✅ Enables scroll when content exceeds height
+        minHeight: '80vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        position: 'relative',
+        scrollbarWidth: 'thin', // Firefox
+        scrollbarColor: '#888 #2c2c2c', // Firefox
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          backgroundColor: '#2c2c2c',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: '#888',
+          borderRadius: '8px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          backgroundColor: '#aaa',
+        },
       }}
     >
+
       {children}
     </Box>
   );
