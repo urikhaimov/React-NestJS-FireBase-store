@@ -27,23 +27,48 @@ export default function OrderDetailPage() {
   const { user, ready } = useAuthReady();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleDownloadInvoice = async () => {
-    const input = document.getElementById('invoice-content');
-    if (!input) return;
+    if (!order) return;
+    setDownloading(true);
+    try {
+      const input = document.getElementById('invoice-content');
+      if (!input) return;
 
-    const canvas = await html2canvas(input);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF();
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+      });
 
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`invoice-${order.id}.pdf`);
+      // Header
+      pdf.setFontSize(18);
+      pdf.text('My Online Store', pageWidth / 2, 15, { align: 'center' });
+
+      pdf.setFontSize(14);
+      pdf.text(`Invoice #${order.id}`, 14, 30);
+      pdf.setFontSize(12);
+      pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 38);
+      pdf.text(`Customer: ${order.ownerName}`, 14, 46);
+
+      // Image below header
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 10, 55, imgWidth, imgHeight);
+      pdf.save(`invoice-${order.id}.pdf`);
+    } catch (err) {
+      console.error('Invoice generation failed:', err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -134,14 +159,20 @@ export default function OrderDetailPage() {
 
           <Divider sx={{ my: 2 }} />
 
-          <Button
-            onClick={handleDownloadInvoice}
-            variant="outlined"
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            Download Invoice (PDF)
-          </Button>
+          <Box mt={2} textAlign="center">
+            <Button
+              onClick={handleDownloadInvoice}
+              variant="outlined"
+              fullWidth
+              disabled={downloading}
+            >
+              {downloading ? (
+                <CircularProgress size={20} sx={{ color: 'inherit' }} />
+              ) : (
+                'Download Invoice (PDF)'
+              )}
+            </Button>
+          </Box>
         </Paper>
       </Box>
     </PageWithStickyFilters>
