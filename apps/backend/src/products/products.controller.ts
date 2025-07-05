@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { ProductsService, ProductWithOrder } from './products.service';
 import { ReorderProductsDto } from './dto/reorder-products.dto';
+import { Req, UseGuards } from '@nestjs/common';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard'; // or wherever your guard is
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
@@ -50,8 +52,9 @@ export class ProductsController {
     return this.productsService.findById(id);
   }
 
-  @Patch('reorder')
-  async reorderProducts(@Body() dto: ReorderProductsDto) {
-    return this.productsService.reorderProducts(dto.orderList);
+  @Post('reorder')
+  @UseGuards(FirebaseAuthGuard) // or your custom guard
+  async reorder(@Body() dto: ReorderProductsDto, @Req() req: any) {
+   return this.productsService.reorder(dto.orderList); // ✅ correct
   }
 }

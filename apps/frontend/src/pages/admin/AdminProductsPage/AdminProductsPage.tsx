@@ -167,7 +167,7 @@ export default function AdminProductsPage() {
         >
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
-              items={visibleProducts.map((p) => p.id)} // ✅ Fix here
+              items={state.products.map((p) => p.id)} // ✅ CORRECT
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts.map((product) => (

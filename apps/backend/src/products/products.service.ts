@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { adminDb } from '../firebase/firebase-admin';
-
+import { InternalServerErrorException } from '@nestjs/common';
 export interface ProductWithOrder {
   id: string;
   order?: number;
@@ -72,21 +72,22 @@ export class ProductsService {
     return { message: 'Product deleted' };
   }
 
-async reorderProducts(orderList: { id: string; order: number }[]) {
-  const batch = adminDb.batch();
+async reorder(orderList: { id: string; order: number }[]): Promise<{ success: boolean }> {
+    if (!orderList.length) return { success: true };
 
-  for (const { id, order } of orderList) {
-    const ref = this.productsRef.doc(id);
-    batch.update(ref, { order });
+    try {
+      const batch = this.productsRef.firestore.batch();
+
+      for (const { id, order } of orderList) {
+        const ref = this.productsRef.doc(id);
+        batch.update(ref, { order });
+      }
+
+      await batch.commit();
+      return { success: true };
+    } catch (error) {
+      console.error('🔥 Failed to reorder products:', error);
+      throw new InternalServerErrorException('Failed to reorder products');
+    }
   }
-
-  await batch.commit();
-
-  const snapshot = await this.productsRef.orderBy('order').get();
-  return snapshot.docs.map((doc) => ({
-    ...(doc.data() as ProductWithOrder),
-    id: doc.id,
-  }));
-}
-
 }

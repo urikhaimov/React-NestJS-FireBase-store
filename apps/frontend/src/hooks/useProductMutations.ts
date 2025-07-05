@@ -3,8 +3,14 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  reorderProducts,
+
 } from '../api/products';
+
+import {
+
+  reorderProducts,
+} from '../api/productApi';
+
 import type { Product, NewProduct } from '../types/firebase';
 import type { UpdateProductPayload } from '../api/products';
 
