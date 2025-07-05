@@ -46,10 +46,14 @@ export function reorderProducts(
   orderList: { id: string; order: number }[],
   token: string
 ) {
-  return axios.put('/api/products/reorder', orderList, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  return axios.post(
+    '/api/products/reorder',
+    { orderList }, // ✅ wrapped object to match DTO
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 }
 

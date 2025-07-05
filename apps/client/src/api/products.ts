@@ -126,23 +126,6 @@ export async function deleteProduct(productId: string): Promise<void> {
   await deleteDoc(refDoc);
 }
 
-// -------------------------
-// Reorder Products via API
-// -------------------------
-export const reorderProducts = (
-  orderList: { id: string; order: number }[],
-  token: string
-) => {
-  return axios.patch(
-    '/api/products/reorder',
-    { orderList },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-};
 
 // -------------------------
 // Utility: Array equality check
