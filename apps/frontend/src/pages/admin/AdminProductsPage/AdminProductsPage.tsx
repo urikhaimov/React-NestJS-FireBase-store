@@ -22,6 +22,11 @@ import { auth } from '../../../firebase';
 import LoadingProgress from '../../../components/LoadingProgress';
 import { useProductMutations } from '../../../hooks/useProductMutations';
 import { useInView } from 'react-intersection-observer';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import type { Product } from '../../../types/firebase';
+import { db } from '../../../firebase';
+import { debounce } from 'lodash';
+
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -104,26 +109,28 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    async function loadProducts() {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          console.error('❌ No user found — make sure user is logged in before fetching products');
-          return;
-        }
-        const token = await user.getIdToken();
-        const { data } = await fetchAllProducts(token);
-        dispatch({ type: 'SET_PRODUCTS', payload: data });
-      } catch (error) {
-        console.error('❌ Failed to fetch products:', error);
-      } finally {
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }
-    }
-    loadProducts();
-  }, []);
+    const q = query(collection(db, 'products'), orderBy('order'));
 
+    // Debounced state update
+    const debouncedSetProducts = debounce((products: Product[]) => {
+      dispatch({ type: 'SET_PRODUCTS_SORTED', payload: products });
+    }, 300); // adjust debounce time as needed
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const products: Product[] = snapshot.docs.map((doc) => ({
+
+        ...(doc.data() as Product),
+        id: doc.id,
+      }));
+
+      debouncedSetProducts(products);
+    });
+
+    return () => {
+      unsubscribe();
+      debouncedSetProducts.cancel();
+    };
+  }, []);
   useEffect(() => {
     if (inView && visibleCount < filteredProducts.length) {
       const timeout = setTimeout(() => {
