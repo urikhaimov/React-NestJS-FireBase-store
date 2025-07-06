@@ -1,6 +1,6 @@
-// src/pages/admin/AdminProductsPage/LocalReducer.ts
 import { Dayjs } from 'dayjs';
 import { Product } from '../../../types/firebase';
+
 
 export interface State {
   products: Product[];
@@ -14,10 +14,13 @@ export interface State {
   pageSize: number;
   successMessage: string;
   pendingDelete: Product | null;
+  reorderPending: boolean; // 🆕
 }
+
 
 export type Action =
   | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | { type: 'SET_PRODUCTS_SORTED'; payload: Product[] }
   | { type: 'ADD_PRODUCTS'; payload: Product[] }
   | { type: 'REMOVE_PRODUCT'; payload: string }
   | { type: 'SET_LAST_DOC'; payload: any }
@@ -33,7 +36,9 @@ export type Action =
   | { type: 'SET_SUCCESS_MESSAGE'; payload: string }
   | { type: 'CLEAR_SUCCESS_MESSAGE' }
   | { type: 'SET_PENDING_DELETE'; payload: Product | null }
+  | { type: 'SET_REORDER_PENDING'; payload: boolean } // 🆕
   | { type: 'RESET_PAGINATION'; payload: State };
+
 
 export const initialState: State = {
   products: [],
@@ -47,7 +52,9 @@ export const initialState: State = {
   pageSize: 10,
   successMessage: '',
   pendingDelete: null,
+  reorderPending: false, // 🆕
 };
+
 
 export function resetPagination(state: State): State {
   return {
@@ -63,6 +70,11 @@ export function resetPagination(state: State): State {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_PRODUCTS':
+      return {
+        ...state,
+        products: [...action.payload], // unsorted — used after reorder
+      };
+    case 'SET_PRODUCTS_SORTED':
       return {
         ...state,
         products: [...action.payload].sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999)),
@@ -106,6 +118,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, pendingDelete: action.payload };
     case 'RESET_PAGINATION':
       return { ...action.payload };
+    case 'SET_REORDER_PENDING':
+      return { ...state, reorderPending: action.payload };
     default:
       return state;
   }

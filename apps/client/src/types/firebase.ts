@@ -30,3 +30,7 @@ export type NewProduct = {
 };
 
 
+export type ProductOrderItem = {
+  id: string;
+  order: number;
+};

@@ -1,3 +1,4 @@
+
 import {
   collection,
   addDoc,
@@ -37,6 +38,22 @@ export type UpdateProductPayload = {
   keepImageUrls: string[];
   newImageFiles?: File[]; // ✅ Files to upload
 };
+export function fetchAllProducts(token: string) {
+  return axios.get('/api/products', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function fetchProductById(id: string, token: string) {
+  return axios.get(`/products/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+// ✅ Add this:
 
 // -------------------------
 // Create Product
@@ -126,7 +143,20 @@ export async function deleteProduct(productId: string): Promise<void> {
   await deleteDoc(refDoc);
 }
 
-
+export function reorderProducts(
+  orderList: { id: string; order: number }[],
+  token: string
+) {
+  return axios.post(
+    '/api/products/reorder',
+    { orderList }, // ✅ wrapped object to match DTO
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
 // -------------------------
 // Utility: Array equality check
 // -------------------------

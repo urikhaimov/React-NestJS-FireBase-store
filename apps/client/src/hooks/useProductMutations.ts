@@ -3,13 +3,9 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-
+  reorderProducts
 } from '../api/products';
 
-import {
-
-  reorderProducts,
-} from '../api/productApi';
 
 import type { Product, NewProduct } from '../types/firebase';
 import type { UpdateProductPayload } from '../api/products';
@@ -63,9 +59,10 @@ export const useProductMutations = () => {
     mutationFn: async ({ orderList, token }: ReorderPayload) => {
       return reorderProducts(orderList, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
+    // ❌ remove this for now to prevent snapping back
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries({ queryKey: ['products'] });
+    // },
     onError: (error) => {
       console.error('Reorder products failed:', error);
     },

@@ -1,5 +1,4 @@
-// src/pages/admin/AdminProductsPage/AdminProductsPage.tsx
-import React, { useReducer, useMemo, useEffect, useState, useRef } from 'react';
+import React, { useReducer, useMemo, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Divider,
@@ -11,15 +10,14 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { DndContext, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import SortableProductCard from './SortableProductCard';
 import AdminProductFilters from './AdminProductFilters';
-import { fetchAllProducts } from '../../../api/productApi';
+import { fetchAllProducts } from '../../../api/products';
 import { auth } from '../../../firebase';
 import LoadingProgress from '../../../components/LoadingProgress';
 import { useProductMutations } from '../../../hooks/useProductMutations';
@@ -33,9 +31,7 @@ export default function AdminProductsPage() {
   const navigate = useNavigate();
   const { reorder } = useProductMutations();
   const { ref: sentinelRef, inView } = useInView();
-
   const sensors = useSensors(useSensor(PointerSensor));
-  const [reorderPending, setReorderPending] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
 
@@ -50,10 +46,7 @@ export default function AdminProductsPage() {
       const matchesDate =
         !state.createdAfter ||
         (p.createdAt &&
-          p.createdAt.toDate().getTime() >= state.createdAfter.valueOf()
-
-
-        );
+          p.createdAt.toDate().getTime() >= state.createdAfter.valueOf());
       return matchesText && matchesCategory && matchesDate;
     });
   }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
@@ -64,7 +57,7 @@ export default function AdminProductsPage() {
     navigate('/admin/products/add');
   };
 
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -75,17 +68,19 @@ export default function AdminProductsPage() {
 
     const reorderedVisible = arrayMove(visibleProducts, oldIndex, newIndex);
 
-    // Now, update the full list based on new visible order
     const updatedProducts = [...state.products];
     reorderedVisible.forEach((product, idx) => {
       const globalIndex = updatedProducts.findIndex((p) => p.id === product.id);
       if (globalIndex !== -1) {
-        updatedProducts.splice(globalIndex, 1); // remove old
-        updatedProducts.splice(idx + state.products.indexOf(visibleProducts[0]), 0, product); // insert at new
+        updatedProducts.splice(globalIndex, 1);
+        updatedProducts.splice(
+          idx + state.products.indexOf(visibleProducts[0]),
+          0,
+          product
+        );
       }
     });
 
-    // Remove duplicates after splicing (safe fallback)
     const uniqueUpdated = Array.from(
       new Map(updatedProducts.map((p) => [p.id, p])).values()
     );
@@ -96,18 +91,17 @@ export default function AdminProductsPage() {
     const token = await auth.currentUser?.getIdToken();
 
     if (token) {
-      setReorderPending(true);
+      dispatch({ type: 'SET_REORDER_PENDING', payload: true });
       try {
         await reorder.mutateAsync({ orderList, token });
         setSnackbarOpen(true);
       } catch (error) {
         console.error('❌ Reorder failed', error);
       } finally {
-        setReorderPending(false);
+        dispatch({ type: 'SET_REORDER_PENDING', payload: false });
       }
     }
   };
-
 
   useEffect(() => {
     async function loadProducts() {
@@ -118,7 +112,6 @@ export default function AdminProductsPage() {
           console.error('❌ No user found — make sure user is logged in before fetching products');
           return;
         }
-
         const token = await user.getIdToken();
         const { data } = await fetchAllProducts(token);
         dispatch({ type: 'SET_PRODUCTS', payload: data });
@@ -128,9 +121,9 @@ export default function AdminProductsPage() {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     }
-
     loadProducts();
   }, []);
+
   useEffect(() => {
     if (inView && visibleCount < filteredProducts.length) {
       const timeout = setTimeout(() => {
@@ -157,41 +150,32 @@ export default function AdminProductsPage() {
       {state.loading ? (
         <LoadingProgress />
       ) : (
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: 'auto', // ✅ enable scrolling
-            maxHeight: '40vh', // ✅ ensures height to trigger scroll
-            px: 2,
-          }}
-        >
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: '40vh', px: 2 }}>
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
-              items={state.products.map((p) => p.id)} // ✅ CORRECT
+              items={state.products.map((p) => p.id)}
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts.map((product) => (
                 <Box
                   key={product.id}
                   mb={2}
-                  sx={{ opacity: reorderPending ? 0.4 : 1 }}
+                  sx={{ opacity: state.reorderPending ? 0.4 : 1 }}
                 >
                   <SortableProductCard
                     product={product}
-                    disabled={reorderPending}
+                    disabled={state.reorderPending}
                     onConfirmDelete={(id) =>
                       dispatch({ type: 'REMOVE_PRODUCT', payload: id })
                     }
                   />
                 </Box>
               ))}
-
               <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
                 {visibleCount < filteredProducts.length && <CircularProgress size={28} />}
               </Box>
             </SortableContext>
           </DndContext>
-
         </Box>
       )}
 
@@ -201,7 +185,9 @@ export default function AdminProductsPage() {
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity="success" variant="filled">Product order updated</Alert>
+        <Alert severity="success" variant="filled">
+          Product order updated
+        </Alert>
       </Snackbar>
     </AdminStickyPage>
   );

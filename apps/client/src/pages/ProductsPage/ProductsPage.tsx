@@ -19,7 +19,7 @@ import { useCartStore } from '../../store/cartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { reducer, initialState } from './LocalReducer';
 import UserProductFilters from './UserProductFilters';
-import { fetchAllProducts } from '../../api/productApi';
+import { fetchAllProducts } from '../../api/products';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
