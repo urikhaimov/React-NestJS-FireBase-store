@@ -12,7 +12,6 @@ import {
   FormControl,
   Switch,
   FormControlLabel,
-  CircularProgress,
   Snackbar,
   Alert,
   useMediaQuery,
@@ -22,11 +21,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { useThemeStore } from '../../../store/themeStore';
-import { useStoreContext } from '../../../stores/useStoreContext';
 import LogoUploader from '../../../components/LogoUploader';
 import BackgroundUploader from '../../../components/BackgroundUploader';
 import ThemePreviewCard from '../../../components/ThemePreviewCard';
 import ThemeImportExportPanel from '../../../components/ThemeImportExportPanel';
+import LoadingProgress from '../../../components/LoadingProgress';
 
 const FONT_OPTIONS = ['Roboto', 'Open Sans', 'Montserrat', 'Poppins'];
 
@@ -52,56 +51,58 @@ function reducer(state: UIState, action: Action): UIState {
 }
 
 export default function AdminThemePage() {
-  const { storeId } = useStoreContext();
   const { themeSettings, updateTheme } = useThemeStore();
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
-
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const {
     control,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { isDirty, isSubmitting },
   } = useForm({
     defaultValues: themeSettings,
   });
 
-  useEffect(() => {
-    const fetchTheme = async () => {
-      const docRef = doc(db, 'stores', storeId, 'theme', 'settings');
+useEffect(() => {
+  const fetchTheme = async () => {
+    try {
+      const docRef = doc(db, 'theme', 'settings');
       const snapshot = await getDoc(docRef);
       if (snapshot.exists()) {
         const data = snapshot.data();
-        reset(data);
-        updateTheme(data);
+        reset(data);        // updates form values
+        updateTheme(data); // updates global store
       }
+    } catch (err) {
+      console.error('Failed to load theme:', err);
+    } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
-    };
-    fetchTheme();
-  }, [storeId, reset, updateTheme]);
+    }
+  };
+
+  fetchTheme();
+}, [reset, updateTheme]);
 
   const onSubmit = async (form: any) => {
-    const docRef = doc(db, 'stores', storeId, 'theme', 'settings');
+    const docRef = doc(db, 'theme', 'settings'); // global path
     await setDoc(docRef, form, { merge: true });
     updateTheme(form);
     dispatch({ type: 'SET_TOAST', payload: true });
   };
 
-  if (state.loading) return <Box p={3}><CircularProgress /></Box>;
+  if (state.loading) return <LoadingProgress />;
 
   return (
     <Box
-    sx={{
-      p: isMobile ? 2 : 4,
-      height: '60vh',
-      overflowY: 'auto',
-      maxHeight: 'calc(100vh - 64px)', // adjust if your header height is different
-    }}
-  >
+      sx={{
+        p: isMobile ? 2 : 4,
+        height: '60vh',
+        overflowY: 'auto',
+        maxHeight: 'calc(100vh - 64px)',
+      }}
+    >
       <Typography variant="h5" gutterBottom>
         Customize Your Store Theme
       </Typography>
@@ -136,7 +137,12 @@ export default function AdminThemePage() {
               name="primaryColor"
               control={control}
               render={({ field }) => (
-                <TextField label="Primary Color" type="color" fullWidth {...field} />
+                <TextField
+                  label="Primary Color"
+                  type="color"
+                  fullWidth
+                  {...field}
+                />
               )}
             />
           </Grid>
@@ -146,7 +152,12 @@ export default function AdminThemePage() {
               name="secondaryColor"
               control={control}
               render={({ field }) => (
-                <TextField label="Secondary Color" type="color" fullWidth {...field} />
+                <TextField
+                  label="Secondary Color"
+                  type="color"
+                  fullWidth
+                  {...field}
+                />
               )}
             />
           </Grid>
@@ -160,7 +171,9 @@ export default function AdminThemePage() {
                 render={({ field }) => (
                   <Select {...field} label="Font">
                     {FONT_OPTIONS.map((font) => (
-                      <MenuItem key={font} value={font}>{font}</MenuItem>
+                      <MenuItem key={font} value={font}>
+                        {font}
+                      </MenuItem>
                     ))}
                   </Select>
                 )}
@@ -173,12 +186,7 @@ export default function AdminThemePage() {
               name="homepageLayout"
               control={control}
               render={({ field }) => (
-                <TextField
-                  select
-                  label="Homepage Layout"
-                  fullWidth
-                  {...field}
-                >
+                <TextField select label="Homepage Layout" fullWidth {...field}>
                   <MenuItem value="hero">Hero</MenuItem>
                   <MenuItem value="carousel">Carousel</MenuItem>
                   <MenuItem value="grid">Grid</MenuItem>
@@ -202,7 +210,10 @@ export default function AdminThemePage() {
               name="backgroundImageUrl"
               control={control}
               render={({ field }) => (
-                <BackgroundUploader value={field.value} onChange={field.onChange} />
+                <BackgroundUploader
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               )}
             />
           </Grid>
