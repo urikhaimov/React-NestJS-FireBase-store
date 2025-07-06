@@ -1,6 +1,6 @@
 // src/pages/admin/AdminThemePage.tsx
-import React, { useEffect, useReducer } from 'react';
-import { Box, Typography, Grid, Button, Snackbar, Alert, useMediaQuery, useTheme } from '@mui/material';
+import { useEffect, useReducer } from 'react';
+import { Grid, Button, Snackbar, Alert, useMediaQuery, useTheme } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';

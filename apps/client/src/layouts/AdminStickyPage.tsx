@@ -12,11 +12,10 @@ export default function AdminStickyPage({ title, filters, children }: AdminStick
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
+        height: 'calc(100vh - 264px)', // Adjust for header height
       }}
     >
-      {/* Sticky Top Filters */}
+      {/* Sticky Top Header / Filters */}
       <Box
         sx={{
           position: 'sticky',
@@ -37,10 +36,9 @@ export default function AdminStickyPage({ title, filters, children }: AdminStick
       <Box
         sx={{
           flexGrow: 1,
-          overflow: 'hidden',
+          overflowY: 'auto',
           px: { xs: 1, sm: 2 },
           pb: 4,
-          height:'50vh'
         }}
       >
         {children}

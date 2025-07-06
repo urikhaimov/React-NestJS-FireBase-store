@@ -2,8 +2,21 @@
 import React, { useEffect } from 'react';
 import { Grid, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { Controller } from 'react-hook-form';
-
-const FONT_OPTIONS = ['Roboto', 'Open Sans', 'Montserrat', 'Poppins'];
+const FONT_OPTIONS = [
+  'Roboto',
+  'Open Sans',
+  'Montserrat',
+  'Poppins',
+  'Lato',
+  'Inter',
+  'Rubik',
+  'Nunito',
+  'Work Sans',
+  'Raleway',
+  'Merriweather',
+  'Ubuntu',
+  'Manrope',
+];
 
 interface Props {
   control: any;
@@ -11,9 +24,8 @@ interface Props {
 
 function loadGoogleFont(font: string) {
   const formatted = font.replace(/ /g, '+');
-  const href = `https://fonts.googleapis.com/css2?family=${formatted}&display=swap`;
+  const href = `https://fonts.googleapis.com/css2?family=${formatted}:wght@400;500;600;700&display=swap`;
 
-  // Avoid duplicates
   if (!document.querySelector(`link[href="${href}"]`)) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
