@@ -1,4 +1,5 @@
 // src/components/ReorderComponent.tsx
+import React from 'react';
 import {
   DndContext,
   closestCenter,
@@ -20,13 +21,13 @@ import {
   CardMedia,
   IconButton,
   LinearProgress,
+  Tooltip,
   useMediaQuery,
   useTheme,
-  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import React from 'react';
+import { motion } from 'framer-motion';
 import type { CombinedImage } from './ImageUploader';
 
 interface Props {
@@ -59,7 +60,13 @@ export default function ReorderComponent({ images, onReorder, onRemove }: Props)
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={images.map((img) => img.id)} strategy={verticalListSortingStrategy}>
-        <Box display="flex" flexWrap="wrap" gap={2} justifyContent={isMobile ? 'center' : 'flex-start'}>
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          gap={2}
+          justifyContent={isMobile ? 'center' : 'flex-start'}
+          sx={{ position: 'relative' }}
+        >
           {images.map((img) => (
             <SortableImage key={img.id} image={img} onRemove={() => onRemove(img.id)} />
           ))}
@@ -77,10 +84,19 @@ function SortableImage({ image, onRemove }: { image: CombinedImage; onRemove: ()
     transition,
     touchAction: 'manipulation' as const,
     zIndex: isDragging ? 1300 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+    cursor: 'grab',
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      layout // ✨ Animate layout changes!
+      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+      {...attributes}
+      {...listeners}
+    >
       <Card
         sx={{
           width: { xs: 90, sm: 100 },
@@ -136,6 +152,6 @@ function SortableImage({ image, onRemove }: { image: CombinedImage; onRemove: ()
           <DeleteIcon fontSize="small" />
         </IconButton>
       </Card>
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 // src/components/ImageUploader.tsx
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -8,7 +9,6 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useDropzone } from 'react-dropzone';
-import React, { useRef, useEffect } from 'react';
 import ReorderComponent from './ReorderComponent';
 
 export interface CombinedImage {
@@ -29,6 +29,9 @@ export interface ImageUploaderProps {
   onCloseSnackbar: () => void;
 }
 
+const MAX_IMAGES = 10;
+const MAX_FILE_SIZE_MB = 5;
+
 export default function ImageUploader({
   images,
   onDrop,
@@ -38,22 +41,29 @@ export default function ImageUploader({
   showSnackbar,
   onCloseSnackbar,
 }: ImageUploaderProps) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'image/*': [] },
-    multiple: true,
-    maxSize: 5 * 1024 * 1024,
-  });
-
   const createdPreviewsRef = useRef<string[]>([]);
 
+  const handleDropRejected = () => {
+    onCloseSnackbar();
+    alert(`❌ Some files were rejected. Only images up to ${MAX_FILE_SIZE_MB}MB are allowed.`);
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    onDropRejected: handleDropRejected,
+    accept: { 'image/*': [] },
+    multiple: true,
+    maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
+    disabled: images.length >= MAX_IMAGES,
+  });
+
+  // Track and auto-cleanup preview blob URLs
   useEffect(() => {
-    const blobs = images.filter((img) => img.url.startsWith('blob:'));
-    for (const blob of blobs) {
-      if (!createdPreviewsRef.current.includes(blob.url)) {
-        createdPreviewsRef.current.push(blob.url);
-      }
-    }
+    const newBlobs = images
+      .map((img) => img.url)
+      .filter((url) => url.startsWith('blob:') && !createdPreviewsRef.current.includes(url));
+
+    createdPreviewsRef.current.push(...newBlobs);
   }, [images]);
 
   useEffect(() => {
@@ -68,10 +78,16 @@ export default function ImageUploader({
         Product Images
       </Typography>
 
-      <ReorderComponent images={images} onReorder={onReorderAll} onRemove={onRemove} />
+      <ReorderComponent
+        images={images}
+        onReorder={onReorderAll}
+        onRemove={onRemove}
+      />
 
       <Paper
-        {...getRootProps()}
+        {...getRootProps({
+          onClick: (e: React.MouseEvent) => e.stopPropagation(),
+        })}
         elevation={3}
         sx={{
           py: 3,
@@ -80,14 +96,20 @@ export default function ImageUploader({
           borderColor: isDragActive ? 'primary.main' : 'grey.400',
           textAlign: 'center',
           color: isDragActive ? 'primary.main' : 'grey.600',
-          cursor: 'pointer',
+          cursor: images.length >= MAX_IMAGES ? 'not-allowed' : 'pointer',
           mt: 2,
+          opacity: images.length >= MAX_IMAGES ? 0.4 : 1,
+          pointerEvents: images.length >= MAX_IMAGES ? 'none' : 'auto',
         }}
       >
         <input {...getInputProps()} />
         <CloudUploadIcon fontSize="large" />
         <Typography mt={1}>
-          {isDragActive ? 'Drop files here...' : 'Drag or click to upload (max 5MB)'}
+          {isDragActive
+            ? 'Drop files here...'
+            : images.length >= MAX_IMAGES
+            ? `Upload limit reached (${MAX_IMAGES})`
+            : `Drag or click to upload (max ${MAX_FILE_SIZE_MB}MB each)`}
         </Typography>
       </Paper>
 
