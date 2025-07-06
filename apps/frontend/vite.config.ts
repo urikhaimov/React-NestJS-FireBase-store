@@ -1,11 +1,14 @@
 import path from 'path';
-import { defineConfig } from 'vite';
 import { createBaseViteConfig } from '../../libs/config/vite/base.config';
 
 export default createBaseViteConfig({
   resolve: {
     alias: {
-      '@config': path.resolve(__dirname, '../../libs/config'),
-    },
-  },
+      '@': path.resolve(__dirname, 'src'),
+      '@components': path.resolve(__dirname, 'src/components'),
+      '@pages': path.resolve(__dirname, 'src/pages'),
+      '@utils': path.resolve(__dirname, 'src/utils'),
+      '@config': path.resolve(__dirname, '../../libs/config')
+    }
+  }
 });

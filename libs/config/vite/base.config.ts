@@ -4,15 +4,17 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { csp } from './csp';
 
+const rootDir = process.cwd(); // safer than hardcoding apps/frontend
+
 export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
   return defineConfig({
     plugins: [react()],
     resolve: {
       alias: {
-        '@': path.resolve(process.cwd(), 'src'),
-        '@components': path.resolve(process.cwd(), 'src/components'),
-        '@pages': path.resolve(process.cwd(), 'src/pages'),
-        '@utils': path.resolve(process.cwd(), 'src/utils'),
+        '@': path.resolve(rootDir, 'src'),
+        '@components': path.resolve(rootDir, 'src/components'),
+        '@pages': path.resolve(rootDir, 'src/pages'),
+        '@utils': path.resolve(rootDir, 'src/utils'),
       },
     },
     server: {
@@ -28,7 +30,10 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
       },
     },
     build: {
-      outDir: path.resolve(process.cwd(), '../../dist', path.basename(process.cwd())),
+      outDir: path.resolve(rootDir, '../../dist/frontend'),
+      rollupOptions: {
+        external: ['motion-dom'], // only if you're not using it directly
+      },
     },
     ...overrides,
   });

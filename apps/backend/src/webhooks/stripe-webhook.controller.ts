@@ -6,7 +6,7 @@ import { Response, Request } from 'express';
 @Controller('webhooks')
 export class WebhooksController {
   private stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: '2025-05-28.basil', // use a valid official version
+    apiVersion: '2025-06-30.basil', // use a valid official version
   });
 
   @Post('stripe')

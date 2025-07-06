@@ -11,13 +11,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@libs/*": ["libs/*"],
-      "@config/*": ["libs/config/*"],
-      "@frontend/*": ["apps/frontend/src/*"],
-      "@backend/*": ["apps/backend/src/*"]
-    }
+    "jsx": "react-jsx"
   }
 }
