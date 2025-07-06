@@ -4,7 +4,7 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer';
 import LeftMenu from '../components/LeftMenu/LeftMenu';
 import { useAuthStore } from '../stores/useAuthStore';
-
+import ScrollContainer from '../components/ScrollContainer';
 interface Props {
   children: React.ReactNode;
 }
@@ -23,7 +23,9 @@ export default function Layout({ children }: Props) {
       <Header />
 
       <Box display="flex" flex="1" minHeight={0} overflow="hidden">
-        <LeftMenu />
+        <ScrollContainer sx={{ width: 260 }}>
+          <LeftMenu />
+        </ScrollContainer>
 
         <Box
           flex="1"
