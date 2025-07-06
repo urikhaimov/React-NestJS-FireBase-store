@@ -1,20 +1,25 @@
 import {
   Card,
   CardContent,
-  CardMedia,
   CardActions,
   Typography,
   Button,
   Box,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
 import type { Props } from './CardReducer';
 
-export default function ProductCard({ product }: Props) {
+type ProductCardProps = Props & {
+  onAddToCart?: () => void;
+};
+
+export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
 
   const handleAddToCart = () => {
     addToCart(product);
+    onAddToCart?.(); // trigger snackbar if provided
   };
 
   return (
@@ -27,18 +32,31 @@ export default function ProductCard({ product }: Props) {
         p: 1,
       }}
     >
-      <CardMedia
-        component="img"
+      {/* ✅ Image with link */}
+      <Box
+        component={Link}
+        to={`/product/${product.id}`}
         sx={{
           width: 80,
           height: 80,
+          display: 'inline-block',
           borderRadius: 1,
-          objectFit: 'cover',
+          overflow: 'hidden',
           mx: { xs: 'auto', sm: 0 },
         }}
-        image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
-        alt={product.name}
-      />
+      >
+        <Box
+          component="img"
+          src={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+          alt={product.name}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      </Box>
 
       <CardContent
         sx={{
@@ -47,9 +65,20 @@ export default function ProductCard({ product }: Props) {
           px: 1,
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          component={Link}
+          to={`/product/${product.id}`}
+          sx={{
+            textDecoration: 'none',
+            color: 'inherit',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
           {product.name}
         </Typography>
+
         <Typography variant="body2" color="text.secondary">
           ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
         </Typography>

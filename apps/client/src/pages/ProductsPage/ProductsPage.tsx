@@ -9,11 +9,11 @@ import React, {
 import {
   Box,
   Typography,
-  Divider,
   CircularProgress,
-  Alert,
   Snackbar,
+  Alert,
 } from '@mui/material';
+
 import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../store/cartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
@@ -23,7 +23,7 @@ import { fetchAllProducts } from '../../api/products';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
-import type { Product } from '../../types/firebase'; // Adjust this import path as needed
+import type { Product } from '../../types/firebase';
 
 export default function ProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -32,10 +32,12 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const observerRef = useRef(null);
+
   const { user, ready } = useAuthReady();
   const { data: categories = [] } = useCategories();
   const cart = useCartStore();
 
+  // Fetch products once auth is ready
   useEffect(() => {
     const loadProducts = async () => {
       if (!ready || !user) return;
@@ -60,9 +62,8 @@ export default function ProductsPage() {
     loadProducts();
   }, [ready, user]);
 
+  // Filter products based on UI filters
   const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-
     return products.filter((p) => {
       const txt = state.search.toLowerCase();
       const inText =
@@ -75,8 +76,7 @@ export default function ProductsPage() {
       const inDate =
         !state.createdAfter ||
         (p.createdAt?.toDate &&
-          p.createdAt.toDate().getTime() >=
-          state.createdAfter.toDate().getTime());
+          p.createdAt.toDate().getTime() >= state.createdAfter.toDate().getTime());
 
       const inStock = !state.inStockOnly || p.stock > 0;
 
@@ -90,6 +90,7 @@ export default function ProductsPage() {
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
+  // Infinite scroll logic
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const entry = entries[0];
@@ -133,8 +134,8 @@ export default function ProductsPage() {
           maxHeight: 'calc(100vh - 240px)',
           px: 1,
           position: 'relative',
-          scrollbarWidth: 'thin', // Firefox
-          scrollbarColor: '#888 #2c2c2c', // Firefox
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#888 #2c2c2c',
           '&::-webkit-scrollbar': {
             width: '8px',
           },
@@ -159,7 +160,8 @@ export default function ProductsPage() {
                 <ProductCardContainer
                   product={p}
                   disabled={false}
-                  onConfirmDelete={() => { }}
+                  onAddToCart={() => setSnackbarOpen(true)} 
+                  onConfirmDelete={() => {}}
                 />
               </Box>
             ))}
