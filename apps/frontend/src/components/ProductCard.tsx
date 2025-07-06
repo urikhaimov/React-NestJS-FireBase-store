@@ -14,13 +14,14 @@ type Props = {
 };
 
 export default function ProductCard({ product }: Props) {
+  console.log('Rendering ProductCard:', product);
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {product.imageUrl && (
+      {product.imageUrl && product.images && (
         <CardMedia
           component="img"
           height="180"
-          image={product.imageUrl}
+          image={product.images.length > 0 ? product.images[0] : product.imageUrl }
           alt={product.name}
           sx={{ objectFit: 'cover' }}
         />
