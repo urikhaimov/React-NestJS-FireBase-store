@@ -15,25 +15,27 @@ export default function SortableProductCard({
   disabled = false,
 }: Props) {
   const {
+    setNodeRef,
     attributes,
     listeners,
-    setNodeRef,
     transform,
     transition,
-    isDragging, // optional for style feedback
+    isDragging,
   } = useSortable({ id: product.id });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     touchAction: 'manipulation',
-    opacity: isDragging ? 0.5 : 1, // ✨ optional visual cue
+    opacity: isDragging ? 0.5 : 1,
     cursor: 'grab',
+    willChange: 'transform', // 🔥 ensures smoothness
   };
 
   return (
     <div ref={setNodeRef} style={style}>
       <ProductAdminCard
+        key={product.id} // ✅ key must be here too
         product={product}
         onConfirmDelete={onConfirmDelete}
         disabled={disabled}
