@@ -1,2 +1,2 @@
-import AdminThemePage from "./ThemePage";
+import AdminThemePage from "./AdminThemePage";
 export default AdminThemePage;
