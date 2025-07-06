@@ -1,4 +1,3 @@
-// src/components/BestSellers.tsx
 import {
   collection,
   getDocs,
@@ -11,10 +10,15 @@ import {
 } from 'firebase/firestore';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { db } from '../firebase';
-import { Box, Grid, Typography } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Typography,
+  Container,
+  Button,
+} from '@mui/material';
 import ProductCard from './ProductCard';
 import LoadingProgress from './LoadingProgress';
-import InfiniteScroll from 'react-infinite-scroll-component';
 import type { Product } from '../types/firebase';
 
 const PAGE_SIZE = 4;
@@ -35,7 +39,9 @@ export default function BestSellers() {
       ...(doc.data() as Product),
       id: doc.id,
     }));
-    const nextCursor = snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : undefined;
+
+    const nextCursor =
+      snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : undefined;
 
     return { products, nextCursor };
   };
@@ -50,13 +56,18 @@ export default function BestSellers() {
     queryKey: ['best-sellers'],
     queryFn: fetchProducts,
     initialPageParam: undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.products.length || lastPage.products.length < PAGE_SIZE) {
+        return undefined; // 🛑 no more pages
+      }
+      return lastPage.nextCursor;
+    },
   });
 
   const allProducts = data?.pages.flatMap((page) => page.products) || [];
 
   return (
-    <Box my={8} px={{ xs: 2, md: 6 }}>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
       <Typography variant="h5" gutterBottom textAlign="center">
         🛍️ Best Sellers
       </Typography>
@@ -68,12 +79,7 @@ export default function BestSellers() {
           No best sellers found.
         </Typography>
       ) : (
-        <InfiniteScroll
-          dataLength={allProducts.length}
-          next={fetchNextPage}
-          hasMore={!!hasNextPage}
-          loader={<LoadingProgress />}
-        >
+        <>
           <Grid container spacing={3}>
             {allProducts.map((product) => (
               <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
@@ -81,10 +87,20 @@ export default function BestSellers() {
               </Grid>
             ))}
           </Grid>
-        </InfiniteScroll>
-      )}
 
-      {isFetchingNextPage && <LoadingProgress />}
-    </Box>
+          {hasNextPage && (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <Button
+                variant="outlined"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Loading...' : 'Load More'}
+              </Button>
+            </Box>
+          )}
+        </>
+      )}
+    </Container>
   );
 }

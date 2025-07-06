@@ -11,7 +11,7 @@ export default function PageWithStickyFilters({ children }: { children: React.Re
         py: 4,
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        minHeight: 'clac(100vh - 264px)', // Adjust based on your header/footer height
         overflowX: 'hidden',
         mx: 'auto',
         mt: 10,
