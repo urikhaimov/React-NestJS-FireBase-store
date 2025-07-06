@@ -1,5 +1,5 @@
 // src/components/ReorderComponent.tsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -21,13 +21,12 @@ import {
   CardMedia,
   IconButton,
   LinearProgress,
-  Tooltip,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { motion } from 'framer-motion';
 import type { CombinedImage } from './ImageUploader';
 
 interface Props {
@@ -46,28 +45,41 @@ export default function ReorderComponent({ images, onReorder, onRemove }: Props)
     })
   );
 
+  const [localImages, setLocalImages] = useState(images);
+const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setLocalImages(images);
+  }, [images]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (
+        JSON.stringify(localImages.map((i) => i.id)) !==
+        JSON.stringify(images.map((i) => i.id))
+      ) {
+        onReorder(localImages);
+      }
+    }, 400); // debounce delay
+  }, [localImages]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = images.findIndex((img) => img.id === active.id);
-    const newIndex = images.findIndex((img) => img.id === over.id);
+    const oldIndex = localImages.findIndex((img) => img.id === active.id);
+    const newIndex = localImages.findIndex((img) => img.id === over.id);
     if (oldIndex !== -1 && newIndex !== -1) {
-      onReorder(arrayMove(images, oldIndex, newIndex));
+      setLocalImages(arrayMove(localImages, oldIndex, newIndex));
     }
   };
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={images.map((img) => img.id)} strategy={verticalListSortingStrategy}>
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          gap={2}
-          justifyContent={isMobile ? 'center' : 'flex-start'}
-          sx={{ position: 'relative' }}
-        >
-          {images.map((img) => (
+      <SortableContext items={localImages.map((img) => img.id)} strategy={verticalListSortingStrategy}>
+        <Box display="flex" flexWrap="wrap" gap={2} justifyContent={isMobile ? 'center' : 'flex-start'}>
+          {localImages.map((img) => (
             <SortableImage key={img.id} image={img} onRemove={() => onRemove(img.id)} />
           ))}
         </Box>
@@ -84,19 +96,10 @@ function SortableImage({ image, onRemove }: { image: CombinedImage; onRemove: ()
     transition,
     touchAction: 'manipulation' as const,
     zIndex: isDragging ? 1300 : 'auto',
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
   };
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      style={style}
-      layout // ✨ Animate layout changes!
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      {...attributes}
-      {...listeners}
-    >
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card
         sx={{
           width: { xs: 90, sm: 100 },
@@ -152,6 +155,6 @@ function SortableImage({ image, onRemove }: { image: CombinedImage; onRemove: ()
           <DeleteIcon fontSize="small" />
         </IconButton>
       </Card>
-    </motion.div>
+    </div>
   );
 }
