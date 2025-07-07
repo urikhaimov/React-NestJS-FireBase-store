@@ -1,11 +1,11 @@
-// MyOrdersScrollContainer.tsx
+// src/components/ScrollContainer.tsx
 import { Box } from '@mui/material';
 import { styled } from '@mui/system';
 
-const MyOrdersScrollContainer = styled(Box)(({ theme }) => ({
+const ScrollContainer = styled(Box)(({ theme }) => ({
   overflowY: 'auto',
-  maxHeight: 'calc(100vh - 240px)',
-  paddingRight: theme.spacing(1),
+  overflowX: 'hidden',
+  maxHeight: '100vh',
   scrollbarWidth: 'thin',
   scrollbarColor: '#888 #2c2c2c',
 
@@ -24,4 +24,4 @@ const MyOrdersScrollContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-export default MyOrdersScrollContainer;
+export default ScrollContainer;
