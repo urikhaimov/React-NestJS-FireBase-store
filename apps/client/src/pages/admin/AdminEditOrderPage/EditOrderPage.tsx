@@ -8,6 +8,8 @@ import {
   Snackbar,
   Alert,
   Grid,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -17,12 +19,17 @@ import { db } from '../../../firebase';
 import FormTextField from '../../../components/FormTextField';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
+
 export default function EditOrderPage() {
   const { id } = useParams();
-  const { user } = useSafeAuth(); // must provide uid or displayName
+  const { user } = useSafeAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
+
   const { control, handleSubmit, reset, getValues } = useForm({
     defaultValues: {
       status: '',
@@ -70,8 +77,6 @@ export default function EditOrderPage() {
 
     try {
       const ref = doc(db, 'orders', id);
-      const oldStatus = getValues('status');
-
       await updateDoc(ref, {
         ...data,
         updatedAt: new Date().toISOString(),
@@ -93,68 +98,132 @@ export default function EditOrderPage() {
   if (error) return <Typography color="error" sx={{ p: 3 }}>{error}</Typography>;
 
   return (
-     <AdminStickyPage title="Edit Order">
-      
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={2}>
-          <FormTextField name="status" label="Order Status" control={control} select>
+    <AdminStickyPage title="Edit Order">
+      <Box
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{ px: { xs: 1, sm: 2 }, py: 2 }}
+      >
+        <Stack spacing={3}>
+          <FormTextField
+            name="status"
+            label="Order Status"
+            control={control}
+            select
+            fullWidth
+          >
             {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map((s) => (
-              <MenuItem key={s} value={s}>{s}</MenuItem>
+              <MenuItem key={s} value={s}>
+                {s}
+              </MenuItem>
             ))}
           </FormTextField>
 
-          <Typography variant="h6">Payment</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <FormTextField name="payment.method" label="Method" control={control} />
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Payment
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="payment.method" label="Method" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormTextField
+                  name="payment.status"
+                  label="Status"
+                  control={control}
+                  select
+                  fullWidth
+                >
+                  {['paid', 'unpaid'].map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </FormTextField>
+              </Grid>
+              <Grid item xs={12}>
+                <FormTextField
+                  name="payment.transactionId"
+                  label="Transaction ID"
+                  control={control}
+                  fullWidth
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={6}>
-              <FormTextField name="payment.status" label="Status" control={control} select>
-                {['paid', 'unpaid'].map((s) => (
-                  <MenuItem key={s} value={s}>{s}</MenuItem>
-                ))}
-              </FormTextField>
-            </Grid>
-            <Grid item xs={12}>
-              <FormTextField name="payment.transactionId" label="Transaction ID" control={control} />
-            </Grid>
-          </Grid>
+          </Box>
 
-          <Typography variant="h6">Shipping Address</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <FormTextField name="shippingAddress.fullName" label="Full Name" control={control} />
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Shipping Address
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="shippingAddress.fullName" label="Full Name" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="shippingAddress.phone" label="Phone" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12}>
+                <FormTextField name="shippingAddress.street" label="Street" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="shippingAddress.city" label="City" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="shippingAddress.postalCode" label="Postal Code" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12}>
+                <FormTextField name="shippingAddress.country" label="Country" control={control} fullWidth />
+              </Grid>
             </Grid>
-            <Grid item xs={6}>
-              <FormTextField name="shippingAddress.phone" label="Phone" control={control} />
-            </Grid>
-            <Grid item xs={12}>
-              <FormTextField name="shippingAddress.street" label="Street" control={control} />
-            </Grid>
-            <Grid item xs={6}>
-              <FormTextField name="shippingAddress.city" label="City" control={control} />
-            </Grid>
-            <Grid item xs={6}>
-              <FormTextField name="shippingAddress.postalCode" label="Postal Code" control={control} />
-            </Grid>
-            <Grid item xs={12}>
-              <FormTextField name="shippingAddress.country" label="Country" control={control} />
-            </Grid>
-          </Grid>
+          </Box>
 
-          <Typography variant="h6">Delivery</Typography>
-          <FormTextField name="delivery.provider" label="Provider" control={control} />
-          <FormTextField name="delivery.trackingNumber" label="Tracking Number" control={control} />
-          <FormTextField name="delivery.eta" label="Estimated Arrival" type="date" control={control} />
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Delivery
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="delivery.provider" label="Provider" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormTextField name="delivery.trackingNumber" label="Tracking Number" control={control} fullWidth />
+              </Grid>
+              <Grid item xs={12}>
+                <FormTextField
+                  name="delivery.eta"
+                  label="Estimated Arrival"
+                  type="date"
+                  control={control}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+          </Box>
 
-          <FormTextField name="notes" label="Admin Notes" control={control} multiline rows={3} />
+          <FormTextField
+            name="notes"
+            label="Admin Notes"
+            control={control}
+            multiline
+            rows={3}
+            fullWidth
+          />
 
-          <Button type="submit" variant="contained">Update Order</Button>
+          <Box textAlign={isMobile ? 'center' : 'left'}>
+            <Button type="submit" variant="contained" size="large" fullWidth={isMobile}>
+              Update Order
+            </Button>
+          </Box>
         </Stack>
-      </form>
+      </Box>
 
-      <Snackbar open={toastOpen} autoHideDuration={4000} onClose={() => setToastOpen(false)}>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={() => setToastOpen(false)}
+      >
         <Alert onClose={() => setToastOpen(false)} severity="success">
           Order updated
         </Alert>
