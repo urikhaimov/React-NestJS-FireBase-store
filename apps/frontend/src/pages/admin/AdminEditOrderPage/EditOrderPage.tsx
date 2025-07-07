@@ -1,3 +1,4 @@
+// src/pages/admin/EditOrderPage.tsx
 import {
   Box,
   Button,
@@ -6,60 +7,85 @@ import {
   Stack,
   Snackbar,
   Alert,
+  Grid,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import FormTextField from '../../../components/FormTextField';
+import { useSafeAuth } from '../../../hooks/getSafeAuth';
 
 export default function EditOrderPage() {
   const { id } = useParams();
+  const { user } = useSafeAuth(); // must provide uid or displayName
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
-  const { control, handleSubmit, reset } = useForm();
+  const { control, handleSubmit, reset, getValues } = useForm({
+    defaultValues: {
+      status: '',
+      payment: {
+        method: '',
+        status: '',
+        transactionId: '',
+      },
+      shippingAddress: {
+        fullName: '',
+        phone: '',
+        street: '',
+        city: '',
+        postalCode: '',
+        country: '',
+      },
+      delivery: {
+        provider: '',
+        trackingNumber: '',
+        eta: '',
+      },
+      notes: '',
+    },
+  });
 
   useEffect(() => {
-    if (!id) {
-      setError('Missing order ID');
-      return;
-    }
-
     const fetchOrder = async () => {
       try {
-        const ref = doc(db, 'orders', id);
+        const ref = doc(db, 'orders', id!);
         const snap = await getDoc(ref);
-        if (!snap.exists()) {
-          throw new Error('Order not found');
-        }
-
-        const data = snap.data();
-        reset(data); // You may need zod/yup transform here if complex
+        if (!snap.exists()) throw new Error('Order not found');
+        reset(snap.data());
       } catch (err) {
         console.error('❌ Failed to fetch order:', err);
-        setError('Could not load order data.');
+        setError('Could not load order');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchOrder();
+    if (id) fetchOrder();
   }, [id, reset]);
 
   const onSubmit = async (data: any) => {
-    if (!id) return;
+    if (!id || !user) return;
 
     try {
-      await updateDoc(doc(db, 'orders', id), {
+      const ref = doc(db, 'orders', id);
+      const oldStatus = getValues('status');
+
+      await updateDoc(ref, {
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
+        statusHistory: arrayUnion({
+          status: data.status,
+          timestamp: new Date().toISOString(),
+          changedBy: user.name || user.uid,
+        }),
       });
+
       setToastOpen(true);
     } catch (err) {
       console.error('❌ Failed to update order:', err);
-      setError('Failed to update order.');
+      setError('Failed to update order');
     }
   };
 
@@ -76,48 +102,61 @@ export default function EditOrderPage() {
         <Stack spacing={2}>
           <FormTextField name="status" label="Order Status" control={control} select>
             {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map((s) => (
-              <MenuItem key={s} value={s}>
-                {s}
-              </MenuItem>
+              <MenuItem key={s} value={s}>{s}</MenuItem>
             ))}
           </FormTextField>
 
-          <FormTextField
-            name="delivery.trackingNumber"
-            label="Tracking Number"
-            control={control}
-          />
-          <FormTextField
-            name="delivery.provider"
-            label="Delivery Provider"
-            control={control}
-          />
-          <FormTextField
-            name="delivery.eta"
-            label="Estimated Delivery Date"
-            control={control}
-            type="date"
-          />
+          <Typography variant="h6">Payment</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <FormTextField name="payment.method" label="Method" control={control} />
+            </Grid>
+            <Grid item xs={6}>
+              <FormTextField name="payment.status" label="Status" control={control} select>
+                {['paid', 'unpaid'].map((s) => (
+                  <MenuItem key={s} value={s}>{s}</MenuItem>
+                ))}
+              </FormTextField>
+            </Grid>
+            <Grid item xs={12}>
+              <FormTextField name="payment.transactionId" label="Transaction ID" control={control} />
+            </Grid>
+          </Grid>
 
-          <FormTextField
-            name="notes"
-            label="Internal Notes"
-            control={control}
-            multiline
-            rows={3}
-          />
+          <Typography variant="h6">Shipping Address</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <FormTextField name="shippingAddress.fullName" label="Full Name" control={control} />
+            </Grid>
+            <Grid item xs={6}>
+              <FormTextField name="shippingAddress.phone" label="Phone" control={control} />
+            </Grid>
+            <Grid item xs={12}>
+              <FormTextField name="shippingAddress.street" label="Street" control={control} />
+            </Grid>
+            <Grid item xs={6}>
+              <FormTextField name="shippingAddress.city" label="City" control={control} />
+            </Grid>
+            <Grid item xs={6}>
+              <FormTextField name="shippingAddress.postalCode" label="Postal Code" control={control} />
+            </Grid>
+            <Grid item xs={12}>
+              <FormTextField name="shippingAddress.country" label="Country" control={control} />
+            </Grid>
+          </Grid>
 
-          <Button type="submit" variant="contained">
-            Update Order
-          </Button>
+          <Typography variant="h6">Delivery</Typography>
+          <FormTextField name="delivery.provider" label="Provider" control={control} />
+          <FormTextField name="delivery.trackingNumber" label="Tracking Number" control={control} />
+          <FormTextField name="delivery.eta" label="Estimated Arrival" type="date" control={control} />
+
+          <FormTextField name="notes" label="Admin Notes" control={control} multiline rows={3} />
+
+          <Button type="submit" variant="contained">Update Order</Button>
         </Stack>
       </form>
 
-      <Snackbar
-        open={toastOpen}
-        autoHideDuration={4000}
-        onClose={() => setToastOpen(false)}
-      >
+      <Snackbar open={toastOpen} autoHideDuration={4000} onClose={() => setToastOpen(false)}>
         <Alert onClose={() => setToastOpen(false)} severity="success">
           Order updated
         </Alert>
