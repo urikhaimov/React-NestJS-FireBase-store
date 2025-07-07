@@ -8,6 +8,7 @@ export interface AppUser {
   name?: string;
   role: Role;
    photoURL?: string;
+   
 }
 
 
