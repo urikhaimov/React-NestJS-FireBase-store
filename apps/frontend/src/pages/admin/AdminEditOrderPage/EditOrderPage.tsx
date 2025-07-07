@@ -16,7 +16,7 @@ import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import FormTextField from '../../../components/FormTextField';
 import { useSafeAuth } from '../../../hooks/getSafeAuth';
-
+import AdminStickyPage from '../../../layouts/AdminStickyPage';
 export default function EditOrderPage() {
   const { id } = useParams();
   const { user } = useSafeAuth(); // must provide uid or displayName
@@ -93,10 +93,8 @@ export default function EditOrderPage() {
   if (error) return <Typography color="error" sx={{ p: 3 }}>{error}</Typography>;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        Edit Order
-      </Typography>
+     <AdminStickyPage title="Edit Order">
+      
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2}>
@@ -161,6 +159,6 @@ export default function EditOrderPage() {
           Order updated
         </Alert>
       </Snackbar>
-    </Box>
+    </AdminStickyPage>
   );
 }
