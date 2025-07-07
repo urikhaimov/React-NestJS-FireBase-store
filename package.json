@@ -6,13 +6,13 @@
     "libs/*"
   ],
   "scripts": {
-    "precommit": "lint-staged",
     "dev": "concurrently \"npm:dev:*\"",
     "dev:frontend": "npm run dev --workspace apps/frontend",
     "dev:backend": "npm run start:dev --workspace apps/backend",
     "build": "concurrently \"npm run build --workspace apps/frontend\" \"npm run build --workspace apps/backend\"",
     "lint": "concurrently \"npm run lint --workspace apps/frontend\" \"npm run lint --workspace apps/backend\"",
-    "start:dev": "nest start --watch"
+    "start:dev": "nest start --watch",
+    "precommit": "lint-staged"
   },
   "lint-staged": {
     "*.{json,mdx}": "npx prettier --write",
