@@ -14,8 +14,15 @@ export interface OrderData {
   fullName: string;
   address: string;
   createdAt?: any;
+  updatedAt?: any;
+  status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  delivery?: {
+    trackingNumber?: string;
+    provider?: string;
+    eta?: string;
+  };
+  notes?: string;
 }
-
 export async function saveOrder(order: OrderData) {
   const ordersRef = collection(db, 'orders');
   const docRef = await addDoc(ordersRef, {

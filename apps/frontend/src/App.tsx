@@ -32,6 +32,7 @@ import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLogsPage from './pages/admin/AdminLogsPage';
+import EditOrderPage from './pages/admin/AdminEditOrderPage';
 import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
 import AdminHomePage from './pages/admin/AdminHomePage';
 
@@ -60,10 +61,10 @@ export default function App() {
   const theme = createTheme(getThemeFromSettings(themeSettings));
 
   // Firebase auth init
-  useEffect(() => {
-    const unsubscribe = initializeAuth();
-    return () => unsubscribe();
-  }, [initializeAuth]);
+useEffect(() => {
+  const unsubscribe = useAuthStore.getState().initializeAuth();
+   return unsubscribe;
+}, []);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -179,6 +180,7 @@ export default function App() {
         <Route path="landingPage" element={<AdminLandingPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="orders/:id" element={<EditOrderPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="logs" element={<AdminLogsPage />} />
         <Route path="products" element={<AdminProductsPage />} />
