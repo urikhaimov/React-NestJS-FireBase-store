@@ -1,12 +1,13 @@
 import { User, UserCredential } from 'firebase/auth';
 
 import type { Role } from '../constants/roles';
+
 export interface AppUser {
   uid: string;
   email: string;
-  name: string;
+  name?: string;
   role: Role;
-  photoURL?: string; // ✅ add this line
+   photoURL?: string;
 }
 
 
