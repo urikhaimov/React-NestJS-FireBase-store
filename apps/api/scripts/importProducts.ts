@@ -3,9 +3,11 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
+import { IProduct } from '@app/types/product.type';
 
 // ✅ Load Service Account
-const serviceAccount = require('../serviceAccountKey.json'); // 👈 update path
+const serviceAccountFile = path.resolve(__dirname, '../serviceAccountKey.json');
+const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountFile, 'utf-8'));
 
 // ✅ Init Firebase Admin
 initializeApp({
@@ -16,14 +18,14 @@ const db = getFirestore();
 
 // ✅ Load product data
 const productsFile = path.resolve(__dirname, '../mock-products.json');
-const products = JSON.parse(fs.readFileSync(productsFile, 'utf-8'));
+const products: IProduct[] = JSON.parse(fs.readFileSync(productsFile, 'utf-8'));
 
 // ✅ Upload each product
 async function importProducts() {
   const batch = db.batch();
   const productsRef = db.collection('products');
 
-  products.forEach((product: any) => {
+  products.forEach((product: IProduct) => {
     const docRef = productsRef.doc(); // auto-generated ID
     batch.set(docRef, {
       name: product.name,
@@ -34,7 +36,7 @@ async function importProducts() {
       images: product.images,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as IProduct);
   });
 
   await batch.commit();
