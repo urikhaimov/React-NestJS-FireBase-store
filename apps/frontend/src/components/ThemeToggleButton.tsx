@@ -1,20 +1,23 @@
-// src/components/ThemeToggleButton.tsx
-import { Switch, FormControlLabel, SxProps } from '@mui/material';
-import { useThemeContext } from '../context/ThemeContext';
 import React from 'react';
+import { Switch, FormControlLabel, SxProps } from '@mui/material';
+import { useThemeStore } from '../store/themeStore';
 
 type Props = {
-  sx?: SxProps; // <-- add this
+  sx?: SxProps;
 };
 
 export default function ThemeToggleButton({ sx }: Props) {
-  const { mode, toggleMode } = useThemeContext();
+  const { themeSettings, toggleDarkMode } = useThemeStore();
 
   return (
     <FormControlLabel
-      sx={sx} // <-- apply it
+      sx={sx}
       control={
-        <Switch checked={mode === 'dark'} onChange={toggleMode} color="primary" />
+        <Switch
+          checked={themeSettings.darkMode}
+          onChange={toggleDarkMode}
+          color="primary"
+        />
       }
       label="Dark Mode"
     />
