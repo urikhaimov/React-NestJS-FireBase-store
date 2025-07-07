@@ -18,7 +18,10 @@ export class FirebaseAuthGuard implements CanActivate {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       const err = new AppError(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
       logger[ELoggerTypes.ERROR](err.message);
-      throw new UnauthorizedException(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
+
+      throw new UnauthorizedException(
+        ECommonErrors.MISSING_AUTHORIZATION_HEADER,
+      );
     }
 
     const token = authHeader.split(' ')[1];
@@ -27,7 +30,10 @@ export class FirebaseAuthGuard implements CanActivate {
       const decodedToken = await auth().verifyIdToken(token);
 
       // 🔍 Get role from Firestore (users/{uid}.role)
-      const userDoc = await firestore().collection('users').doc(decodedToken.uid).get();
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(decodedToken.uid)
+        .get();
       const role = userDoc.exists ? userDoc.data()?.role || 'user' : 'user';
 
       // ✅ Attach user to request
@@ -38,15 +44,22 @@ export class FirebaseAuthGuard implements CanActivate {
       };
 
       if (process.env.NODE_ENV !== 'production') {
-        logger[ELoggerTypes.INFO](`[FirebaseAuthGuard] Authenticated user`, request.user);
+        logger[ELoggerTypes.INFO](
+          `[FirebaseAuthGuard] Authenticated user`,
+          request.user,
+        );
       }
 
       return true;
     } catch (error) {
-      const err = new AppError(ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED);
+      const err = new AppError(
+        ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,
+      );
       logger[ELoggerTypes.ERROR](err.message);
 
-      throw new UnauthorizedException(ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED);
+      throw new UnauthorizedException(
+        ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,
+      );
     }
   }
 }
