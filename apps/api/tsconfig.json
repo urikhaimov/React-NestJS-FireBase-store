@@ -19,6 +19,17 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "noFallthroughCasesInSwitch": false,
-     "typeRoots": ["./node_modules/@types", "./src/types"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "paths": {
+      "@app/*": ["src/*"],
+      "@app/config/*": ["src/config/*"],
+      "@app/services/*": ["src/services/*"],
+      "@app/controllers/*": ["src/controllers/*"],
+      "@app/models/*": ["src/models/*"],
+      "@app/utils/*": ["src/utils/*"]
+    }
   }
 }
