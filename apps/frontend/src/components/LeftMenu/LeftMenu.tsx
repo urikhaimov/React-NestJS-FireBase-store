@@ -1,5 +1,5 @@
 // src/components/LeftMenu/LeftMenu.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   Drawer,
   Box,
@@ -36,6 +36,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { useCartStore } from '../../store/cartStore';
 import CartDrawer from '../CartDrawer';
 import { useSidebarStore } from '../../stores/useSidebarStore';
+import ScrollContainer from '../ScrollContainer';
 
 export default function LeftMenu() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function LeftMenu() {
   const cartItems = useCartStore((s) => s.items);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isAdmin = !!user && (user.role === 'admin' || user.role === 'superadmin');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -67,25 +68,27 @@ export default function LeftMenu() {
     setExpanded(!isMobile);
   }, [isMobile, setExpanded]);
 
-  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
-    setAnchorEl(event.currentTarget);
+  const handleProfileMenuOpen = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget),
+    [setAnchorEl]
+  );
+  const handleProfileMenuClose = useCallback(() => setAnchorEl(null), [setAnchorEl]);
 
-  const handleProfileMenuClose = () => setAnchorEl(null);
-const storeLinks = [
-  { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
-  {
-    label: 'Cart',
-    icon: (
-      <Badge badgeContent={cartCount} color="secondary">
-        <ShoppingCartIcon />
-      </Badge>
-    ),
-    action: () => openCartDrawer(),
-  },
-  { label: 'Products', icon: <InventoryIcon />, action: () => navigate('/products') }, // ✅ New Link
-  { label: 'My Orders', icon: <ReceiptIcon />, action: () => navigate('/my-orders') },
-  { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
-];
+  const storeLinks = [
+    { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
+    {
+      label: 'Cart',
+      icon: (
+        <Badge badgeContent={cartCount} color="secondary">
+          <ShoppingCartIcon />
+        </Badge>
+      ),
+      action: () => openCartDrawer(),
+    },
+    { label: 'Products', icon: <InventoryIcon />, action: () => navigate('/products') },
+    { label: 'My Orders', icon: <ReceiptIcon />, action: () => navigate('/my-orders') },
+    { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
+  ];
 
   const adminLinks = [
     { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
@@ -94,116 +97,116 @@ const storeLinks = [
     { label: 'Products', icon: <InventoryIcon />, path: '/admin/products' },
     { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' },
     { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
-     { label: 'Landing Page', icon: <HomeIcon />, path: '/admin/landingPage' }, 
+    { label: 'Landing Page', icon: <HomeIcon />, path: '/admin/landingPage' },
   ];
 
   const drawerContent = (
-    <Box
-      width={drawerWidth}
-      height="100%"
-      display="flex"
-      flexDirection="column"
-      sx={{ px: isMobile ? 0 : 1 }}
-    >
-      {!isMobile && (
-        <IconButton onClick={() => setExpanded(!expanded)} sx={{ m: 1 }}>
-          <MenuIcon />
-        </IconButton>
-      )}
-
-      <Divider />
-
-      {user && (
-        <Box
-          display="flex"
-          alignItems="center"
-          gap={1}
-          p={2}
-          sx={{ cursor: 'pointer' }}
-          onClick={handleProfileMenuOpen}
-        >
-          <Avatar
-            src={user.photoURL || '/default-avatar.png'}
-            sx={{ width: 32, height: 32 }}
-          />
-          {showLabel && (
-            <Typography variant="subtitle2" noWrap>
-              {user.name || user.email}
-            </Typography>
-          )}
-        </Box>
-      )}
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleProfileMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    <ScrollContainer>
+      <Box
+        width={drawerWidth}
+        height="100%"
+        display="flex"
+        flexDirection="column"
+        sx={{ px: isMobile ? 0 : 1 }}
       >
-        <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
-          Edit Profile
-        </MenuItem>
-        <MenuItem onClick={() => { logout(); handleProfileMenuClose(); }}>
-          Logout
-        </MenuItem>
-      </Menu>
+        {!isMobile && (
+          <IconButton onClick={() => setExpanded(!expanded)} sx={{ m: 1 }}>
+            <MenuIcon />
+          </IconButton>
+        )}
 
-      <Divider />
-      <List>
-        {storeLinks.map(({ label, icon, action }) => (
-          <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
+        <Divider />
+
+        {user && (
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            p={2}
+            sx={{ cursor: 'pointer' }}
+            onClick={handleProfileMenuOpen}
+          >
+            <Avatar src={user.photoURL || '/default-avatar.png'} sx={{ width: 32, height: 32 }} />
+            {showLabel && (
+              <Typography variant="subtitle2" noWrap>
+                {user.name || user.email}
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleProfileMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
+            Edit Profile
+          </MenuItem>
+          <MenuItem onClick={() => { logout(); handleProfileMenuClose(); }}>
+            Logout
+          </MenuItem>
+        </Menu>
+
+        <Divider />
+        <List>
+          {storeLinks.map(({ label, icon, action }) => (
+            <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={() => {
+                    action();
+                    if (isMobile) closeMobileDrawer();
+                  }}
+                >
+                  <ListItemIcon>{icon}</ListItemIcon>
+                  {showLabel && <ListItemText primary={label} />}
+                </ListItemButton>
+              </ListItem>
+            </Tooltip>
+          ))}
+        </List>
+
+        {isAdmin && (
+          <>
+            <Divider />
+            <List>
+              {adminLinks.map(({ label, icon, path }) => (
+                <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      onClick={() => {
+                        navigate(path);
+                        if (isMobile) closeMobileDrawer();
+                      }}
+                    >
+                      <ListItemIcon>{icon}</ListItemIcon>
+                      {showLabel && <ListItemText primary={label} />}
+                    </ListItemButton>
+                  </ListItem>
+                </Tooltip>
+              ))}
+            </List>
+          </>
+        )}
+
+        <Box flexGrow={1} />
+
+        <Divider />
+        <List>
+          <Tooltip title={!showLabel ? 'Logout' : ''} placement="right">
             <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => {
-                  action();
-                  if (isMobile) closeMobileDrawer();
-                }}
-              >
-                <ListItemIcon>{icon}</ListItemIcon>
-                {showLabel && <ListItemText primary={label} />}
+              <ListItemButton onClick={logout}>
+                <ListItemIcon><LogoutIcon /></ListItemIcon>
+                {showLabel && <ListItemText primary="Logout" />}
               </ListItemButton>
             </ListItem>
           </Tooltip>
-        ))}
-      </List>
-
-      {isAdmin && (
-        <>
-          <Divider />
-          <List>
-            {adminLinks.map(({ label, icon, path }) => (
-              <Tooltip title={!showLabel ? label : ''} placement="right" key={label}>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    onClick={() => {
-                      navigate(path);
-                      if (isMobile) closeMobileDrawer();
-                    }}
-                  >
-                    <ListItemIcon>{icon}</ListItemIcon>
-                    {showLabel && <ListItemText primary={label} />}
-                  </ListItemButton>
-                </ListItem>
-              </Tooltip>
-            ))}
-          </List>
-        </>
-      )}
-
-      <Box flexGrow={1} />
-
-      <List>
-        <Tooltip title={!showLabel ? 'Logout' : ''} placement="right">
-          <ListItem disablePadding>
-            <ListItemButton onClick={logout}>
-              <ListItemIcon><LogoutIcon /></ListItemIcon>
-              {showLabel && <ListItemText primary="Logout" />}
-            </ListItemButton>
-          </ListItem>
-        </Tooltip>
-      </List>
-    </Box>
+        </List>
+      </Box>
+    </ScrollContainer>
   );
 
   return (
