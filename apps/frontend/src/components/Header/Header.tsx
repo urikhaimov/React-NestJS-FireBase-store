@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -66,7 +67,7 @@ const Header: React.FC = () => {
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
-        {/* LEFT: Hamburger menu */}
+        {/* LEFT: Hamburger menu and store name */}
         <Box display="flex" alignItems="center">
           {isMobile && (
             <IconButton
@@ -80,11 +81,11 @@ const Header: React.FC = () => {
             </IconButton>
           )}
           <Typography variant="h6" fontWeight="bold" noWrap component="div">
-            Bunder Shop
+            {themeSettings.storeName || 'My Store'}
           </Typography>
         </Box>
 
-        {/* RIGHT: Actions */}
+        {/* RIGHT: Icons and avatar */}
         <Box display="flex" alignItems="center" gap={1}>
           <IconButton color="inherit" onClick={handleToggleDarkMode}>
             <Brightness4Icon />

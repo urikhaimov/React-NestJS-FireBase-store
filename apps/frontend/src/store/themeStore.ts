@@ -110,18 +110,38 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     }
   },
 
-  toggleDarkMode: async () => {
-    const current = get().themeSettings;
-    const newDarkMode = !current.darkMode;
-    const updated = { ...current, darkMode: newDarkMode };
+toggleDarkMode: async () => {
+  const current = get().themeSettings;
+  const updated = {
+    ...current,
+    darkMode: !current.darkMode,
+    font: current.font || 'Roboto',
+    fontSize: current.fontSize ?? 16,
+    fontWeight: current.fontWeight ?? 400,
+    storeName: current.storeName || 'My Store',
+    logoUrl: current.logoUrl || '',
+    homepageLayout: current.homepageLayout || 'hero',
+    productCardVariant: current.productCardVariant || 'compact',
+    categoryStyle: current.categoryStyle || 'tabs',
+    showSidebar: current.showSidebar ?? true,
+    maxWidth: current.maxWidth || 'xl',
+    stickyHeader: current.stickyHeader ?? true,
+  };
 
-    try {
-      const ref = doc(db, 'theme', 'settings');
-      await setDoc(ref, updated, { merge: true });
-      set({ themeSettings: updated });
-    } catch (error) {
-      set({ error: 'Failed to toggle dark mode' });
-      console.error('❌ Failed to toggle dark mode:', error);
-    }
-  },
+  // ✅ Remove undefined fields before saving
+  const cleanUpdated = Object.fromEntries(
+    Object.entries(updated).filter(([_, v]) => v !== undefined)
+  );
+
+  try {
+    const ref = doc(db, 'theme', 'settings');
+    await setDoc(ref, cleanUpdated, { merge: true });
+    set({ themeSettings: updated });
+  } catch (error) {
+    set({ error: 'Failed to toggle dark mode' });
+    console.error('❌ Failed to toggle dark mode:', error);
+  }
+},
+
+
 }));
