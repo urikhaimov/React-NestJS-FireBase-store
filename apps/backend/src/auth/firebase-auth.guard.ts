@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { auth, firestore } from 'firebase-admin';
 import { Request } from 'express';
+import { AppError, ECommonErrors } from '@app/utils/errors.util';
+import { ELoggerTypes, logger } from '@app/utils/logger.util';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -14,7 +16,9 @@ export class FirebaseAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      const err = new AppError(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
+      logger[ELoggerTypes.ERROR](err.message);
+      throw new UnauthorizedException(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
     }
 
     const token = authHeader.split(' ')[1];
@@ -34,13 +38,15 @@ export class FirebaseAuthGuard implements CanActivate {
       };
 
       if (process.env.NODE_ENV !== 'production') {
-        console.log('[FirebaseAuthGuard] Authenticated user:', request.user);
+        logger[ELoggerTypes.INFO](`[FirebaseAuthGuard] Authenticated user`, request.user);
       }
 
       return true;
     } catch (error) {
-      console.error('[FirebaseAuthGuard] Token verification failed:', error.message);
-      throw new UnauthorizedException('Invalid or expired token');
+      const err = new AppError(ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED);
+      logger[ELoggerTypes.ERROR](err.message);
+
+      throw new UnauthorizedException(ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED);
     }
   }
 }
