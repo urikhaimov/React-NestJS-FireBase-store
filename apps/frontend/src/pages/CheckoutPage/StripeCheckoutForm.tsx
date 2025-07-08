@@ -1,5 +1,5 @@
-// src/pages/checkout/StripeCheckoutForm.tsx
-import React, { useState } from 'react';
+// src/pages/CheckoutPage/StripeCheckoutForm.tsx
+import React, { useReducer } from 'react';
 import {
   Box,
   Button,
@@ -8,14 +8,10 @@ import {
   Alert,
   Typography,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import {
-  useStripe,
-  useElements,
-  PaymentElement,
-} from '@stripe/react-stripe-js';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { useForm } from 'react-hook-form';
 import FormTextField from '../../components/FormTextField';
+import { reducer, initialState } from './StripeFormReducer';
 
 type FormData = {
   ownerName: string;
@@ -25,7 +21,6 @@ type FormData = {
 export default function StripeCheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const navigate = useNavigate();
 
   const {
     register,
@@ -33,16 +28,16 @@ export default function StripeCheckoutForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { loading, error } = state;
 
   const onSubmit = async (data: FormData) => {
     if (!stripe || !elements) {
-      setError('Stripe is not loaded yet');
+      dispatch({ type: 'SET_ERROR', payload: 'Stripe is not ready yet' });
       return;
     }
 
-    setLoading(true);
+    dispatch({ type: 'SET_LOADING', payload: true });
 
     const { error: stripeError } = await stripe.confirmPayment({
       elements,
@@ -56,11 +51,14 @@ export default function StripeCheckoutForm() {
       },
     });
 
-    setLoading(false);
+    dispatch({ type: 'SET_LOADING', payload: false });
 
     if (stripeError) {
       console.error('❌ Payment failed:', stripeError);
-      setError(stripeError.message || 'Payment failed');
+      dispatch({
+        type: 'SET_ERROR',
+        payload: stripeError.message || 'Payment failed',
+      });
     }
   };
 
@@ -73,18 +71,6 @@ export default function StripeCheckoutForm() {
       <Typography variant="subtitle2" gutterBottom>
         Payment Details
       </Typography>
-
-      <Box
-        sx={{
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 2,
-          p: 2,
-          bgcolor: 'background.default',
-        }}
-      >
-        <PaymentElement />
-      </Box>
 
       <FormTextField
         label="Owner Name"
@@ -102,6 +88,18 @@ export default function StripeCheckoutForm() {
         errorObject={errors.passportId}
       />
 
+      <Box
+        sx={{
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 2,
+          p: 2,
+          bgcolor: 'background.default',
+        }}
+      >
+        <PaymentElement />
+      </Box>
+
       <Button
         type="submit"
         variant="contained"
@@ -115,11 +113,11 @@ export default function StripeCheckoutForm() {
       <Snackbar
         open={!!error}
         autoHideDuration={5000}
-        onClose={() => setError(null)}
+        onClose={() => dispatch({ type: 'SET_ERROR', payload: null })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setError(null)}
+          onClose={() => dispatch({ type: 'SET_ERROR', payload: null })}
           severity="error"
           sx={{ width: '100%' }}
         >

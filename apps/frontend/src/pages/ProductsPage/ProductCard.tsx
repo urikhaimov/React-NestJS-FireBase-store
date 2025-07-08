@@ -14,7 +14,10 @@ type ProductCardProps = Props & {
   onAddToCart?: () => void;
 };
 
-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  onAddToCart,
+}: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
 
   const handleAddToCart = () => {
@@ -47,7 +50,9 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       >
         <Box
           component="img"
-          src={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+          src={
+            product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'
+          }
           alt={product.name}
           sx={{
             width: '100%',
@@ -80,7 +85,8 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         </Typography>
 
         <Typography variant="body2" color="text.secondary">
-          ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
+          ${product?.price?.toFixed(2) ?? 'N/A'} • Stock:{' '}
+          {product?.stock ?? 'N/A'}
         </Typography>
       </CardContent>
 

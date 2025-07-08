@@ -1,5 +1,5 @@
 {
-//  "extends": "../../tsconfig.base.json",
+  // "extends": "../../tsconfig.base.json", // Uncomment if you want to inherit base settings
   "references": [
     {
       "path": "./tsconfig.build.json"

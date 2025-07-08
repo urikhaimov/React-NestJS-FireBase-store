@@ -1,3 +1,4 @@
+// src/pages/checkout/CheckoutPage.tsx
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -34,17 +35,20 @@ export default function CheckoutPage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ amount: 1999 }), // in cents
+          body: JSON.stringify({
+            amount: 1999, // in cents
+          }),
         });
 
         if (!res.ok) {
-          throw new Error(`Error fetching client secret: ${res.statusText}`);
+          throw new Error(`Failed: ${res.status} ${res.statusText}`);
         }
 
         const data = await res.json();
+        if (!data.clientSecret) throw new Error('No clientSecret returned');
         setClientSecret(data.clientSecret);
       } catch (err: any) {
-        console.error('Error fetching clientSecret:', err);
+        console.error('❌ Error fetching clientSecret:', err);
         setError(err.message || 'Something went wrong');
       } finally {
         setLoading(false);
@@ -55,47 +59,50 @@ export default function CheckoutPage() {
   }, []);
 
   return (
-   <Box
-  sx={{
-    minHeight: 'calc(100vh - 64px)', // assuming header is 64px
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    px: 2,
-    py: 4,
-  }}
->
-  <Paper elevation={1} sx={{ p: 3, width: '100%', maxWidth: 480 }}>
-    <Typography variant="h6" mb={2}>
-      Checkout
-    </Typography>
+    <Box
+      sx={{
+        minHeight: 'calc(100vh - 64px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        py: 4,
+      }}
+    >
+      <Paper elevation={1} sx={{ p: 3, width: '100%', maxWidth: 480 }}>
+        <Typography variant="h6" mb={2}>
+          Checkout
+        </Typography>
 
-    {loading ? (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-        <CircularProgress />
-      </Box>
-    ) : clientSecret ? (
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <StripeCheckoutForm />
-      </Elements>
-    ) : (
-      <Typography color="error">
-        Failed to load payment form. Please try again later.
-      </Typography>
-    )}
-  </Paper>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress />
+          </Box>
+        ) : clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <StripeCheckoutForm />
+          </Elements>
+        ) : (
+          <Typography color="error">
+            Failed to load payment form. Please try again later.
+          </Typography>
+        )}
+      </Paper>
 
-  <Snackbar
-    open={!!error}
-    autoHideDuration={5000}
-    onClose={() => setError(null)}
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-  >
-    <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-      {error}
-    </Alert>
-  </Snackbar>
-</Box>
-
+      <Snackbar
+        open={!!error}
+        autoHideDuration={5000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
