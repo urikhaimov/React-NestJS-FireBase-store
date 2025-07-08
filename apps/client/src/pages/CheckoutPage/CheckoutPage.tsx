@@ -60,7 +60,9 @@ export default function CheckoutPage() {
               : (item.imageUrl ?? ''),
         }));
 
-        const safeAmount = Math.max(1, total);
+        // Fix: Minimum amount must be 50 cents (50)
+        const safeAmount = Math.max(50, total);
+        console.log('Amount sent to backend (cents):', safeAmount);
 
         const res = await fetch('/api/orders/create-payment-intent', {
           method: 'POST',
@@ -78,6 +80,7 @@ export default function CheckoutPage() {
             discount,
           }),
         });
+
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(
