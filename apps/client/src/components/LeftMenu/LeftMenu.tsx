@@ -22,6 +22,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import SecurityIcon from '@mui/icons-material/Security';
 import CategoryIcon from '@mui/icons-material/Category';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
@@ -90,7 +91,7 @@ export default function LeftMenu() {
     { label: 'Profile', icon: <AccountCircleIcon />, action: () => navigate('/profile') },
   ];
 
-  const adminLinks = [
+   const adminLinks = [
     { label: 'Dashboard Home', icon: <AdminPanelSettingsIcon />, path: '/admin' },
     { label: 'Categories', icon: <CategoryIcon />, path: '/admin/categories' },
     { label: 'Users', icon: <PeopleIcon />, path: '/admin/users' },
@@ -98,6 +99,7 @@ export default function LeftMenu() {
     { label: 'Orders', icon: <ReceiptIcon />, path: '/admin/orders' },
     { label: 'Theme', icon: <BrushIcon />, path: '/admin/theme' },
     { label: 'Landing Page', icon: <HomeIcon />, path: '/admin/landingPage' },
+    { label: 'Security Logs', icon: <SecurityIcon />, path: '/admin/security-logs' },
   ];
 
   const drawerContent = (

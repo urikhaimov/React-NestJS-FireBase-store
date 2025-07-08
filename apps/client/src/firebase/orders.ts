@@ -1,12 +1,13 @@
-// src/firebase/orders.ts
 import { db } from '../firebase';
 import {
-  addDoc,
   collection,
-  serverTimestamp,
+  addDoc,
+  updateDoc,
   Timestamp,
 } from 'firebase/firestore';
-import { updateDoc } from 'firebase/firestore';
+
+// ----- Interfaces -----
+
 export interface OrderItem {
   productId: string;
   name: string;
@@ -33,17 +34,19 @@ export interface ShippingAddress {
 export interface DeliveryInfo {
   provider?: string;
   trackingNumber?: string;
-  eta?: string; // ISO date string or human-readable
+  eta?: string; // ISO 8601 or human-readable
+  shippingCost?: number;
+  sla?: string; // ✅ e.g. "Standard", "Next-day"
 }
 
 export interface OrderStatusHistory {
   status: string;
-  timestamp: string;
-  changedBy: string;
+  timestamp: string; // ISO string
+  changedBy: string; // uid or "system"
 }
 
 export interface OrderData {
-  id?: string; // redundant but useful
+  id?: string;
   userId: string;
   items: OrderItem[];
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
@@ -51,31 +54,40 @@ export interface OrderData {
   shippingAddress: ShippingAddress;
   delivery?: DeliveryInfo;
   notes?: string;
+  internalTags?: string[]; // ✅ e.g. ["fragile", "gift"]
   statusHistory?: OrderStatusHistory[];
   createdAt?: string | Timestamp;
   updatedAt?: string | Timestamp;
 }
 
-export async function saveOrder(order: Omit<OrderData, 'id' | 'createdAt' | 'updatedAt'>) {
-  const ordersRef = collection(db, 'orders');
+// ----- Firestore Save -----
 
+/**
+ * Saves a new order to Firestore
+ * Automatically sets `createdAt`, `updatedAt`, and first `statusHistory` entry.
+ */
+export async function saveOrder(
+  order: Omit<OrderData, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> {
   const now = new Date().toISOString();
+  const ordersRef = collection(db, 'orders');
 
   const docRef = await addDoc(ordersRef, {
     ...order,
     createdAt: now,
     updatedAt: now,
     statusHistory: [
+      ...(order.statusHistory ?? []),
       {
         status: order.status,
         timestamp: now,
-        changedBy: 'system', // or order.userId if you prefer
+        changedBy: 'system', // or use `order.userId`
       },
     ],
   });
 
-  // Optional: write the ID into the doc itself
- await updateDoc(docRef, { id: docRef.id });
+  // Write generated ID into doc for reference
+  await updateDoc(docRef, { id: docRef.id });
 
   return docRef.id;
 }
