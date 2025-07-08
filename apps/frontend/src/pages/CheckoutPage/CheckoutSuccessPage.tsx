@@ -14,7 +14,7 @@ import { auth } from '../../firebase';
 
 export default function CheckoutSuccessPage() {
   const clearCart = useCartStore((s) => s.clearCart);
-  const items = useCartStore((s) => s.items); // 👈 get saved items for backend
+  const items = useCartStore((s) => s.items);
   const [toastOpen, setToastOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,24 +25,26 @@ export default function CheckoutSuccessPage() {
     const confirmAndSaveOrder = async () => {
       try {
         const params = new URLSearchParams(location.search);
-        const clientSecret = params.get('payment_intent_client_secret');
-        if (!clientSecret) throw new Error('Missing payment client secret');
+        // Use payment_intent ID, NOT client secret here
+        const paymentIntentId = params.get('payment_intent');
+        if (!paymentIntentId) throw new Error('Missing payment intent ID');
 
         const user = auth.currentUser;
         if (!user) throw new Error('Not authenticated');
         const token = await user.getIdToken();
 
-        // Fetch payment intent from backend
-        const res = await fetch(`/api/stripe/payment-intent/${clientSecret}`, {
+        // Fetch payment intent by ID from backend
+        const res = await fetch(`/api/stripe/payment-intent/${paymentIntentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
+        if (!res.ok) throw new Error('Failed to fetch payment intent');
         const paymentIntent = await res.json();
         if (!paymentIntent?.id) throw new Error('Payment intent not found');
 
-        // Save order in backend
+        // Save order in backend with full item info and userId
         const saveRes = await fetch('/api/orders', {
           method: 'POST',
           headers: {
@@ -50,10 +52,14 @@ export default function CheckoutSuccessPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
+            userId: user.uid,
             paymentIntentId: paymentIntent.id,
             totalAmount: paymentIntent.amount,
             items: items.map((item) => ({
               productId: item.id,
+              name: item.name,
+              price: item.price,
+              image: item.imageUrl,
               quantity: item.quantity,
             })),
           }),
@@ -61,8 +67,8 @@ export default function CheckoutSuccessPage() {
 
         if (!saveRes.ok) throw new Error('Failed to save order');
 
-        clearCart();               // ✅ clear cart
-        setToastOpen(true);        // ✅ show toast
+        clearCart();
+        setToastOpen(true);
       } catch (err: any) {
         console.error('❌ Order save error:', err);
         setError(err.message || 'Error saving order');
@@ -72,7 +78,7 @@ export default function CheckoutSuccessPage() {
     };
 
     confirmAndSaveOrder();
-  }, []);
+  }, [clearCart, items, location.search]);
 
   return (
     <Box

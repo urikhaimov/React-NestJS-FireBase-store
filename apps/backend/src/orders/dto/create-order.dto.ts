@@ -18,6 +18,7 @@ class OrderItemDto {
   @Min(1)
   quantity: number;
 }
+
 export class CreateOrderDto {
   @IsString()
   @IsNotEmpty()

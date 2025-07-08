@@ -7,7 +7,7 @@ import { OrdersModule } from './orders/orders.module';
 import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ImageProxyController } from './image-proxy/image-proxy.controller';
-
+import { StripeController } from './stripe/stripe.controller';
 @Module({
   imports: [
     // ✅ Loads environment variables from `.env` and makes ConfigService globally available
@@ -24,6 +24,6 @@ import { ImageProxyController } from './image-proxy/image-proxy.controller';
   ],
 
   // ✅ Global controllers (if not scoped to specific modules)
-  controllers: [ImageProxyController],
+  controllers: [ImageProxyController, StripeController ],
 })
 export class AppModule {}
