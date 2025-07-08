@@ -21,8 +21,17 @@ export class OrdersService {
 
   // ✅ Used on frontend direct checkout (e.g. cash, testing, etc.)
   async createOrder(dto: CreateOrderDto) {
+    const plainItems = dto.items.map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      quantity: item.quantity,
+    }));
+
     const order = {
       ...dto,
+      items: plainItems, // <-- pass plain objects, not class instances
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
@@ -63,40 +72,40 @@ export class OrdersService {
 
   // ✅ Create a PaymentIntent from frontend
 
-async createPaymentIntent(
-  amount: number,
-  ownerName: string,
-  passportId: string,
-  uid: string,
-  cart: any[],
-  shipping: number,
-  taxRate: number,
-  discount: number
-) {
-  try {
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount, // already in cents
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        uid,
-        ownerName,
-        passportId,
-        shipping: shipping.toString(),
-        taxRate: taxRate.toString(),
-        discount: discount.toString(),
-        items: JSON.stringify(cart),
-      },
-    });
+  async createPaymentIntent(
+    amount: number,
+    ownerName: string,
+    passportId: string,
+    uid: string,
+    cart: any[],
+    shipping: number,
+    taxRate: number,
+    discount: number,
+  ) {
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount, // already in cents
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          uid,
+          ownerName,
+          passportId,
+          shipping: shipping.toString(),
+          taxRate: taxRate.toString(),
+          discount: discount.toString(),
+          items: JSON.stringify(cart),
+        },
+      });
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-    };
-  } catch (error) {
-    console.error('❌ Stripe error:', error);
-    throw new InternalServerErrorException('Failed to create payment intent');
+      return {
+        clientSecret: paymentIntent.client_secret,
+      };
+    } catch (error) {
+      console.error('❌ Stripe error:', error);
+      throw new InternalServerErrorException('Failed to create payment intent');
+    }
   }
-}
 
   // ✅ Stripe webhook entry point
   async handleStripeWebhook(rawBody: Buffer, signature: string) {
@@ -107,7 +116,7 @@ async createPaymentIntent(
       const event = this.stripe.webhooks.constructEvent(
         rawBody,
         signature,
-        webhookSecret
+        webhookSecret,
       );
 
       if (event.type === 'payment_intent.succeeded') {
