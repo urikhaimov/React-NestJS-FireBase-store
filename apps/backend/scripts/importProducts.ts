@@ -3,7 +3,7 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
-import { IProduct } from '@app/types/product.type';
+import { IProduct } from '@backend/types/product.type';
 
 // ✅ Load Service Account
 const serviceAccountFile = path.resolve(__dirname, '../serviceAccountKey.json');

@@ -2,13 +2,13 @@
 import { Controller, Post, Req, Res, Headers } from '@nestjs/common';
 import Stripe from 'stripe';
 import { Response, Request } from 'express';
-import { getEnv } from '@app/utils/env.util';
-import { ELoggerTypes, logger } from '@app/utils/logger.util';
-import { AppError, ECommonErrors } from '@app/utils/errors.util';
+import { getEnv } from '@backend/utils/env.util';
+import { ELoggerTypes, logger } from '@backend/utils/logger.util';
+import { AppError, ECommonErrors } from '@backend/utils/errors.util';
 
 @Controller('webhooks')
 export class WebhooksController {
-  private stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  private stripe = new Stripe(getEnv('STRIPE_SECRET_KEY') as string, {
     apiVersion: '2025-06-30.basil', // use a valid official version
   });
 
@@ -18,7 +18,7 @@ export class WebhooksController {
     @Res() res: Response,
     @Headers('stripe-signature') signature: string,
   ) {
-    const endpointSecret = getEnv('STRIPE_WEBHOOK_SECRET');
+    const endpointSecret = getEnv('STRIPE_WEBHOOK_SECRET') as string;
     if (!endpointSecret) {
       return res.status(500).send('Missing webhook secret');
     }
