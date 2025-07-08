@@ -6,7 +6,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
+import { OrderItemDto } from './order-item.dto';
 class CartItemDto {
   @IsString()
   @IsNotEmpty()
@@ -31,15 +31,12 @@ export class CreatePaymentIntentDto {
   amount: number;
 
   @IsString()
-  @IsNotEmpty()
   ownerName: string;
 
   @IsString()
-  @IsNotEmpty()
   passportId: string;
 
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CartItemDto)
-  cart: CartItemDto[];
+  cart: OrderItemDto[];
 }
+
