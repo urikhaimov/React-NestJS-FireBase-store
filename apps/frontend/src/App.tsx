@@ -41,7 +41,7 @@ import { useAuthStore } from './stores/useAuthStore';
 import { useThemeStore } from './store/themeStore';
 import { getThemeFromSettings } from './utils/themeBuilder';
 import { StripeProvider } from './stripe/StripeProvider';
-
+import AdminSecurityLogsPage from './pages/admin/AdminSecurityLogsPage';
 import './App.css';
 
 export default function App() {
@@ -187,6 +187,7 @@ useEffect(() => {
         <Route path="products/add" element={<ProductFormPage mode="add" />} />
         <Route path="products/edit/:productId" element={<ProductFormPage mode="edit" />} />
         <Route path="theme" element={<AdminThemePage />} />
+        <Route path="security-logs" element={<AdminSecurityLogsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -1,3 +1,4 @@
+// src/pages/checkout/StripeCheckoutForm.tsx
 import React, { useState } from 'react';
 import {
   Box,
@@ -8,7 +9,11 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import {
+  useStripe,
+  useElements,
+  PaymentElement,
+} from '@stripe/react-stripe-js';
 import { useForm } from 'react-hook-form';
 import FormTextField from '../../components/FormTextField';
 
@@ -32,16 +37,20 @@ export default function StripeCheckoutForm() {
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (data: FormData) => {
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      setError('Stripe is not loaded yet');
+      return;
+    }
+
     setLoading(true);
 
-    const { error } = await stripe.confirmPayment({
+    const { error: stripeError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/success`,
         payment_method_data: {
           billing_details: {
-            name: data.ownerName, // ✅ Only this is allowed on frontend
+            name: data.ownerName,
           },
         },
       },
@@ -49,15 +58,18 @@ export default function StripeCheckoutForm() {
 
     setLoading(false);
 
-    if (error) {
-      setError(error.message || 'Payment failed');
-    } else {
-      // Will redirect if payment succeeded
+    if (stripeError) {
+      console.error('❌ Payment failed:', stripeError);
+      setError(stripeError.message || 'Payment failed');
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit(onSubmit)}
+      sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
       <Typography variant="subtitle2" gutterBottom>
         Payment Details
       </Typography>
@@ -66,10 +78,9 @@ export default function StripeCheckoutForm() {
         sx={{
           border: 1,
           borderColor: 'divider',
-          borderRadius: 1,
+          borderRadius: 2,
           p: 2,
           bgcolor: 'background.default',
-          mb: 2,
         }}
       >
         <PaymentElement />
@@ -77,16 +88,18 @@ export default function StripeCheckoutForm() {
 
       <FormTextField
         label="Owner Name"
-        register={register('ownerName', { required: 'Owner name is required' })}
+        register={register('ownerName', {
+          required: 'Owner name is required',
+        })}
         errorObject={errors.ownerName}
-        margin="normal"
       />
 
       <FormTextField
         label="Passport ID"
-        register={register('passportId', { required: 'Passport ID is required' })}
+        register={register('passportId', {
+          required: 'Passport ID is required',
+        })}
         errorObject={errors.passportId}
-        margin="normal"
       />
 
       <Button
@@ -99,8 +112,17 @@ export default function StripeCheckoutForm() {
         {loading ? <CircularProgress size={24} /> : 'Pay Now'}
       </Button>
 
-      <Snackbar open={!!error} autoHideDuration={5000} onClose={() => setError(null)}>
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={5000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
           {error}
         </Alert>
       </Snackbar>
