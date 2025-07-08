@@ -29,9 +29,9 @@ export default [
   jsLint.configs.recommended,
   {
     files: [
-      'apps/backend/**/*.ts',
-      'apps/frontend/**/*.ts',
-      'apps/frontend/**/*.tsx',
+      './apps/backend/**/*.ts',
+      './apps/frontend/**/*.ts',
+      './apps/frontend/**/*.tsx',
     ],
     settings: {
       'import/resolver': {
@@ -55,7 +55,7 @@ export default [
       parserOptions: {
         ecmaVersion: 2020,
         sourceType: 'module',
-        project: 'tsconfig.json',
+        project: 'tsconfig.base.json',
         ecmaFeatures: {
           jsx: true,
           tsx: true,
