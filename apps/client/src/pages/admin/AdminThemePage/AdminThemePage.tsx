@@ -13,7 +13,7 @@ import ThemeImportExportPanel from '../../../components/ThemeImportExportPanel';
 import StoreNameField from './components/StoreNameField';
 import DarkModeToggle from './components/DarkModeToggle';
 import ColorPickerSection from './components/ColorPickerSection';
-import FontSelector from './components/FontSelector';
+import FontSelectorWithControls  from './components/FontSelectorWithControls';
 import HomepageLayoutSelect from './components/HomepageLayoutSelect';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 const initialState = { loading: true, toastOpen: false };
@@ -61,12 +61,21 @@ export default function AdminThemePage() {
     fetchTheme();
   }, [reset, updateTheme]);
 
-  const onSubmit = async (form: any) => {
+ const onSubmit = async (form: any) => {
+  const cleanedForm = Object.fromEntries(
+    Object.entries(form).filter(([_, value]) => value !== undefined)
+  );
+
+  try {
     const docRef = doc(db, 'theme', 'settings');
-    await setDoc(docRef, form, { merge: true });
-    updateTheme(form);
+    await setDoc(docRef, cleanedForm, { merge: true });
+    updateTheme(cleanedForm);
     dispatch({ type: 'SET_TOAST', payload: true });
-  };
+  } catch (error) {
+    console.error('❌ Failed to save theme settings:', error);
+  }
+};
+
 
   if (state.loading) return <LoadingProgress />;
 
@@ -82,7 +91,7 @@ export default function AdminThemePage() {
           <StoreNameField control={control} />
           <DarkModeToggle control={control} />
           <ColorPickerSection control={control} />
-          <FontSelector control={control} />
+          <FontSelectorWithControls />
           <HomepageLayoutSelect control={control} />
 
           <Grid item xs={12}>

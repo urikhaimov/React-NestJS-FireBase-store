@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -7,11 +6,12 @@ import {
   CircularProgress,
   Box,
 } from '@mui/material';
+import { createTheme } from '@mui/material/styles';
 import { AnimatePresence } from 'framer-motion';
 
 import { ProtectedRoute, AdminProtectedRoute } from './components/ProtectedRoutes';
 import HomePage from './pages/HomePage';
-import ProductsPage  from './pages/ProductsPage'
+import ProductsPage from './pages/ProductsPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -32,19 +32,22 @@ import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLogsPage from './pages/admin/AdminLogsPage';
+import EditOrderPage from './pages/admin/AdminEditOrderPage';
 import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
 import AdminHomePage from './pages/admin/AdminHomePage';
 
 import { useRedirect } from './context/RedirectContext';
 import { useAuthStore } from './stores/useAuthStore';
-import { useThemeContext } from './context/ThemeContext';
+import { useThemeStore } from './store/themeStore';
+import { getThemeFromSettings } from './utils/themeBuilder';
 import { StripeProvider } from './stripe/StripeProvider';
-import './App.css';
 
+import './App.css';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const {
     user,
     loading,
@@ -52,16 +55,18 @@ export default function App() {
     initializeAuth,
   } = useAuthStore();
   const { consumeRedirect } = useRedirect();
-  const { theme, isLoading } = useThemeContext();
   const hasRedirected = useRef(false);
 
-  // Initialize Firebase auth listener
-  useEffect(() => {
-    const unsubscribe = initializeAuth();
-    return () => unsubscribe();
-  }, [initializeAuth]);
+  const { themeSettings } = useThemeStore();
+  const theme = createTheme(getThemeFromSettings(themeSettings));
 
-  // Handle redirect if not authenticated
+  // Firebase auth init
+useEffect(() => {
+  const unsubscribe = useAuthStore.getState().initializeAuth();
+   return unsubscribe;
+}, []);
+
+  // Redirect unauthenticated users
   useEffect(() => {
     if (authInitialized && !user && !hasRedirected.current) {
       const next = consumeRedirect();
@@ -74,7 +79,6 @@ export default function App() {
     if (user && !hasRedirected.current) {
       const redirect = consumeRedirect();
       const defaultTarget = ['admin', 'superadmin'].includes(user.role ?? '') ? '/admin' : '/';
-
       if (redirect && location.pathname !== redirect) {
         navigate(redirect, { replace: true });
         hasRedirected.current = true;
@@ -82,8 +86,8 @@ export default function App() {
     }
   }, [user, consumeRedirect, location.pathname, navigate]);
 
-
-  if (isLoading || !theme || !authInitialized) {
+  // You can remove this condition if themeSettings is always preloaded
+  if (!authInitialized || !themeSettings) {
     return (
       <Box
         height="100vh"
@@ -91,7 +95,7 @@ export default function App() {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        bgcolor={theme?.palette.background.default || '#fff'}
+        bgcolor="#fff"
       >
         <CircularProgress size={60} color="primary" />
       </Box>
@@ -112,7 +116,6 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-
       <Route
         path="/checkout"
         element={
@@ -133,8 +136,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
-
       <Route
         path="/order/:id"
         element={
@@ -167,7 +168,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/*"
         element={
@@ -180,6 +180,7 @@ export default function App() {
         <Route path="landingPage" element={<AdminLandingPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="orders/:id" element={<EditOrderPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="logs" element={<AdminLogsPage />} />
         <Route path="products" element={<AdminProductsPage />} />
@@ -187,7 +188,6 @@ export default function App() {
         <Route path="products/edit/:productId" element={<ProductFormPage mode="edit" />} />
         <Route path="theme" element={<AdminThemePage />} />
       </Route>
-
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

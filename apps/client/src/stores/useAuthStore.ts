@@ -1,28 +1,28 @@
+// src/stores/useAuthStore.ts
 import { create } from 'zustand';
-import { AppUser } from '../types/auth';
-import { auth, db } from '../firebase';
 import {
   signOut,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
-  updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { AppUser } from '../types/auth';
+import { UserCredential } from 'firebase/auth';
 
-interface AuthState {
+export type AuthState = {
   user: AppUser | null;
   loading: boolean;
-  authInitialized: boolean;
-
+  login: (email: string, password: string) => Promise<UserCredential>;
+  signup: (email: string, password: string) => Promise<UserCredential>;
+  logout: () => Promise<void>;
   setUser: (user: AppUser | null) => void;
   setLoading: (loading: boolean) => void;
-  setAuthInitialized: (val: boolean) => void;
-
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  initializeAuth: () => () => void;
+  initializeAuth: () => void;
   refreshUser: () => Promise<void>;
-}
+  authInitialized?: boolean;
+};
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -39,37 +39,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setLoading: (loading) => set({ loading }),
-  setAuthInitialized: (val) => set({ authInitialized: val }),
-
-  login: async (email, password) => {
-    set({ loading: true });
-
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
-
-    const role =
-      userDoc.exists() && userDoc.data().role
-        ? (userDoc.data().role as 'user' | 'admin' | 'superadmin')
-        : 'user';
-
-    const user: AppUser = {
-      uid: cred.user.uid,
-      email: cred.user.email ?? '',
-      name: cred.user.displayName ?? '',
-      photoURL: cred.user.photoURL ?? '',
-      role,
-    };
-
-    set({ user, loading: false, authInitialized: true });
-    localStorage.setItem('appUser', JSON.stringify(user));
-  },
-
-  logout: async () => {
-    await signOut(auth);
-    localStorage.removeItem('appUser');
-    set({ user: null });
-  },
-
   initializeAuth: () => {
     const cached = localStorage.getItem('appUser');
     if (cached) {
@@ -108,6 +77,53 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
 
     return unsubscribe;
+  },
+
+  login: async (email, password) => {
+    set({ loading: true });
+
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
+    const role =
+      userDoc.exists() && userDoc.data().role
+        ? (userDoc.data().role as 'user' | 'admin' | 'superadmin')
+        : 'user';
+
+    const user: AppUser = {
+      uid: cred.user.uid,
+      email: cred.user.email ?? '',
+      name: cred.user.displayName ?? '',
+      photoURL: cred.user.photoURL ?? '',
+      role,
+    };
+
+    set({ user, loading: false, authInitialized: true });
+    localStorage.setItem('appUser', JSON.stringify(user));
+    return cred;
+  },
+
+  signup: async (email, password) => {
+    set({ loading: true });
+
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    const user: AppUser = {
+      uid: cred.user.uid,
+      email: cred.user.email ?? '',
+      name: cred.user.displayName ?? '',
+      photoURL: cred.user.photoURL ?? '',
+      role: 'user',
+    };
+
+    set({ user, loading: false, authInitialized: true });
+    localStorage.setItem('appUser', JSON.stringify(user));
+    return cred;
+  },
+
+  logout: async () => {
+    await signOut(auth);
+    localStorage.removeItem('appUser');
+    set({ user: null });
   },
 
   refreshUser: async () => {

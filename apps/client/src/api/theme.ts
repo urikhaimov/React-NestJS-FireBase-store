@@ -6,6 +6,8 @@ export interface ThemeSettings {
   primaryColor: string;
   secondaryColor: string;
   fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
 }
 
 export async function getThemeSettings(storeId: string): Promise<ThemeSettings> {
@@ -17,6 +19,8 @@ export async function getThemeSettings(storeId: string): Promise<ThemeSettings> 
       primaryColor: '#1976d2',
       secondaryColor: '#dc004e',
       fontFamily: 'Roboto',
+      fontSize: 16,
+      fontWeight: 400,
     };
   }
   return snap.data().theme as ThemeSettings;

@@ -1,4 +1,4 @@
-// src/components/Header/Header.tsx
+// src/components/Header.tsx
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -18,23 +18,28 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
-
 import { useSafeAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../stores/useStoreSettings';
 import { useCartStore } from '../../store/cartStore';
 import { useSidebarStore } from '../../stores/useSidebarStore';
+import { useThemeStore } from '../../store/themeStore';
+
 const DEFAULT_AVATAR = '/default-avatar.png';
+
 const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { user } = useSafeAuth();
   const { storeId, setStoreId } = useStoreSettings();
-  const [showToast, setShowToast] = useState(false);
+  const [showStoreToast, setShowStoreToast] = useState(false);
+  const [showThemeToast, setShowThemeToast] = useState(false);
+
   const items = useCartStore((s) => s.items);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const { toggleMobileDrawer } = useSidebarStore();
+  const { toggleDarkMode, themeSettings } = useThemeStore();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -43,8 +48,13 @@ const Header: React.FC = () => {
 
   const handleStoreChange = (newId: string) => {
     setStoreId(newId);
-    setShowToast(true);
+    setShowStoreToast(true);
     setTimeout(() => window.location.reload(), 1000);
+  };
+
+  const handleToggleDarkMode = async () => {
+    await toggleDarkMode();
+    setShowThemeToast(true);
   };
 
   return (
@@ -57,7 +67,7 @@ const Header: React.FC = () => {
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
-        {/* LEFT: Hamburger menu */}
+        {/* LEFT: Hamburger menu and store name */}
         <Box display="flex" alignItems="center">
           {isMobile && (
             <IconButton
@@ -71,13 +81,13 @@ const Header: React.FC = () => {
             </IconButton>
           )}
           <Typography variant="h6" fontWeight="bold" noWrap component="div">
-            Bunder Shop
+            {themeSettings.storeName || 'My Store'}
           </Typography>
         </Box>
 
-        {/* RIGHT: Actions */}
+        {/* RIGHT: Icons and avatar */}
         <Box display="flex" alignItems="center" gap={1}>
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={handleToggleDarkMode}>
             <Brightness4Icon />
           </IconButton>
 
@@ -105,20 +115,33 @@ const Header: React.FC = () => {
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
             <MenuItem disabled>{user?.name || user?.email}</MenuItem>
-            <MenuItem onClick={() => window.location.href = '/profile'}>Profile</MenuItem>
-            <MenuItem onClick={() => window.location.href = '/logout'}>Logout</MenuItem>
+            <MenuItem onClick={() => (window.location.href = '/profile')}>Profile</MenuItem>
+            <MenuItem onClick={() => (window.location.href = '/logout')}>Logout</MenuItem>
           </Menu>
         </Box>
       </Toolbar>
 
+      {/* Toast for store switch */}
       <Snackbar
-        open={showToast}
+        open={showStoreToast}
         autoHideDuration={1000}
-        onClose={() => setShowToast(false)}
+        onClose={() => setShowStoreToast(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert severity="success" sx={{ width: '100%' }}>
           Theme updated for store: <strong>{storeId}</strong>
+        </Alert>
+      </Snackbar>
+
+      {/* Toast for dark mode toggle */}
+      <Snackbar
+        open={showThemeToast}
+        autoHideDuration={1200}
+        onClose={() => setShowThemeToast(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="success" sx={{ width: '100%' }}>
+          {themeSettings.darkMode ? 'Dark Mode Enabled 🌙' : 'Light Mode Enabled ☀️'}
         </Alert>
       </Snackbar>
     </AppBar>
