@@ -31,9 +31,12 @@ export default function CheckoutPage() {
   const taxRate = 0.17;
   const discount = 3.0;
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const tax = subtotal * taxRate;
-  const total = getCartTotal(cart, {
+  const total = useCartStore.getState().getCartTotal({
     shipping,
     taxRate,
     discount: discount * 100,
@@ -46,6 +49,18 @@ export default function CheckoutPage() {
         if (!user) throw new Error('User not authenticated');
 
         const token = await user.getIdToken();
+        const sanitizedCart = cart.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image:
+            typeof item.imageUrl === 'string'
+              ? item.imageUrl
+              : (item.imageUrl ?? ''),
+        }));
+
+        const safeAmount = Math.max(1, total);
 
         const res = await fetch('/api/orders/create-payment-intent', {
           method: 'POST',
@@ -54,8 +69,8 @@ export default function CheckoutPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            amount: total,
-            cart,
+            amount: safeAmount,
+            cart: sanitizedCart,
             ownerName: 'John Doe',
             passportId: 'AB1234567',
             shipping,
@@ -63,10 +78,11 @@ export default function CheckoutPage() {
             discount,
           }),
         });
-
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || `Failed: ${res.status} ${res.statusText}`);
+          throw new Error(
+            errData.message || `Failed: ${res.status} ${res.statusText}`,
+          );
         }
 
         const data = await res.json();
@@ -132,7 +148,11 @@ export default function CheckoutPage() {
         onClose={() => setError(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
           {error}
         </Alert>
       </Snackbar>
