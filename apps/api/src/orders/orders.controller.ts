@@ -52,20 +52,29 @@ export class OrdersController {
   }
 
   @Post('create-payment-intent')
-  createPaymentIntent(@Req() req, @Body() body: CreatePaymentIntentDto) {
+  createPaymentIntent(
+    @Req() req,
+    @Body()
+    body: {
+      amount: number;
+      cart: any[];
+      ownerName: string;
+      passportId: string;
+    },
+  ) {
     return this.ordersService.createPaymentIntent(
       body.amount,
       body.ownerName,
       body.passportId,
-      req.user.uid,
-      body.cart
+      req.user.uid, // 🔥 CRUCIAL
+      body.cart, // 🔥 CRUCIAL
     );
   }
 
   @Post('webhook')
   async handleStripeWebhook(
     @Req() req: RawBodyRequest,
-    @Headers('stripe-signature') signature: string
+    @Headers('stripe-signature') signature: string,
   ) {
     return this.ordersService.handleStripeWebhook(req.rawBody, signature);
   }
