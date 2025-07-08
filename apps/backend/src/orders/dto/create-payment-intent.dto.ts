@@ -1,11 +1,40 @@
 // src/orders/dto/create-payment-intent.dto.ts
-import { IsString, IsNumber, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderItemDto } from './order-item.dto';
+
+class OrderItemDto {
+  @IsString()
+  productId: string;
+
+  @IsString()
+  name: string;
+
+  @IsNumber()
+  price: number;
+
+  @IsString()
+  image: string;
+
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+}
 
 export class CreatePaymentIntentDto {
   @IsNumber()
-  amount: number;
+  @Min(1)
+  amount: number; // in cents
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  cart: OrderItemDto[];
 
   @IsString()
   ownerName: string;
@@ -13,8 +42,12 @@ export class CreatePaymentIntentDto {
   @IsString()
   passportId: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => OrderItemDto)
-  cart: OrderItemDto[];
+  @IsNumber()
+  shipping: number;
+
+  @IsNumber()
+  taxRate: number;
+
+  @IsNumber()
+  discount: number;
 }

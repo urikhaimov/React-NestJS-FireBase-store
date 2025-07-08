@@ -54,20 +54,17 @@ export class OrdersController {
   @Post('create-payment-intent')
   createPaymentIntent(
     @Req() req,
-    @Body()
-    body: {
-      amount: number;
-      cart: any[];
-      ownerName: string;
-      passportId: string;
-    },
+    @Body() body: CreatePaymentIntentDto,
   ) {
     return this.ordersService.createPaymentIntent(
       body.amount,
       body.ownerName,
       body.passportId,
-      req.user.uid, // 🔥 CRUCIAL
-      body.cart, // 🔥 CRUCIAL
+      req.user.uid,
+      body.cart,
+      body.shipping,
+      body.taxRate,
+      body.discount,
     );
   }
 

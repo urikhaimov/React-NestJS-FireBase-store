@@ -2,7 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Product } from '../types/firebase';
 
-export type CartItem = Product & { quantity: number};
+export type CartItem = Product & { quantity: number };
+
+interface CartTotalOptions {
+  shipping?: number;
+  taxRate?: number; // e.g., 0.17 for 17%
+  discount?: number; // in cents
+}
 
 type CartState = {
   items: CartItem[];
@@ -11,6 +17,7 @@ type CartState = {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   hasItem: (id: string) => boolean;
+  getCartTotal: (opts?: CartTotalOptions) => number;
   _persistedAt?: number;
 };
 
@@ -19,18 +26,16 @@ const EXPIRATION_MS = 1000 * 60 * 60; // 1 hour
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => {
-      // Expiration auto-clear interval
+      // Auto-clear expired cart
       if (typeof window !== 'undefined') {
         setInterval(() => {
           const savedAt = get()._persistedAt ?? 0;
           const now = Date.now();
-          const expired = now - savedAt > EXPIRATION_MS;
-
-          if (expired && get().items.length > 0) {
+          if (now - savedAt > EXPIRATION_MS && get().items.length > 0) {
             set({ items: [], _persistedAt: now });
             console.log('🕒 Cart auto-cleared after 1 hour of inactivity');
           }
-        }, 60_000); // Every 60 seconds
+        }, 60_000); // every minute
       }
 
       return {
@@ -84,6 +89,18 @@ export const useCartStore = create<CartState>()(
 
         hasItem: (id) => {
           return get().items.some((item) => item.id === id);
+        },
+
+        getCartTotal: ({ shipping = 0, taxRate = 0, discount = 0 }: CartTotalOptions = {}) => {
+          const subtotal = get().items.reduce((sum, item) => {
+            const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            return sum + price * item.quantity;
+          }, 0);
+
+          const tax = subtotal * taxRate;
+          const total = subtotal + shipping + tax - (discount ?? 0);
+
+          return Math.max(Math.round(total * 100), 0); // Convert to cents, never below $0
         },
       };
     },
