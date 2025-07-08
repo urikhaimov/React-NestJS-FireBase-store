@@ -62,34 +62,41 @@ export class OrdersService {
   }
 
   // ✅ Create a PaymentIntent from frontend
-  async createPaymentIntent(
-    amount: number,
-    ownerName: string,
-    passportId: string,
-    uid: string,
-    cart: any[]
-  ) {
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        automatic_payment_methods: { enabled: true },
-        metadata: {
-          uid,
-          ownerName,
-          passportId,
-          items: JSON.stringify(cart),
-        },
-      });
 
-      return {
-        clientSecret: paymentIntent.client_secret,
-      };
-    } catch (error) {
-      console.error('❌ Stripe error:', error);
-      throw new InternalServerErrorException('Failed to create payment intent');
-    }
+async createPaymentIntent(
+  amount: number,
+  ownerName: string,
+  passportId: string,
+  uid: string,
+  cart: any[],
+  shipping: number,
+  taxRate: number,
+  discount: number
+) {
+  try {
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount, // already in cents
+      currency: 'usd',
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        uid,
+        ownerName,
+        passportId,
+        shipping: shipping.toString(),
+        taxRate: taxRate.toString(),
+        discount: discount.toString(),
+        items: JSON.stringify(cart),
+      },
+    });
+
+    return {
+      clientSecret: paymentIntent.client_secret,
+    };
+  } catch (error) {
+    console.error('❌ Stripe error:', error);
+    throw new InternalServerErrorException('Failed to create payment intent');
   }
+}
 
   // ✅ Stripe webhook entry point
   async handleStripeWebhook(rawBody: Buffer, signature: string) {
