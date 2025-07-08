@@ -1,9 +1,23 @@
-// src/firebase/firebase.module.ts
 import { Module } from '@nestjs/common';
-import { FirebaseService } from './firebase.service';
+import {
+  FirebaseAdminAppProvider,
+  FirestoreProvider,
+  FirebaseAuthProvider,
+  FirebaseStorageProvider,
+} from './firebase-admin.provider';
 
 @Module({
-  providers: [FirebaseService],
-  exports: [FirebaseService],
+  providers: [
+    FirebaseAdminAppProvider,
+    FirestoreProvider,
+    FirebaseAuthProvider,
+    FirebaseStorageProvider,
+  ],
+  exports: [
+    FirebaseAdminAppProvider,
+    FirestoreProvider,
+    FirebaseAuthProvider,
+    FirebaseStorageProvider,
+  ],
 })
-export class FirebaseModule {}
+export class FirebaseAdminModule {}
