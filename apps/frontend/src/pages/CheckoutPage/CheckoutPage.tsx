@@ -1,4 +1,3 @@
-// src/pages/checkout/CheckoutPage.tsx
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -7,12 +6,16 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Divider,
+  Stack,
 } from '@mui/material';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
+import { useCartStore } from '../../store/cartStore';
+import { getCartTotal } from '../../utils/getCartTotal';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
@@ -20,6 +23,21 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const cart = useCartStore((s) => s.items);
+
+  // Adjust these for your business
+  const shipping = 5.99;
+  const taxRate = 0.17;
+  const discount = 3.0;
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const tax = subtotal * taxRate;
+  const total = getCartTotal(cart, {
+    shipping,
+    taxRate,
+    discount: discount * 100,
+  });
 
   useEffect(() => {
     const fetchClientSecret = async () => {
@@ -36,12 +54,19 @@ export default function CheckoutPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            amount: 1999, // in cents
+            amount: total,
+            cart,
+            ownerName: 'John Doe',
+            passportId: 'AB1234567',
+            shipping,
+            taxRate,
+            discount,
           }),
         });
 
         if (!res.ok) {
-          throw new Error(`Failed: ${res.status} ${res.statusText}`);
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Failed: ${res.status} ${res.statusText}`);
         }
 
         const data = await res.json();
@@ -74,6 +99,18 @@ export default function CheckoutPage() {
           Checkout
         </Typography>
 
+        {/* Price breakdown */}
+        <Stack spacing={1} mb={2}>
+          <Typography>Subtotal: ${subtotal.toFixed(2)}</Typography>
+          <Typography>Shipping: ${shipping.toFixed(2)}</Typography>
+          <Typography>Tax (17%): ${tax.toFixed(2)}</Typography>
+          <Typography>Discount: -${discount.toFixed(2)}</Typography>
+          <Divider />
+          <Typography fontWeight="bold">
+            Total: ${(total / 100).toFixed(2)} USD
+          </Typography>
+        </Stack>
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress />
@@ -95,11 +132,7 @@ export default function CheckoutPage() {
         onClose={() => setError(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={() => setError(null)}
-          severity="error"
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
           {error}
         </Alert>
       </Snackbar>
