@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Product } from '../types/firebase';
 
-export type CartItem = Product & { quantity: number };
+export type CartItem = Product & { quantity: number};
 
 type CartState = {
   items: CartItem[];
