@@ -1,4 +1,5 @@
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+// src/orders/dto/order-item.dto.ts
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class OrderItemDto {
   @IsString()
@@ -7,8 +8,8 @@ export class OrderItemDto {
   @IsString()
   name: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   image?: string;
 
   @IsNumber()
