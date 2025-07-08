@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { auth, firestore } from 'firebase-admin';
 import { Request } from 'express';
-import { AppError, ECommonErrors } from '@app/utils/errors.util';
-import { ELoggerTypes, logger } from '@app/utils/logger.util';
+import { AppError, ECommonErrors } from '@backend/utils/errors.util';
+import { ELoggerTypes, logger } from '@backend/utils/logger.util';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
