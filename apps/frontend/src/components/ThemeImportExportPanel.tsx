@@ -11,12 +11,14 @@ import {
 import { useThemeStore } from '../store/themeStore';
 import type { ThemeSettings } from '../store/themeStore';
 
-const defaultTheme: ThemeSettings = {
+export const defaultTheme: ThemeSettings = {
   storeName: 'My Store',
   darkMode: false,
   primaryColor: '#1976d2',
   secondaryColor: '#ff4081',
   font: 'Roboto',
+  fontSize: 16,           // ✅ added
+  fontWeight: 400,        // ✅ added
   logoUrl: '',
   homepageLayout: 'hero',
   productCardVariant: 'compact',
@@ -25,7 +27,6 @@ const defaultTheme: ThemeSettings = {
   maxWidth: 'xl',
   stickyHeader: true,
 };
-
 export default function ThemeImportExportPanel() {
   const { themeSettings, updateTheme } = useThemeStore();
   const fileInputRef = useRef<HTMLInputElement>(null);

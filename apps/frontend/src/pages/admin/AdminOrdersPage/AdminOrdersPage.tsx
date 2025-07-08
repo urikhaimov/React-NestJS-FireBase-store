@@ -3,20 +3,24 @@ import {
   Box,
   Typography,
   Paper,
-  CircularProgress,
+  Button,
   Divider,
   useMediaQuery,
   useTheme,
   Pagination,
 } from '@mui/material';
-import {VariableSizeList, ListChildComponentProps } from 'react-window';
+import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import OrderFilters from './OrderFilters';
 import { reducer, initialState } from './LocalReducer';
 import { fetchAllOrders } from '../../../api/orderApi';
 import { useAuthReady } from '../../../hooks/useAuthReady';
+import LoadingProgress from '@/components/LoadingProgress';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function AdminOrdersPage() {
+  const navigate = useNavigate();
   const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -44,12 +48,13 @@ export default function AdminOrdersPage() {
   const pageSize = state.pageSize;
   const paginatedOrders = state.orders.slice(
     (state.page - 1) * pageSize,
-    state.page * pageSize
+    state.page * pageSize,
   );
 
   const renderRow = ({ index, style }: ListChildComponentProps) => {
     const order = paginatedOrders[index];
-    const date = (order.createdAt as any).toDate?.() ?? new Date(order.createdAt);
+    const date =
+      (order.createdAt as any).toDate?.() ?? new Date(order.createdAt);
 
     return (
       <Paper
@@ -76,6 +81,12 @@ export default function AdminOrdersPage() {
           Date: {date.toLocaleString?.() ?? 'Invalid date'}
         </Typography>
         <Typography variant="body2">Status: {order.status}</Typography>
+        <Button
+          variant="outlined"
+          onClick={() => navigate(`/admin/orders/${order.id}`)}
+        >
+          Edit
+        </Button>
       </Paper>
     );
   };
@@ -88,28 +99,26 @@ export default function AdminOrdersPage() {
       <Divider sx={{ mb: 2 }} />
 
       {state.loading ? (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress />
-        </Box>
+        <LoadingProgress />
       ) : (
         <>
-         
-            <VariableSizeList
+          <VariableSizeList
             style={{ overflowX: 'hidden' }}
-              height={isMobile ? 300 : 350}
-              width="100%"
-              itemCount={paginatedOrders.length}
-              itemSize={() =>isMobile ? 220 : 160}
-            >
-              {renderRow}
-            </VariableSizeList>
-         
+            height={isMobile ? 300 : 350}
+            width="100%"
+            itemCount={paginatedOrders.length}
+            itemSize={() => (isMobile ? 220 : 160)}
+          >
+            {renderRow}
+          </VariableSizeList>
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
               count={Math.ceil(state.orders.length / pageSize)}
               page={state.page}
-              onChange={(_, value) => dispatch({ type: 'setPage', payload: value })}
+              onChange={(_, value) =>
+                dispatch({ type: 'setPage', payload: value })
+              }
               color="primary"
             />
           </Box>
