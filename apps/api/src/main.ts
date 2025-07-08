@@ -1,14 +1,22 @@
 import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { getEnv, isProd } from '@backend/utils/env.util';
+import { setupSwagger } from '@backend/swagger';
+import { ELoggerTypes, logger } from '@backend/utils/logger.util';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+async function appBootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.setGlobalPrefix('api');
+  const appPort = getEnv('APP_PORT', 3000);
+
+  const globalPrefix = 'api';
+  app.setGlobalPrefix(globalPrefix);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -26,7 +34,28 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization',
   });
 
-  await app.listen(3000);
-  console.log(`🚀 Server running at http://localhost:3000/api`);
+  await app.listen(appPort);
+  logger[ELoggerTypes.INFO](`🚀 Server running at http://localhost:${appPort}/${globalPrefix}`)
 }
-bootstrap();
+
+async function swaggerBootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const swaggerPort = getEnv('SWAGGER_PORT', 3001);
+  const globalPrefix = 'api/v1';
+
+  if (!isProd()) {
+    setupSwagger(app, {
+      serverUrl: `http://localhost:${swaggerPort}/${globalPrefix}`,
+    });
+  }
+
+  await app.listen(swaggerPort);
+}
+
+appBootstrap().then(() => {
+  logger[ELoggerTypes.INFO]('Bootstrap completed successfully');
+});
+
+swaggerBootstrap().then(()=>{
+  logger[ELoggerTypes.INFO]('Swagger bootstrap completed successfully');
+});

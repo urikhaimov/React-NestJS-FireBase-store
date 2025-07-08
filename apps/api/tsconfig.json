@@ -1,4 +1,13 @@
 {
+//  "extends": "../../tsconfig.base.json",
+  "references": [
+    {
+      "path": "./tsconfig.build.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
@@ -24,12 +33,12 @@
       "./src/types"
     ],
     "paths": {
-      "@app/*": ["src/*"],
-      "@app/config/*": ["src/config/*"],
-      "@app/services/*": ["src/services/*"],
-      "@app/controllers/*": ["src/controllers/*"],
-      "@app/models/*": ["src/models/*"],
-      "@app/utils/*": ["src/utils/*"]
+      "@backend/*": ["src/*"],
+      "@backend/config/*": ["src/config/*"],
+      "@backend/services/*": ["src/services/*"],
+      "@backend/controllers/*": ["src/controllers/*"],
+      "@backend/models/*": ["src/models/*"],
+      "@backend/utils/*": ["src/utils/*"]
     }
   }
 }

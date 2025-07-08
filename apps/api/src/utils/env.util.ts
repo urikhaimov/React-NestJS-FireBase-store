@@ -1,12 +1,25 @@
-import { logger } from './logger.util';
+import { ELoggerTypes, logger } from './logger.util';
 
-export const getEnv = (key: string): string => {
+enum EEnvKeys {
+  PRODUCTION = 'production',
+  DEVELOPMENT = 'development',
+}
+
+export const getEnv = (key: string, defaultValue?: string | number): string | number => {
   const value = process.env[key] as string;
   if (!value) {
-    const err = new Error(`Environment variable ${key} is not set`);
-    logger.error(err);
+    const msg = `Environment variable ${key} is not set.`;
+    logger[ELoggerTypes.WARN](msg);
 
-    throw err;
+    if (defaultValue) {
+      logger[ELoggerTypes.INFO](`Using default value for ${key}: ${defaultValue}`);
+      return defaultValue;
+    }
+
+    throw new Error(msg);
   }
   return value;
 };
+
+export const isProd = (): boolean => getEnv('NODE_ENV') === EEnvKeys.PRODUCTION;
+export const isDev = (): boolean => getEnv('NODE_ENV') === EEnvKeys.DEVELOPMENT;
