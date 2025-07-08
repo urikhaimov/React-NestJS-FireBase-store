@@ -1,9 +1,8 @@
-// apps/backend/src/orders/orders.service.ts
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { adminDb } from '../firebase/firebase-admin';
 import Stripe from 'stripe';
+import { adminDb } from '../firebase/firebase-admin';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -11,7 +10,6 @@ export class OrdersService {
 
   constructor(private readonly config: ConfigService) {
     const secretKey = this.config.get<string>('STRIPE_SECRET_KEY');
-
     if (!secretKey) {
       throw new Error('Missing STRIPE_SECRET_KEY in environment');
     }
@@ -21,6 +19,7 @@ export class OrdersService {
     });
   }
 
+  // ✅ Used on frontend direct checkout (e.g. cash, testing, etc.)
   async createOrder(dto: CreateOrderDto) {
     const order = {
       ...dto,
@@ -62,25 +61,105 @@ export class OrdersService {
     }));
   }
 
-async createPaymentIntent(amount: number, ownerName: string, passportId: string) {
-  try {
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        ownerName,
-        passportId,
-      },
-    });
+  // ✅ Create a PaymentIntent from frontend
+  async createPaymentIntent(
+    amount: number,
+    ownerName: string,
+    passportId: string,
+    uid: string,
+    cart: any[]
+  ) {
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          uid,
+          ownerName,
+          passportId,
+          items: JSON.stringify(cart),
+        },
+      });
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-    };
-  } catch (error) {
-    console.error('Stripe error:', error);
-    throw new InternalServerErrorException('Failed to create payment intent');
+      return {
+        clientSecret: paymentIntent.client_secret,
+      };
+    } catch (error) {
+      console.error('❌ Stripe error:', error);
+      throw new InternalServerErrorException('Failed to create payment intent');
+    }
   }
-}
 
+  // ✅ Stripe webhook entry point
+  async handleStripeWebhook(rawBody: Buffer, signature: string) {
+    try {
+      const webhookSecret = this.config.get<string>('STRIPE_WEBHOOK_SECRET');
+      if (!webhookSecret) throw new Error('Missing STRIPE_WEBHOOK_SECRET');
+
+      const event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret
+      );
+
+      if (event.type === 'payment_intent.succeeded') {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        await this.createOrderFromIntent(intent);
+      }
+
+      return { received: true };
+    } catch (err) {
+      console.error('❌ Stripe webhook error:', err);
+      throw new InternalServerErrorException('Webhook handling failed');
+    }
+  }
+
+  // ✅ Called by webhook
+  async createOrderFromIntent(intent: Stripe.PaymentIntent) {
+    const uid = intent.metadata?.uid;
+    const ownerName = intent.metadata?.ownerName;
+    const passportId = intent.metadata?.passportId;
+    const itemsRaw = intent.metadata?.items;
+
+    if (!uid) throw new Error('Missing user ID in intent metadata');
+
+    let items: any[] = [];
+    try {
+      if (itemsRaw) {
+        items = JSON.parse(itemsRaw);
+        if (!Array.isArray(items)) throw new Error();
+      }
+    } catch {
+      console.warn('⚠️ Invalid or missing items in metadata');
+    }
+
+    const order = {
+      userId: uid,
+      items,
+      totalAmount: intent.amount,
+      paymentIntentId: intent.id,
+      payment: {
+        method: 'card',
+        status: 'paid',
+        transactionId: intent.id,
+      },
+      status: 'confirmed',
+      ownerName,
+      passportId,
+      statusHistory: [
+        {
+          status: 'confirmed',
+          timestamp: new Date().toISOString(),
+          changedBy: 'system',
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const ref = await adminDb.collection('orders').add(order);
+    console.log('✅ Order created in Firestore from Stripe intent:', ref.id);
+    return { id: ref.id, ...order };
+  }
 }
