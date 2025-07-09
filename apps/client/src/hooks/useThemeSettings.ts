@@ -1,22 +1,47 @@
 // src/hooks/useThemeSettings.ts
-import { useFirestoreDoc } from './useFirestoreDoc';
-import { useThemeStore } from '../store/themeStore';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios, { AxiosResponse } from 'axios';
 
-export type ThemeSettings = {
-  storeName?: string;
-  darkMode?: boolean;
-  primaryColor?: string;
+export interface ThemeSettings {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  mode: 'light' | 'dark';
+  primaryColor: string;
+  secondaryColor: string;
   logoUrl?: string;
   backgroundImageUrl?: string;
-  // Add other theme fields here...
-};
+}
+
+const THEME_SETTINGS_QUERY_KEY = ['themeSettings'] as const;
 
 export function useThemeSettings() {
-  const { updateTheme } = useThemeStore();
+  const queryClient = useQueryClient();
 
-  return useFirestoreDoc<ThemeSettings>({
-    collection: 'theme',
-    docId: 'settings',
-    onUpdate: updateTheme,
+  // Fetch theme settings
+  const { data, isLoading, isError } = useQuery<ThemeSettings, Error>({
+    queryKey: THEME_SETTINGS_QUERY_KEY,
+    queryFn: async () => {
+      const res: AxiosResponse<ThemeSettings> = await axios.get('/api/theme-settings');
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false,
   });
+
+  // Mutation to save/update theme settings
+  const mutation = useMutation<AxiosResponse<any>, Error, ThemeSettings>({
+    mutationFn: (newSettings) => axios.post('/api/theme-settings', newSettings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: THEME_SETTINGS_QUERY_KEY });
+    },
+  });
+
+  return {
+    data,
+    isLoading,
+    isError,
+    save: mutation.mutate,
+    isSaving: mutation.status === 'pending',
+  };
 }
