@@ -1,15 +1,11 @@
 import React, { ReactNode } from 'react';
 import {
   Box,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   Button,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export interface FilterLayoutProps {
   title: string;
@@ -18,8 +14,7 @@ export interface FilterLayoutProps {
   hasFilters?: boolean;
   onClear?: () => void;
   onApply?: () => void;
-  actions?: ReactNode; // ✅ NEW
-  
+  actions?: ReactNode;
 }
 
 export default function AdminFilterLayout({
@@ -29,7 +24,7 @@ export default function AdminFilterLayout({
   hasFilters = false,
   onClear,
   onApply,
-  actions, // ✅ NEW
+  actions,
 }: FilterLayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -37,7 +32,6 @@ export default function AdminFilterLayout({
 
   return (
     <Box mb={3}>
-      {/* ✅ Flexible header: actions or legacy Clear/Apply buttons */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -63,7 +57,6 @@ export default function AdminFilterLayout({
         )}
       </Box>
       {children}
-     
     </Box>
   );
 }
