@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,50 +11,43 @@ import {
 } from '@mui/material';
 import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import OrderFilters from './OrderFilters';
-import { reducer, initialState } from './LocalReducer';
-import { fetchAllOrders } from '../../../api/orderApi';
+// Import OrderFilters properly or remove if not ready yet
+// import OrderFilters from './OrderFilters';
 import { useAuthReady } from '../../../hooks/useAuthReady';
 import LoadingProgress from '@/components/LoadingProgress';
+import { useOrders, Order } from '../../../hooks/useOrders';
 import { useNavigate } from 'react-router-dom';
-
 
 export default function AdminOrdersPage() {
   const navigate = useNavigate();
-  const [state, dispatch] = useReducer(reducer, initialState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { ready, user } = useAuthReady();
 
+  const [token, setToken] = useState<string | undefined>();
   useEffect(() => {
-    if (!ready || !user) return;
-
-    const loadOrders = async () => {
-      dispatch({ type: 'setLoading', payload: true });
-      try {
-        const token = await user.getIdToken();
-        const response = await fetchAllOrders(token);
-        dispatch({ type: 'setOrders', payload: response.data });
-      } catch (error) {
-        console.error('Failed to fetch orders', error);
-      } finally {
-        dispatch({ type: 'setLoading', payload: false });
-      }
-    };
-
-    loadOrders();
+    if (ready && user) {
+      user.getIdToken().then(setToken);
+    }
   }, [ready, user]);
 
-  const pageSize = state.pageSize;
-  const paginatedOrders = state.orders.slice(
-    (state.page - 1) * pageSize,
-    state.page * pageSize,
-  );
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const { data: orders = [], isLoading, error } = useOrders(token);
+
+  const paginatedOrders: Order[] = Array.isArray(orders)
+    ? orders.slice((page - 1) * pageSize, page * pageSize)
+    : [];
 
   const renderRow = ({ index, style }: ListChildComponentProps) => {
     const order = paginatedOrders[index];
+    if (!order) return null;
+
     const date =
-      (order.createdAt as any).toDate?.() ?? new Date(order.createdAt);
+      typeof order.createdAt === 'string'
+        ? new Date(order.createdAt)
+        : order.createdAt?.toDate?.() ?? new Date();
 
     return (
       <Paper
@@ -78,13 +71,10 @@ export default function AdminOrdersPage() {
         <Typography variant="body2">Email: {order.email}</Typography>
         <Typography variant="body2">Total: ${order.total}</Typography>
         <Typography variant="body2">
-          Date: {date.toLocaleString?.() ?? 'Invalid date'}
+          Date: {date.toLocaleString() ?? 'Invalid date'}
         </Typography>
         <Typography variant="body2">Status: {order.status}</Typography>
-        <Button
-          variant="outlined"
-          onClick={() => navigate(`/admin/orders/${order.id}`)}
-        >
+        <Button variant="outlined" onClick={() => navigate(`/admin/orders/${order.id}`)}>
           Edit
         </Button>
       </Paper>
@@ -94,12 +84,17 @@ export default function AdminOrdersPage() {
   return (
     <AdminStickyPage
       title="Admin Orders"
-      filters={<OrderFilters state={state} dispatch={dispatch} />}
+      // Provide real props or remove filters if not implemented
+      // filters={<OrderFilters state={state} dispatch={dispatch} />}
     >
       <Divider sx={{ mb: 2 }} />
 
-      {state.loading ? (
+      {isLoading ? (
         <LoadingProgress />
+      ) : error ? (
+        <Typography color="error" sx={{ p: 2 }}>
+          Failed to load orders: {error.message}
+        </Typography>
       ) : (
         <>
           <VariableSizeList
@@ -114,11 +109,9 @@ export default function AdminOrdersPage() {
 
           <Box mt={2} display="flex" justifyContent="center">
             <Pagination
-              count={Math.ceil(state.orders.length / pageSize)}
-              page={state.page}
-              onChange={(_, value) =>
-                dispatch({ type: 'setPage', payload: value })
-              }
+              count={Math.ceil(orders.length / pageSize)}
+              page={page}
+              onChange={(_, value) => setPage(value)}
               color="primary"
             />
           </Box>
