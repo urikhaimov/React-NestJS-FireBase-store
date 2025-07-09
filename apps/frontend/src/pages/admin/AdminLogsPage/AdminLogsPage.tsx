@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,44 +13,30 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { fetchLogs, fetchLogsByCategory, LogEntry } from '../../../api/logs';
 import { SelectChangeEvent } from '@mui/material';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import { useLogs } from '../../../hooks/useLogs';
+import type { LogEntry } from '../../../api/logs';
 
-
+const CATEGORY_OPTIONS = [
+  { id: '', label: 'All' },
+  { id: 'category1', label: 'Category 1' },
+  { id: 'category2', label: 'Category 2' },
+  { id: 'category3', label: 'Category 3' },
+];
 
 const AdminLogsPage: React.FC = () => {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        setLoading(true);
-        const data = categoryFilter
-          ? await fetchLogsByCategory(categoryFilter)
-          : await fetchLogs();
-        setLogs(data);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load logs');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLogs();
-  }, [categoryFilter]);
+  const { data: logs, isLoading, error } = useLogs(categoryFilter);
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     setCategoryFilter(event.target.value);
   };
 
-  return (
+  const logsArray: LogEntry[] = logs ?? [];
 
-    <AdminStickyPage title={'Admin Logs'}>
+  return (
+    <AdminStickyPage title="Admin Logs">
       <FormControl sx={{ mb: 2, minWidth: 200 }}>
         <InputLabel>Filter by Category</InputLabel>
         <Select
@@ -59,21 +45,22 @@ const AdminLogsPage: React.FC = () => {
           displayEmpty
           label="Filter by Category"
         >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="category1">Category 1</MenuItem>
-          <MenuItem value="category2">Category 2</MenuItem>
-          <MenuItem value="category3">Category 3</MenuItem>
+          {CATEGORY_OPTIONS.map(({ id, label }) => (
+            <MenuItem key={id} value={id}>
+              {label}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
 
-      {loading ? (
+      {isLoading ? (
         <CircularProgress />
       ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : (
+        <Typography color="error">Failed to load logs: {error.message}</Typography>
+      ) : logsArray.length > 0 ? (
         <Paper>
           <List>
-            {logs.map((log) => (
+            {logsArray.map((log: LogEntry) => (
               <React.Fragment key={log.id}>
                 <ListItem>
                   <ListItemText
@@ -85,12 +72,11 @@ const AdminLogsPage: React.FC = () => {
               </React.Fragment>
             ))}
           </List>
-          {logs.length === 0 && (
-            <Typography sx={{ p: 2 }} align="center">
-              No logs found.
-            </Typography>
-          )}
         </Paper>
+      ) : (
+        <Typography sx={{ p: 2 }} align="center">
+          No logs found.
+        </Typography>
       )}
     </AdminStickyPage>
   );
