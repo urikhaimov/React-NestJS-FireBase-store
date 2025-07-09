@@ -40,21 +40,27 @@ export default function AdminProductsPage() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
 
-  const filteredProducts = useMemo(() => {
-    const term = state.searchTerm.toLowerCase();
-    return state.products.filter((p) => {
-      const matchesText =
-        p.name.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term);
-      const matchesCategory =
-        !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
-      const matchesDate =
-        !state.createdAfter ||
-        (p.createdAt &&
-          p.createdAt.toDate().getTime() >= state.createdAfter.valueOf());
-      return matchesText && matchesCategory && matchesDate;
-    });
-  }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
+const filteredProducts = useMemo(() => {
+  const term = state.searchTerm.toLowerCase();
+  return state.products.filter((p) => {
+    const matchesText =
+      p.name.toLowerCase().includes(term) ||
+      p.description?.toLowerCase().includes(term);
+    const matchesCategory =
+      !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
+
+    let createdAtDate: Date | null = null;
+    if (p.createdAt) {
+      createdAtDate = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
+    }
+
+    const matchesDate =
+      !state.createdAfter || (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
+
+    return matchesText && matchesCategory && matchesDate;
+  });
+}, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
+
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 

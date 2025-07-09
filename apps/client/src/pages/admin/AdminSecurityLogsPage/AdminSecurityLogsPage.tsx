@@ -1,30 +1,24 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/admin/AdminSecurityLogsPage.tsx
+import React from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, CircularProgress
+  TableContainer, TableHead, TableRow, CircularProgress,
 } from '@mui/material';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { useSecurityLogs } from '../../../hooks/useSecurityLogs';
 
 export default function AdminSecurityLogsPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: logs, isLoading, error } = useSecurityLogs();
 
-  useEffect(() => {
-    const fetchLogs = async () => {
-      const q = query(
-        collection(db, 'securityLogs'),
-        orderBy('timestamp', 'desc')
-      );
-      const snapshot = await getDocs(q);
-      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    };
-    fetchLogs();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <Box sx={{ p: 3 }}><CircularProgress /></Box>;
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">Failed to load security logs: {error.message}</Typography>
+      </Box>
+    );
   }
 
   return (
@@ -43,9 +37,9 @@ export default function AdminSecurityLogsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {logs.map((log) => (
+            {logs?.map((log) => (
               <TableRow key={log.id}>
-                <TableCell>{new Date(log.timestamp?.toDate()).toLocaleString()}</TableCell>
+                <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                 <TableCell>{log.email || log.uid}</TableCell>
                 <TableCell>{log.type}</TableCell>
                 <TableCell>{log.details}</TableCell>

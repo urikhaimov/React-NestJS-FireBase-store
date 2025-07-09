@@ -1,11 +1,5 @@
-import React, {
-  useMemo,
-  useReducer,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
+// src/pages/ProductsPage/ProductsPage.tsx
+import React, { useReducer, useMemo, useEffect, useRef, useCallback, useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,31 +7,34 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import { Dayjs } from 'dayjs';
 
+import { fetchAllProducts } from '../../api/products';
+import { useAuthReady } from '../../hooks/useAuthReady';
 import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../store/cartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import { reducer, initialState } from './LocalReducer';
 import UserProductFilters from './UserProductFilters';
-import { fetchAllProducts } from '../../api/products';
-import { useAuthReady } from '../../hooks/useAuthReady';
 import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
 import type { Product } from '../../types/firebase';
 
+import { reducer, initialState, State, Action } from './LocalReducer';
+
 export default function ProductsPage() {
+  // Correctly type useReducer with State and Action:
   const [state, dispatch] = useReducer(reducer, initialState);
+
   const [products, setProducts] = useState<Product[]>([]);
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(initialState.pageSize);
   const [loading, setLoading] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const observerRef = useRef(null);
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
   const { user, ready } = useAuthReady();
   const { data: categories = [] } = useCategories();
   const cart = useCartStore();
 
-  // Fetch products once auth is ready
   useEffect(() => {
     const loadProducts = async () => {
       if (!ready || !user) return;
@@ -62,21 +59,42 @@ export default function ProductsPage() {
     loadProducts();
   }, [ready, user]);
 
-  // Filter products based on UI filters
+  // Date helper type guard
+  const isDate = (val: unknown): val is Date => val instanceof Date;
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const txt = state.search.toLowerCase();
       const inText =
         p.name.toLowerCase().includes(txt) ||
-        p.description?.toLowerCase().includes(txt);
+        (p.description?.toLowerCase().includes(txt) ?? false);
 
       const inCat =
         !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
 
       const inDate =
         !state.createdAfter ||
-        (p.createdAt?.toDate &&
-          p.createdAt.toDate().getTime() >= state.createdAfter.toDate().getTime());
+        (() => {
+          if (!p.createdAt) return false;
+
+          let productDate: Date | null = null;
+
+          if (typeof p.createdAt === 'string') {
+            productDate = new Date(p.createdAt);
+          } else if (
+            p.createdAt !== null &&
+            typeof p.createdAt === 'object' &&
+            typeof (p.createdAt as any)?.toDate === 'function'
+          ) {
+            productDate = (p.createdAt as any).toDate();
+          } else if (isDate(p.createdAt)) {
+            productDate = p.createdAt;
+          }
+
+          if (!productDate) return false;
+
+          return productDate.getTime() >= state.createdAfter!.toDate().getTime();
+        })();
 
       const inStock = !state.inStockOnly || p.stock > 0;
 
@@ -90,15 +108,14 @@ export default function ProductsPage() {
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
-  // Infinite scroll logic
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const entry = entries[0];
       if (entry.isIntersecting && visibleCount < filteredProducts.length) {
-        setVisibleCount((prev) => prev + 10);
+        setVisibleCount((prev) => prev + state.pageSize);
       }
     },
-    [filteredProducts.length, visibleCount]
+    [filteredProducts.length, visibleCount, state.pageSize]
   );
 
   useEffect(() => {
@@ -160,13 +177,18 @@ export default function ProductsPage() {
                 <ProductCardContainer
                   product={p}
                   disabled={false}
-                  onAddToCart={() => setSnackbarOpen(true)} 
+                  onAddToCart={() => setSnackbarOpen(true)}
                   onConfirmDelete={() => {}}
                 />
               </Box>
             ))}
             {visibleCount < filteredProducts.length && (
-              <Box ref={observerRef} display="flex" justifyContent="center" mt={2}>
+              <Box
+                ref={observerRef}
+                display="flex"
+                justifyContent="center"
+                mt={2}
+              >
                 <CircularProgress />
               </Box>
             )}
