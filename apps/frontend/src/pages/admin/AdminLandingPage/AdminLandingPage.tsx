@@ -1,4 +1,4 @@
-// AdminLandingPage.tsx
+import React, { useEffect, useReducer, useRef } from 'react';
 import {
   Box,
   Button,
@@ -7,20 +7,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { useEffect, useReducer, useRef } from 'react';
-import {
-  doc,
-  getDoc,
-  updateDoc,
-} from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
 
-import { db, storage } from '../../../firebase';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import PageHeader from '../../../layouts/PageHeader';
 
@@ -29,44 +16,43 @@ import SectionsEditor from '../../../components/SectionsEditor';
 import FormTextField from '../../../components/FormTextField';
 
 import { reducer, initialState } from './LocalReducer';
-import type { CombinedImage } from '../../../components/ImageUploader';
+
+import { useLandingPage, useUpdateLandingPage } from '../../../hooks/useLandingPage';
 import type { LandingPageData } from '../../../types/landing';
+
+import { uploadImage, deleteImage, deleteImageByUrl } from '../../../utils/storageHelpers';
 
 export default function AdminLandingPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const uploadedPathsRef = useRef<string[]>([]);
 
-  // 🔄 Load landing page data
-  useEffect(() => {
-    const fetchData = async () => {
-      const refDoc = doc(db, 'landingPages', 'default');
-      const snap = await getDoc(refDoc);
-      if (snap.exists()) {
-        const data = snap.data() as LandingPageData;
-        dispatch({ type: 'SET_FORM', payload: data });
-        if (data.bannerImageUrl) {
-          dispatch({
-            type: 'SET_IMAGE_STATE',
-            payload: [
-              {
-                id: 'existing-banner',
-                url: data.bannerImageUrl,
-                type: 'existing',
-              },
-            ],
-          });
-        }
-      }
-    };
-    fetchData();
-  }, []);
+  const { data, isLoading, error } = useLandingPage();
+  const updateMutation = useUpdateLandingPage();
 
-  // 🧹 Cleanup abandoned images
+  useEffect(() => {
+    if (data) {
+      dispatch({ type: 'SET_FORM', payload: data });
+
+      if (data.bannerImageUrl) {
+        dispatch({
+          type: 'SET_IMAGE_STATE',
+          payload: [
+            {
+              id: 'existing-banner',
+              url: data.bannerImageUrl,
+              type: 'existing',
+            },
+          ],
+        });
+      }
+    }
+  }, [data]);
+
   useEffect(() => {
     return () => {
       uploadedPathsRef.current.forEach(async (path) => {
         try {
-          await deleteObject(ref(storage, path));
+          await deleteImage(path);
         } catch (err) {
           console.warn('Failed to delete abandoned image:', err);
         }
@@ -106,14 +92,13 @@ export default function AdminLandingPage() {
   const handleSave = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
 
+    let finalBannerUrl = '';
     const newImage = state.images.find((img) => img.type === 'new' && img.file);
     const existingImage = state.images.find((img) => img.type === 'existing');
-    let finalBannerUrl = '';
 
     if (newImage && existingImage?.url) {
       try {
-        const path = decodeURIComponent(new URL(existingImage.url).pathname.split('/o/')[1].split('?')[0]);
-        await deleteObject(ref(storage, path));
+        await deleteImageByUrl(existingImage.url);
       } catch (error) {
         console.warn('Could not delete previous image:', error);
       }
@@ -121,10 +106,8 @@ export default function AdminLandingPage() {
 
     if (newImage?.file) {
       try {
-        const fileRef = ref(storage, `landing/banner-${Date.now()}`);
-        const uploadTask = await uploadBytes(fileRef, newImage.file);
-        finalBannerUrl = await getDownloadURL(uploadTask.ref);
-        uploadedPathsRef.current.push(uploadTask.ref.fullPath);
+        finalBannerUrl = await uploadImage(newImage.file, `landing/banner-${Date.now()}`);
+        uploadedPathsRef.current.push(finalBannerUrl);
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: 'Image upload failed. Please try again.' });
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -140,16 +123,25 @@ export default function AdminLandingPage() {
       finalBannerUrl = '';
     }
 
-    await updateDoc(doc(db, 'landingPages', 'default'), {
+    const saveData: LandingPageData = {
       ...state.form,
       bannerImageUrl: finalBannerUrl,
       sections: state.form.sections || [],
-    });
+    };
 
-    uploadedPathsRef.current = [];
-    dispatch({ type: 'SET_LOADING', payload: false });
-    dispatch({ type: 'SET_SUCCESS', payload: 'Landing page updated successfully!' });
+    try {
+      await updateMutation.mutateAsync(saveData);
+      dispatch({ type: 'SET_SUCCESS', payload: 'Landing page updated successfully!' });
+    } catch {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to save landing page. Please try again.' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      uploadedPathsRef.current = [];
+    }
   };
+
+  if (isLoading) return <div>Loading landing page data...</div>;
+  if (error) return <div>Error loading landing page data</div>;
 
   return (
     <AdminStickyPage title="Landing Page">
@@ -202,16 +194,14 @@ export default function AdminLandingPage() {
 
             <SectionsEditor
               sections={state.form.sections || []}
-              onChange={(updated) =>
-                dispatch({ type: 'SET_SECTIONS', payload: updated })
-              }
+              onChange={(updated) => dispatch({ type: 'SET_SECTIONS', payload: updated })}
             />
 
             <Box textAlign="right">
               <Button
                 variant="contained"
                 onClick={handleSave}
-                disabled={state.loading}
+                disabled={state.loading || updateMutation.status === 'pending'}
               >
                 Save Changes
               </Button>
