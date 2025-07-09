@@ -11,11 +11,11 @@ export type Product = {
   description: string;
   price: number;
   stock: number;
-  categoryId: string;
+  categoryId?: string;
   images: string[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  createdBy: string;
+  createdAt?: string;    // make optional
+  updatedAt?: string;
+  createdBy?: string;
   order?: number; // ✅ optional, for sorting
   imageUrl?: string; // ✅ Add this line
 };

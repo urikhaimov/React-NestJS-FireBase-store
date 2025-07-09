@@ -1,3 +1,4 @@
+// src/pages/ProductsPage/LocalReducer.ts
 import { Dayjs } from 'dayjs';
 
 export interface State {
