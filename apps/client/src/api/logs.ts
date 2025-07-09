@@ -1,34 +1,15 @@
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
-
-export interface LogEntry {
+// src/api/logs.ts
+export interface SecurityLog {
   id: string;
-  action: string;
-  categoryId?: string;
-  adminId: string;
-  timestamp: { seconds: number; nanoseconds: number };
-}
+  timestamp: string;  // ISO string datetime from API
+  email?: string;
+  uid?: string;
+  type?: string;
+  details?: string;
+  collection?: string;
+  affectedDocId?: string;
 
-export async function fetchLogs(): Promise<LogEntry[]> {
-  const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'));
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<LogEntry, 'id'>),
-  }));
-}
-export async function fetchLogsByCategory(categoryId: string): Promise<LogEntry[]> {
-  const q = query(
-    collection(db, 'logs'),
-    orderBy('timestamp', 'desc')
-  );
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs
-    .map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<LogEntry, 'id'>),
-    }))
-    .filter(log => log.categoryId === categoryId);
+  // Optional: If your API uses other names for action/adminId, rename here or remove if unused
+  action?: string;
+  adminId?: string;
 }
