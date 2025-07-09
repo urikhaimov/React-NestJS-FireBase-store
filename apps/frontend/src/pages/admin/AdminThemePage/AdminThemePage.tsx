@@ -1,3 +1,4 @@
+// src/pages/admin/AdminThemePage/AdminThemePage.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Grid,
@@ -76,7 +77,7 @@ export default function AdminThemePage() {
               name="logoUrl"
               control={control}
               render={({ field }) => (
-                <LogoUploader value={field.value ?? ''} onChange={field.onChange} />
+                <LogoUploader value={String(field.value ?? '')} onChange={field.onChange} />
               )}
             />
           </Grid>
@@ -86,7 +87,7 @@ export default function AdminThemePage() {
               name="backgroundImageUrl"
               control={control}
               render={({ field }) => (
-                <BackgroundUploader value={field.value ?? ''} onChange={field.onChange} />
+                <BackgroundUploader value={String(field.value ?? '')} onChange={field.onChange} />
               )}
             />
           </Grid>
@@ -118,11 +119,7 @@ export default function AdminThemePage() {
         onClose={() => setToastOpen(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert
-          severity="success"
-          variant="filled"
-          onClose={() => setToastOpen(false)}
-        >
+        <Alert severity="success" variant="filled" onClose={() => setToastOpen(false)}>
           Theme updated successfully
         </Alert>
       </Snackbar>
