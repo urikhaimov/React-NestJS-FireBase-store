@@ -16,7 +16,7 @@ import {
 import { SelectChangeEvent } from '@mui/material';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 import { useLogs } from '../../../hooks/useLogs';
-import type { LogEntry } from '../../../api/logs';
+import type { SecurityLog } from '../../../api/logs';
 
 const CATEGORY_OPTIONS = [
   { id: '', label: 'All' },
@@ -33,7 +33,7 @@ const AdminLogsPage: React.FC = () => {
     setCategoryFilter(event.target.value);
   };
 
-  const logsArray: LogEntry[] = logs ?? [];
+  const logsArray: SecurityLog[] = logs ?? [];
 
   return (
     <AdminStickyPage title="Admin Logs">
@@ -60,12 +60,12 @@ const AdminLogsPage: React.FC = () => {
       ) : logsArray.length > 0 ? (
         <Paper>
           <List>
-            {logsArray.map((log: LogEntry) => (
+            {logsArray.map((log: SecurityLog) => (
               <React.Fragment key={log.id}>
                 <ListItem>
                   <ListItemText
-                    primary={`${log.action} (Admin: ${log.adminId})`}
-                    secondary={new Date(log.timestamp.seconds * 1000).toLocaleString()}
+                    primary={`${log.type || log.action || 'Unknown action'} (Admin: ${log.email || log.uid || 'Unknown'})`}
+                    secondary={new Date(log.timestamp).toLocaleString()}
                   />
                 </ListItem>
                 <Divider />
