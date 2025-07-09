@@ -12,10 +12,14 @@ export interface Section {
 }
 
 export interface LandingPageData {
-  title?: string;
+  title: string;
   subtitle?: string;
   bannerImageUrl?: string;
   ctaButtonText?: string;
   ctaButtonLink?: string;
-  sections?: Section[]; // <-- add this
+  sections?: Array<{
+    title?: string;
+    subtitle?: string;
+    content?: string;
+  }>;
 }

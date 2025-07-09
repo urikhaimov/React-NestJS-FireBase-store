@@ -1,18 +1,17 @@
-import  { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Button,
   Typography,
+  CircularProgress,
+  Container,
   useTheme,
   useMediaQuery,
-  Divider,
-  Container,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 
-import { db } from '../../firebase';
+import { useLandingPage } from '../../hooks/useLandingPage';
 import LoadingProgress from '../../components/LoadingProgress';
 import BestSellers from '../../components/BestSellers';
 import type { LandingPageData } from '../../types/landing';
@@ -21,25 +20,27 @@ import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 export default function HomePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [landingData, setLandingData] = useState<LandingPageData | null>(null);
 
-  useEffect(() => {
-    const fetchLanding = async () => {
-      try {
-        const ref = doc(db, 'landingPages', 'default');
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setLandingData(snap.data() as LandingPageData);
-        }
-      } catch (error) {
-        console.error('❌ Failed to load landing page data:', error);
-      }
-    };
+  const { data, isLoading, isError } = useLandingPage();
+ 
 
-    fetchLanding();
-  }, []);
+  if (isLoading) return <LoadingProgress />;
+  if (isError)
+    return (
+      <Typography color="error" textAlign="center" mt={6}>
+        Failed to load landing page data.
+      </Typography>
+    );
 
-  if (!landingData) return <LoadingProgress />;
+  // Defensive fallback for data properties
+  const landingData: LandingPageData = data ?? {
+    title: '',
+    subtitle: '',
+    bannerImageUrl: '',
+    ctaButtonText: '',
+    ctaButtonLink: '',
+    sections: [],
+  };
 
   const sections = landingData.sections ?? [];
 
@@ -47,7 +48,6 @@ export default function HomePage() {
     <PageWithStickyFilters>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Banner Section */}
-
         {landingData.bannerImageUrl && (
           <>
             <Box
@@ -60,7 +60,6 @@ export default function HomePage() {
                 mb: 2,
               }}
             >
-              {/* Background Image */}
               <Box
                 component="img"
                 src={landingData.bannerImageUrl}
@@ -71,21 +70,17 @@ export default function HomePage() {
                   objectFit: 'cover',
                   objectPosition: 'center top',
                   display: 'block',
-                   opacity: 0.5, // 👈 subtle dimming
+                  opacity: 0.5,
                 }}
               />
-
-              {/* Soft Dark Overlay for the whole image */}
               <Box
                 sx={{
                   position: 'absolute',
                   inset: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)', // <- subtle opacity
+                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
                   zIndex: 1,
                 }}
               />
-
-              {/* Title and Subtitle */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -122,7 +117,6 @@ export default function HomePage() {
               </Box>
             </Box>
 
-            {/* CTA Button Below Banner */}
             {landingData.ctaButtonText && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -144,8 +138,6 @@ export default function HomePage() {
           </>
         )}
 
-
-
         {/* Featured Sections */}
         {sections.length > 0 && (
           <motion.div
@@ -153,16 +145,15 @@ export default function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             viewport={{ once: true }}
-          > 
+          >
             <Box mb={6}>
               <Typography variant="h5" textAlign="center" gutterBottom>
                 🧩 Featured Sections
               </Typography>
-              <Divider sx={{ mb: 3 }} />
               <Box display="flex" flexDirection="column" gap={4}>
                 {sections.map((section, index) => (
                   <motion.div
-                    key={index}
+                   key={index}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.15 }}
@@ -175,11 +166,7 @@ export default function HomePage() {
                         </Typography>
                       )}
                       {section.subtitle && (
-                        <Typography
-                          variant="subtitle2"
-                          color="text.secondary"
-                          gutterBottom
-                        >
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                           {section.subtitle}
                         </Typography>
                       )}
