@@ -1,0 +1,38 @@
+rules_version = '2'; // Optional but recommended
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // === Public user avatars ===
+    match /avatars/{avatarPath} {
+      // Allow read by anyone
+      allow read: if true;
+
+      // Allow write only if user is uploading their own avatar
+      allow write: if request.auth != null &&
+                   avatarPath.startsWith(request.auth.uid);
+    }
+
+    // === Product images ===
+    match /products/{allPaths=**} {
+      // Publicly readable product images
+      allow read: if true;
+
+      // Only admins or superadmins can write
+      allow write: if request.auth != null &&
+                   request.auth.token.role in ['admin', 'superadmin'];
+    }
+
+    // === Temporary uploads ===
+    match /temp/{tempPath} {
+      // Only the authenticated user can access their own temp files
+      allow read, write: if request.auth != null &&
+                         tempPath.startsWith(request.auth.uid);
+    }
+
+    // === Fallback: deny all other paths ===
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

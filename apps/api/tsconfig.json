@@ -1,5 +1,5 @@
 {
-  // "extends": "../../tsconfig.base.json", // Uncomment if you want to inherit base settings
+  "extends": "../../tsconfig.base.json",
   "references": [
     {
       "path": "./tsconfig.build.json"
@@ -33,12 +33,24 @@
       "./src/types"
     ],
     "paths": {
-      "@backend/*": ["src/*"],
-      "@backend/config/*": ["src/config/*"],
-      "@backend/services/*": ["src/services/*"],
-      "@backend/controllers/*": ["src/controllers/*"],
-      "@backend/models/*": ["src/models/*"],
-      "@backend/utils/*": ["src/utils/*"]
+      "@backend/*": [
+        "src/*"
+      ],
+      "@backend/config/*": [
+        "src/config/*"
+      ],
+      "@backend/services/*": [
+        "src/services/*"
+      ],
+      "@backend/controllers/*": [
+        "src/controllers/*"
+      ],
+      "@backend/models/*": [
+        "src/models/*"
+      ],
+      "@backend/utils/*": [
+        "src/utils/*"
+      ]
     }
   }
 }
