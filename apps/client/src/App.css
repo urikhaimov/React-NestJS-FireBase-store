@@ -1,0 +1,14 @@
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* prevent base scroll */
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+/* * {
+  outline: 1px dashed red;
+} */
