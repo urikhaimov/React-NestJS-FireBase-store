@@ -5,17 +5,26 @@ import {
   Paper,
   Stack,
   Button,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
 
-import { useProduct, Product } from '../../../hooks/useProduct';
+import { storage, db } from '../../../firebase'; // Adjust your import paths
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, updateDoc, serverTimestamp, collection } from 'firebase/firestore';
+
+import { useProduct } from '../../../hooks/useProduct';
 import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
 import { productFormReducer, initialProductFormState } from './productFormReducer';
 import FormTextField from '../../../components/FormTextField';
+
+// Fetch categories from API or replace with your API call
+async function fetchCategories() {
+  const res = await fetch('/api/categories'); // Adjust API endpoint
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  return await res.json();
+}
 
 type FormState = {
   name: string;
@@ -48,7 +57,18 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     },
   });
 
-  // Load product data into form and reducer state when fetched
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const categories = await fetchCategories();
+        dispatch({ type: 'SET_CATEGORIES', payload: categories });
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    }
+    loadCategories();
+  }, []);
+
   useEffect(() => {
     if (!product) return;
 
@@ -74,7 +94,7 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
 
   const handleImageDrop = (files: File[]) => {
     const newImages: CombinedImage[] = files.map((file) => ({
-      id: URL.createObjectURL(file), // generate unique id for demo, ideally a UUID
+      id: URL.createObjectURL(file),
       url: URL.createObjectURL(file),
       type: 'new',
       file,
@@ -83,9 +103,91 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     dispatch({ type: 'ADD_COMBINED_IMAGES', payload: newImages });
   };
 
+  // Helper to upload a single file to Firebase Storage
+  async function uploadFile(file: File, productDocId: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, `products/${productDocId}/${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          // Optional: dispatch upload progress if desired
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          // e.g. dispatch({ type: 'SET_UPLOAD_PROGRESS', payload: { id: file.name, progress } });
+        },
+        (error) => {
+          reject(error);
+        },
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(url);
+        }
+      );
+    });
+  }
+
   const onSubmit = async (data: FormState) => {
-    // Implement your submit logic, e.g., create or update product
-    // You can access state.combinedImages for images info
+    try {
+      dispatch({ type: 'SET_UPLOADING_IMAGES', payload: true });
+
+      // Generate product ID for new product
+      let productDocId = productId ?? '';
+      if (mode === 'add' && !productDocId) {
+        const newDocRef = doc(collection(db, 'products'));
+        productDocId = newDocRef.id;
+      }
+
+      // Upload new images
+      const newImages = state.combinedImages.filter((img) => img.type === 'new');
+      const uploadedUrls = await Promise.all(
+        newImages.map((img) => {
+          if (!img.file) throw new Error('Missing file for upload');
+          return uploadFile(img.file, productDocId);
+        })
+      );
+
+      // Combine existing images + uploaded URLs
+      const existingUrls = state.combinedImages
+        .filter((img) => img.type === 'existing')
+        .map((img) => img.url);
+
+      const allImageUrls = [...existingUrls, ...uploadedUrls];
+
+      // Prepare product data
+      const productData = {
+        name: data.name,
+        description: data.description,
+        price: Number(data.price),
+        stock: Number(data.stock),
+        categoryId: data.categoryId,
+        images: allImageUrls,
+        updatedAt: serverTimestamp(),
+      };
+
+      // Save to Firestore
+      if (mode === 'edit' && productId) {
+        const productRef = doc(db, 'products', productId);
+        await updateDoc(productRef, productData);
+      } else {
+        // New product
+        const newDocRef = doc(db, 'products', productDocId);
+        await setDoc(newDocRef, {
+          ...productData,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: true });
+      dispatch({ type: 'SET_UPLOADING_IMAGES', payload: false });
+
+      alert('Product saved successfully!');
+      navigate('/admin/products');
+    } catch (error) {
+      console.error('Failed to save product:', error);
+      dispatch({ type: 'SET_UPLOADING_IMAGES', payload: false });
+      alert('Failed to save product. Check console for details.');
+    }
   };
 
   if (isLoading) {
@@ -159,6 +261,7 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
               register={register('stock')}
               errorObject={errors.stock}
             />
+
             <FormTextField
               label="Category"
               name="categoryId"
@@ -205,8 +308,6 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
           </Stack>
         </form>
       </Paper>
-
-      {/* Snackbars etc here as before */}
     </Box>
   );
 }
