@@ -1,0 +1,44 @@
+{
+  // "extends": "../../tsconfig.base.json", // Uncomment if you want to inherit base settings
+  "references": [
+    {
+      "path": "./tsconfig.build.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "noFallthroughCasesInSwitch": false,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "paths": {
+      "@backend/*": ["src/*"],
+      "@backend/config/*": ["src/config/*"],
+      "@backend/services/*": ["src/services/*"],
+      "@backend/controllers/*": ["src/controllers/*"],
+      "@backend/models/*": ["src/models/*"],
+      "@backend/utils/*": ["src/utils/*"]
+    }
+  }
+}
