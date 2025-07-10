@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 import axios from 'axios';
-import { useSafeAuth } from './getSafeAuth';
+import { useSafeAuth } from './useGetSafeAuth';
 
 export type Order = {
   id: string;

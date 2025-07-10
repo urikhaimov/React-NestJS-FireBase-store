@@ -12,7 +12,7 @@ import { Dayjs } from 'dayjs';
 import { fetchAllProducts } from '../../api/products';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { useCategories } from '../../hooks/useCategories';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import UserProductFilters from './UserProductFilters';
 import ProductCardContainer from './ProductCardContainer';

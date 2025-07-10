@@ -38,7 +38,7 @@ import AdminHomePage from './pages/admin/AdminHomePage';
 
 import { useRedirect } from './context/RedirectContext';
 import { useAuthStore } from './stores/useAuthStore';
-import { useThemeStore } from './store/themeStore';
+import { useThemeStore } from './stores/useThemeStore';
 import { getThemeFromSettings } from './utils/themeBuilder';
 import { StripeProvider } from './stripe/StripeProvider';
 import AdminSecurityLogsPage from './pages/admin/AdminSecurityLogsPage';

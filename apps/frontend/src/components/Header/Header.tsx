@@ -20,9 +20,9 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import { useSafeAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../stores/useStoreSettings';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import { useSidebarStore } from '../../stores/useSidebarStore';
-import { useThemeStore } from '../../store/themeStore';
+import { useThemeStore } from '../../stores/useThemeStore';
 
 const DEFAULT_AVATAR = '/default-avatar.png';
 

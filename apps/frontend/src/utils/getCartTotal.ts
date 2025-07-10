@@ -1,5 +1,5 @@
 // src/utils/getCartTotal.ts
-import { CartItem } from '../store/cartStore';
+import { CartItem } from '../stores/useCartStore';
 
 interface CartTotalOptions {
   shipping?: number;

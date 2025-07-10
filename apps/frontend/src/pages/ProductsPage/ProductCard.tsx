@@ -7,7 +7,7 @@ import {
   Box,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import type { Props } from './CardReducer';
 
 type ProductCardProps = Props & {
