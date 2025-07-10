@@ -77,7 +77,9 @@ export default function ProductAdminCard({
             objectFit: 'cover',
             mx: { xs: 'auto', sm: 0 },
           }}
-          image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+          image={
+            product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'
+          }
           alt={product.name}
         />
 
@@ -92,7 +94,13 @@ export default function ProductAdminCard({
             {product.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
+            $
+            {typeof product.price === 'number'
+              ? product.price.toFixed(2)
+              : Number(product.price).toFixed
+                ? Number(product.price).toFixed(2)
+                : 'N/A'}{' '}
+            • Stock: {product?.stock ?? 'N/A'}
           </Typography>
         </CardContent>
 
@@ -130,15 +138,23 @@ export default function ProductAdminCard({
         </CardActions>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => dispatch({ type: 'CLOSE_DIALOG' })} fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => dispatch({ type: 'CLOSE_DIALOG' })}
+        fullWidth
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{product.name}</strong>?
+            This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => dispatch({ type: 'CLOSE_DIALOG' })} disabled={loading}>
+          <Button
+            onClick={() => dispatch({ type: 'CLOSE_DIALOG' })}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button
