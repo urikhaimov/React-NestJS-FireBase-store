@@ -1,4 +1,3 @@
-// apps/backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
@@ -8,22 +7,24 @@ import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ImageProxyController } from './image-proxy/image-proxy.controller';
 import { StripeController } from './stripe/stripe.controller';
+import { ThemeSettingsModule } from './theme/theme-settings.module';  // <
+import { LandingPageModule } from './landing-page/landing-page.module';
+import { SecurityLogsModule } from './security-logs/security-logs.module'; 
+
 @Module({
   imports: [
-    // ✅ Loads environment variables from `.env` and makes ConfigService globally available
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env', // Optional: specify custom path if needed
+      envFilePath: '.env',
     }),
-
-    // ✅ Feature modules
     ProductsModule,
     OrdersModule,
     UsersModule,
     CategoriesModule,
+    LandingPageModule,
+    ThemeSettingsModule,
+    SecurityLogsModule
   ],
-
-  // ✅ Global controllers (if not scoped to specific modules)
-  controllers: [ImageProxyController, StripeController ],
+  controllers: [ImageProxyController, StripeController],
 })
 export class AppModule {}
