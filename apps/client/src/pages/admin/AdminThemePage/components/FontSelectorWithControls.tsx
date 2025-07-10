@@ -10,7 +10,7 @@ import {
   Slider,
   SelectChangeEvent,
 } from '@mui/material';
-import { useThemeStore } from '../../../../store/themeStore';
+import { useThemeStore } from '../../../../stores/useThemeStore';
 
 const FONT_GROUPS = {
   'Sans Serif': ['Roboto', 'Open Sans', 'Lato', 'Poppins'],

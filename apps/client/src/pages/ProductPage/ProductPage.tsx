@@ -11,7 +11,7 @@ import { doc, getDoc } from 'firebase/firestore';
 
 
 import { db } from '../../firebase';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import ImageGallery from '../../components/ImageGallery';
 import DOMPurify from 'dompurify';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';

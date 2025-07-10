@@ -16,7 +16,7 @@ import {
   Slide,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useCartStore } from '../store/cartStore';
+import { useCartStore } from '../stores/useCartStore';
 import { useSwipeable } from 'react-swipeable';
 
 interface CartDrawerProps {

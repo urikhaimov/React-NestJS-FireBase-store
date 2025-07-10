@@ -14,7 +14,7 @@ import { loadStripe } from '@stripe/stripe-js';
 
 import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import { getCartTotal } from '../../utils/getCartTotal';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);

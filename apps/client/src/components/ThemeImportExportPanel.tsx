@@ -8,8 +8,8 @@ import {
   Alert,
   Stack,
 } from '@mui/material';
-import { useThemeStore } from '../store/themeStore';
-import type { ThemeSettings } from '../store/themeStore';
+import { useThemeStore } from '../stores/useThemeStore';
+import type { ThemeSettings } from '../stores/useThemeStore';
 
 export const defaultTheme: ThemeSettings = {
   storeName: 'My Store',

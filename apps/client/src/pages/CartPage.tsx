@@ -8,7 +8,7 @@ import {
   Divider,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useCartStore } from '../store/cartStore';
+import { useCartStore } from '../stores/useCartStore';
 import { useNavigate } from 'react-router-dom';
 import PageWithStickyFilters from '../layouts/PageWithStickyFilters';
 

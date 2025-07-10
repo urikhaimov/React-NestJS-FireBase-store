@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 
-import { useThemeStore } from '../store/themeStore';
+import { useThemeStore } from '../stores/useThemeStore';
 import { getThemeFromSettings } from '../utils/themeBuilder';
 
 type Props = {

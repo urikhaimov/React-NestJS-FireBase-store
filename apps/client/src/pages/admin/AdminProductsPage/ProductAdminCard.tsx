@@ -18,7 +18,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import { useNavigate } from 'react-router-dom';
 import { useReducer } from 'react';
-import { deleteProduct } from '../../../hooks/deleteProduct';
+import { deleteProduct } from '../../../hooks/useDeleteProduct';
 import { reducer, initialState } from './CardReducer';
 import type { Product } from '../../../types/firebase';
 

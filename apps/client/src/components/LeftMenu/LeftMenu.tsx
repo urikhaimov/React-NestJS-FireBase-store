@@ -34,7 +34,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../../stores/useAuthStore';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import CartDrawer from '../CartDrawer';
 import { useSidebarStore } from '../../stores/useSidebarStore';
 import ScrollContainer from '../ScrollContainer';

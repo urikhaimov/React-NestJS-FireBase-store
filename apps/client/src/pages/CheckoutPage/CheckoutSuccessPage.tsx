@@ -8,7 +8,7 @@ import {
   Button,
   CircularProgress,
 } from '@mui/material';
-import { useCartStore } from '../../store/cartStore';
+import { useCartStore } from '../../stores/useCartStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../../firebase';
 
