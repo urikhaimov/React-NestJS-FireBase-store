@@ -1,0 +1,3 @@
+apps/frontend/eslint.config.js
+apps/backend/eslint.config.mjs
+eslint.config.mjs

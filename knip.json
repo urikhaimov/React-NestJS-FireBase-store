@@ -1,0 +1,15 @@
+{
+  "entry": [
+    "apps/frontend/src/main.tsx",
+    "apps/backend/src/main.ts"
+  ],
+  "project": [
+    "apps/frontend/tsconfig.json",
+    "apps/backend/tsconfig.json"
+  ],
+  "ignore": [
+    "apps/frontend/eslint.config.js",
+    "apps/backend/eslint.config.mjs",
+    "eslint.config.mjs"
+  ]
+}

@@ -37,6 +37,7 @@
     "eslint-plugin-mdx": "^3.6.0",
     "eslint-plugin-prettier": "^5.5.1",
     "husky": "^9.1.7",
+    "knip": "^5.61.3",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
