@@ -57,15 +57,17 @@ export default function ImageUploader({
     disabled: images.length >= MAX_IMAGES,
   });
 
-  // Track and auto-cleanup preview blob URLs
+  // Track and cleanup preview blob URLs for new images
   useEffect(() => {
-    const newBlobs = images
+    const newBlobUrls = images
+      .filter((img) => img.type === 'new' && img.url.startsWith('blob:'))
       .map((img) => img.url)
-      .filter((url) => url.startsWith('blob:') && !createdPreviewsRef.current.includes(url));
+      .filter((url) => !createdPreviewsRef.current.includes(url));
 
-    createdPreviewsRef.current.push(...newBlobs);
+    createdPreviewsRef.current.push(...newBlobUrls);
   }, [images]);
 
+  // Revoke blob URLs on unmount
   useEffect(() => {
     return () => {
       createdPreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -85,9 +87,7 @@ export default function ImageUploader({
       />
 
       <Paper
-        {...getRootProps({
-          onClick: (e: React.MouseEvent) => e.stopPropagation(),
-        })}
+        {...getRootProps()}
         elevation={3}
         sx={{
           py: 3,
@@ -113,11 +113,13 @@ export default function ImageUploader({
         </Typography>
       </Paper>
 
-      <Snackbar open={showSnackbar} autoHideDuration={5000} onClose={onCloseSnackbar}>
-        <Alert severity="error" onClose={onCloseSnackbar}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
+      {errorMessage && (
+        <Snackbar open={showSnackbar} autoHideDuration={5000} onClose={onCloseSnackbar}>
+          <Alert severity="error" onClose={onCloseSnackbar}>
+            {errorMessage}
+          </Alert>
+        </Snackbar>
+      )}
     </Box>
   );
 }
