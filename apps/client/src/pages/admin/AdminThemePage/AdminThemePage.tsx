@@ -1,128 +1,127 @@
-// src/pages/admin/AdminThemePage/AdminThemePage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import {
-  Grid,
+  Box,
+  TextField,
   Button,
-  Snackbar,
-  Alert,
-  useMediaQuery,
-  useTheme,
+  Switch,
+  FormControlLabel,
+  Typography,
+  Stack,
+  MenuItem,
 } from '@mui/material';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
-
-import { useThemeSettings, ThemeSettings } from '../../../hooks/useThemeSettings';
-
-import LoadingProgress from '../../../components/LoadingProgress';
-import LogoUploader from '../../../components/LogoUploader';
-import BackgroundUploader from '../../../components/BackgroundUploader';
-import ThemePreviewCard from '../../../components/ThemePreviewCard';
-import ThemeImportExportPanel from '../../../components/ThemeImportExportPanel';
-
-import StoreNameField from './components/StoreNameField';
-import DarkModeToggle from './components/DarkModeToggle';
-import ColorPickerSection from './components/ColorPickerSection';
-import FontSelectorWithControls from './components/FontSelectorWithControls';
-import HomepageLayoutSelect from './components/HomepageLayoutSelect';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import {
+  ThemeSettings,
+  useThemeSettingsQuery,
+  useUpdateThemeSettingsMutation,
+} from '../../../api/theme';
+import { themePresets, loadGoogleFont } from '../../../constants/themePresets';
 
 export default function AdminThemePage() {
-  const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
-
-  const { data: themeSettings, isLoading, isError, save, isSaving } = useThemeSettings();
-
-  const [toastOpen, setToastOpen] = useState(false);
+  const { data, isLoading } = useThemeSettingsQuery();
+  const { mutate, isPending } = useUpdateThemeSettingsMutation();
 
   const {
     control,
     handleSubmit,
     reset,
-    formState: { isDirty, isSubmitting },
+    watch,
+    formState: { errors },
   } = useForm<ThemeSettings>({
-    defaultValues: themeSettings ?? {},
+    defaultValues: data,
+    values: data,
   });
 
-  // Reset form when themeSettings loads or changes
+  const selectedFont = watch('fontFamily');
+
   useEffect(() => {
-    if (themeSettings) reset(themeSettings);
-  }, [themeSettings, reset]);
+    if (selectedFont) loadGoogleFont(selectedFont);
+  }, [selectedFont]);
 
-  if (isLoading) return <LoadingProgress />;
-
-  if (isError)
-    return (
-      <AdminStickyPage title="Customize Your Store Theme">
-        <div>Error loading theme settings</div>
-      </AdminStickyPage>
-    );
-
-  const onSubmit: SubmitHandler<ThemeSettings> = (data) => {
-    save(data, {
-      onSuccess: () => setToastOpen(true),
-    });
+  const onSubmit = (values: ThemeSettings) => {
+    mutate(values);
   };
 
+  const applyPreset = (presetName: keyof typeof themePresets) => {
+    const preset = themePresets[presetName];
+    reset(preset);
+    loadGoogleFont(preset.fontFamily);
+  };
+
+  if (isLoading || !data) return <div>Loading theme settings...</div>;
+
   return (
-    <AdminStickyPage title="Customize Your Store Theme">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Grid container spacing={2}>
-          <StoreNameField control={control} />
-          <DarkModeToggle control={control} />
-          <ColorPickerSection control={control} />
-          <FontSelectorWithControls />
-          <HomepageLayoutSelect control={control} />
+    <Box p={3}>
+      <Typography variant="h5" gutterBottom>Edit Theme</Typography>
 
-          <Grid item xs={12}>
-            <Controller
-              name="logoUrl"
-              control={control}
-              render={({ field }) => (
-                <LogoUploader value={String(field.value ?? '')} onChange={field.onChange} />
-              )}
-            />
-          </Grid>
+      <Stack direction="row" spacing={2} mb={3}>
+        {Object.keys(themePresets).map((key) => (
+          <Button
+            key={key}
+            variant="outlined"
+            onClick={() => applyPreset(key as keyof typeof themePresets)}
+          >
+            {key}
+          </Button>
+        ))}
+      </Stack>
 
-          <Grid item xs={12}>
-            <Controller
-              name="backgroundImageUrl"
-              control={control}
-              render={({ field }) => (
-                <BackgroundUploader value={String(field.value ?? '')} onChange={field.onChange} />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <ThemePreviewCard />
-          </Grid>
-
-          <Grid item xs={12}>
-            <ThemeImportExportPanel />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth={isMobile}
-              disabled={!isDirty || isSubmitting || isSaving}
-            >
-              Save Theme
-            </Button>
-          </Grid>
-        </Grid>
-      </form>
-
-      <Snackbar
-        open={toastOpen}
-        autoHideDuration={1500}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="success" variant="filled" onClose={() => setToastOpen(false)}>
-          Theme updated successfully
-        </Alert>
-      </Snackbar>
-    </AdminStickyPage>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Stack spacing={2} maxWidth={500}>
+          <Controller
+            name="primaryColor"
+            control={control}
+            rules={{ required: 'Primary color is required' }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Primary Color"
+                error={!!errors.primaryColor}
+                helperText={errors.primaryColor?.message}
+              />
+            )}
+          />
+          <Controller
+            name="secondaryColor"
+            control={control}
+            rules={{ required: 'Secondary color is required' }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Secondary Color"
+                error={!!errors.secondaryColor}
+                helperText={errors.secondaryColor?.message}
+              />
+            )}
+          />
+          <Controller
+            name="fontFamily"
+            control={control}
+            rules={{ required: 'Font is required' }}
+            render={({ field }) => (
+              <TextField select label="Font" {...field}>
+                <MenuItem value="Roboto">Roboto</MenuItem>
+                <MenuItem value="Open Sans">Open Sans</MenuItem>
+                <MenuItem value="Inter">Inter</MenuItem>
+                <MenuItem value="Orbitron">Orbitron</MenuItem>
+              </TextField>
+            )}
+          />
+          <Controller
+            name="darkMode"
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={<Switch {...field} checked={field.value} />}
+                label="Dark Mode"
+              />
+            )}
+          />
+          <Button type="submit" variant="contained" disabled={isPending}>
+            Save Theme
+          </Button>
+        </Stack>
+      </Box>
+    </Box>
   );
 }

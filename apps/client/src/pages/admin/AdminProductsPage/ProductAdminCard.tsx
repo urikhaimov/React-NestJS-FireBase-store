@@ -38,7 +38,7 @@ export default function ProductAdminCard({
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { dialogOpen, loading } = state;
-
+const formattedPrice = Number(product.price).toFixed(2);
   const handleDeleteClick = () => {
     dispatch({ type: 'OPEN_DIALOG' });
   };
@@ -92,7 +92,7 @@ export default function ProductAdminCard({
             {product.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            ${product?.price?.toFixed(2) ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
+            ${formattedPrice ?? 'N/A'} • Stock: {product?.stock ?? 'N/A'}
           </Typography>
         </CardContent>
 

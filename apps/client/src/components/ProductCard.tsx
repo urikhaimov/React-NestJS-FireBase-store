@@ -15,6 +15,7 @@ type Props = {
 
 export default function ProductCard({ product }: Props) {
   console.log('Rendering ProductCard:', product);
+  const formattedPrice = Number(product.price).toFixed(2);
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {product.imageUrl && product.images && (
@@ -32,7 +33,7 @@ export default function ProductCard({ product }: Props) {
           {product.name}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          ${product.price?.toFixed(2)}
+          ${formattedPrice}
         </Typography>
       </CardContent>
 

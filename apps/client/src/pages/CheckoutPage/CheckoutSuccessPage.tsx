@@ -58,7 +58,7 @@ export default function CheckoutSuccessPage() {
             items: items.map((item) => ({
               productId: item.id,
               name: item.name,
-              price: item.price,
+             price: Number(item.price),
               image: item.imageUrl,
               quantity: item.quantity,
             })),

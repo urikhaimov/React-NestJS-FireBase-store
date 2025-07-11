@@ -41,7 +41,7 @@ function SwipeableCartItem({
     onSwipedLeft: onRemove,
     delta: 50,
   });
-
+const formattedPrice = Number(item.price).toFixed(2);
   return (
     <Fade in>
       <Box
@@ -59,7 +59,7 @@ function SwipeableCartItem({
       >
         <ListItemText
           primary={item.name}
-          secondary={`$${item.price.toFixed(2)} × ${item.quantity}`}
+          secondary={`$${formattedPrice} × ${item.quantity}`}
         />
         <Box
           sx={{

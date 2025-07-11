@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import {
   Box, Typography, Paper, TextField, Button, Avatar, Stack,
   IconButton, CircularProgress, Dialog, DialogContent, Snackbar, Alert,
-  useMediaQuery, useTheme as useMuiTheme
+  useMediaQuery, useTheme as useMuiTheme,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { updateProfile } from 'firebase/auth';
@@ -48,8 +48,7 @@ function reducer(state: State, action: any): State {
 }
 
 export default function UserProfilePage() {
-  const user = useAuthStore((s) => s.user);
-  const refreshUser = useAuthStore((s) => s.refreshUser);
+  const { user, loading, authInitialized, refreshUser } = useAuthStore();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
@@ -58,22 +57,34 @@ export default function UserProfilePage() {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const { theme } = useThemeContext();
 
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { name: '', email: '' },
-  });
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({ defaultValues: { name: '', email: '' } });
 
   useEffect(() => {
     if (user) reset({ name: user.name || '', email: user.email || '' });
   }, [user, reset]);
 
-  useEffect(() => () => { if (imageSrc) URL.revokeObjectURL(imageSrc); }, [imageSrc]);
+  useEffect(() => {
+    return () => {
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
+    };
+  }, [imageSrc]);
 
   const onSubmit = async (data: { name: string }) => {
     if (!auth.currentUser) return;
-    await updateProfile(auth.currentUser, { displayName: data.name });
-    await updateDoc(doc(db, 'users', auth.currentUser.uid), { name: data.name });
-    await refreshUser();
-    setToastOpen(true);
+    try {
+      await updateProfile(auth.currentUser, { displayName: data.name });
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { name: data.name });
+      await refreshUser();
+      setToastOpen(true);
+    } catch (err) {
+      console.error('❌ Update failed:', err);
+      setErrorMsg('Failed to update profile.');
+    }
   };
 
   const onCropComplete = useCallback((_: any, croppedAreaPixels: Area) => {
@@ -92,39 +103,31 @@ export default function UserProfilePage() {
     dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: true });
   };
 
- const handleUploadCroppedImage = async () => {
-  console.log("Uploading as:", auth.currentUser?.uid);
+  const handleUploadCroppedImage = async () => {
+    if (!imageSrc || !state.croppedAreaPixels || !auth.currentUser) return;
 
-  if (!imageSrc || !state.croppedAreaPixels || !auth.currentUser) return;
+    dispatch({ type: 'SET_UPLOADING', payload: true });
 
-  dispatch({ type: 'SET_UPLOADING', payload: true });
+    try {
+      const croppedBlob = await getCroppedImg(imageSrc, state.croppedAreaPixels, state.zoom);
+      const uid = auth.currentUser.uid;
+      const storageRef = ref(storage, `avatars/${uid}`);
+      await uploadBytes(storageRef, croppedBlob!);
+      const photoURL = await getDownloadURL(storageRef);
 
-  try {
-    const croppedBlob = await getCroppedImg(imageSrc, state.croppedAreaPixels, state.zoom);
+      await updateProfile(auth.currentUser, { photoURL });
+      await updateDoc(doc(db, 'users', uid), { photoURL });
+      await refreshUser();
 
-    console.log("Blob size:", croppedBlob?.size);
-    console.log("Blob type:", croppedBlob?.type);
-
-    const uid = auth.currentUser.uid;
-    const storageRef = ref(storage, `avatars/${uid}`);
-    await uploadBytes(storageRef, croppedBlob!);
-    const photoURL = await getDownloadURL(storageRef);
-
-    console.log("✅ Uploaded avatar URL:", photoURL);
-
-    await updateProfile(auth.currentUser, { photoURL });
-    await updateDoc(doc(db, 'users', uid), { photoURL });
-    await refreshUser();
-
-    setToastOpen(true);
-    dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
-  } catch (err) {
-    console.error('❌ Upload failed', err);
-  setErrorMsg((err as any)?.message || '❌ Upload failed. Please try again.');
-  } finally {
-    dispatch({ type: 'SET_UPLOADING', payload: false });
-  }
-};
+      setToastOpen(true);
+      dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
+    } catch (err) {
+      console.error('❌ Upload failed', err);
+      setErrorMsg((err as any)?.message || '❌ Upload failed. Please try again.');
+    } finally {
+      dispatch({ type: 'SET_UPLOADING', payload: false });
+    }
+  };
 
   const handleAvatarDelete = async () => {
     if (!auth.currentUser) return;
@@ -138,27 +141,58 @@ export default function UserProfilePage() {
       await refreshUser();
       setToastOpen(true);
     } catch (err) {
-      console.error('Failed to delete avatar:', err);
+      console.error('❌ Failed to delete avatar:', err);
       setErrorMsg('❌ Failed to delete avatar.');
     }
   };
 
+  // Loading spinner while auth is initializing
+  if (loading || !authInitialized) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // If user is still null after auth initialized
   if (!user) {
-    return <Typography variant="h6">No user data available.</Typography>;
+    return (
+      <Typography variant="h6" textAlign="center" mt={4}>
+        No user data available.
+      </Typography>
+    );
   }
 
   return (
-    <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center" px={theme.spacing(2)} py={theme.spacing(4)}>
-      <Paper sx={{ p: { xs: 2, sm: 3 }, width: '100%', maxWidth: 500, mx: 'auto', backgroundColor: theme.palette.background.paper }}>
-        <Typography variant="h5" gutterBottom textAlign="center">My Profile</Typography>
+    <Box
+      flexGrow={1}
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      px={theme.spacing(2)}
+      py={theme.spacing(4)}
+    >
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 3 },
+          width: '100%',
+          maxWidth: 500,
+          mx: 'auto',
+          backgroundColor: theme.palette.background.paper,
+        }}
+      >
+        <Typography variant="h5" gutterBottom textAlign="center">
+          My Profile
+        </Typography>
 
         <Stack spacing={3} mt={2} alignItems="center">
           <Box position="relative">
             <Avatar
-              src={imageSrc || user?.photoURL || undefined}
+              src={imageSrc || user.photoURL || undefined}
               sx={{ width: 80, height: 80, border: '2px solid white' }}
             >
-              {user?.name?.[0] || user?.email?.[0]}
+              {user.name?.[0] || user.email?.[0]}
             </Avatar>
 
             <IconButton component="label" sx={{ position: 'absolute', bottom: 0, right: 0 }} size="small">
@@ -166,7 +200,7 @@ export default function UserProfilePage() {
               <input hidden accept="image/*" type="file" onChange={handleFileChange} />
             </IconButton>
 
-            {user?.photoURL && (
+            {user.photoURL && (
               <IconButton
                 size="small"
                 onClick={handleAvatarDelete}
@@ -191,21 +225,42 @@ export default function UserProfilePage() {
               />
               <TextField label="Email" value={user.email} fullWidth disabled />
               <TextField label="UID" value={user.uid} fullWidth disabled />
-              <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>Save Changes</Button>
+              <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
+                Save Changes
+              </Button>
             </Stack>
           </Box>
         </Stack>
       </Paper>
 
-      <Snackbar open={toastOpen} autoHideDuration={3000} onClose={() => setToastOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity="success" sx={{ width: '100%' }}>✅ Profile updated</Alert>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={3000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="success" sx={{ width: '100%' }}>
+          ✅ Profile updated
+        </Alert>
       </Snackbar>
 
-      <Snackbar open={!!errorMsg} autoHideDuration={4000} onClose={() => setErrorMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="error" sx={{ width: '100%' }}>{errorMsg}</Alert>
+      <Snackbar
+        open={!!errorMsg}
+        autoHideDuration={4000}
+        onClose={() => setErrorMsg('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" sx={{ width: '100%' }}>
+          {errorMsg}
+        </Alert>
       </Snackbar>
 
-      <Dialog open={state.cropDialogOpen} onClose={() => dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false })} fullWidth maxWidth="xs">
+      <Dialog
+        open={state.cropDialogOpen}
+        onClose={() => dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false })}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogContent sx={{ height: isMobile ? 250 : 300, position: 'relative' }}>
           {imageSrc && (
             <Cropper
@@ -219,7 +274,9 @@ export default function UserProfilePage() {
             />
           )}
           <Stack direction="row" justifyContent="space-between" mt={2}>
-            <Button onClick={() => dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false })}>Cancel</Button>
+            <Button onClick={() => dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false })}>
+              Cancel
+            </Button>
             <Button onClick={handleUploadCroppedImage} variant="contained" disabled={state.uploading}>
               Upload
             </Button>

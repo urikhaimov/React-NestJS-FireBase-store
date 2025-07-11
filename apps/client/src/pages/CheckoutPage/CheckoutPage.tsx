@@ -57,7 +57,7 @@ export default function CheckoutPage() {
         const sanitizedCart = cart.map((item) => ({
           productId: item.id,
           name: item.name,
-          price: item.price,
+          price: Number(item.price),
           quantity: item.quantity,
           image:
             typeof item.imageUrl === 'string'
