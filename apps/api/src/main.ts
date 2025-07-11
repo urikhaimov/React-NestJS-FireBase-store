@@ -17,7 +17,7 @@ dotenv.config();
 async function appBootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const appPort = getEnv('APP_PORT', { defaultValue: 3000 });
+  const appPort = getEnv('APP_PORT', { defaultValue: 3000, env: process.env });
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
@@ -57,6 +57,7 @@ async function swaggerBootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const swaggerPort = getEnv('SWAGGER_PORT', {
     defaultValue: 3001,
+    env: process.env,
   });
   const globalPrefix = 'api/v1';
 

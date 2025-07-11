@@ -53,8 +53,8 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
 export default createBaseViteConfig({
   resolve: {
     alias: {
-      '@': '/src',
-      '@client/logger': '../libs/utils/src/lib/logger/logger.client.ts',
+      // '@': '/src',
+      // '@client/logger': '../../libs/utils/src/lib/logger/logger.client.ts',
     },
   },
 });

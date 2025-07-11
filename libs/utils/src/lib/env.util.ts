@@ -5,10 +5,8 @@ enum EEnvKeys {
   DEVELOPMENT = 'development',
 }
 
-export interface IGetEnvOptions<
-  T extends { env: Record<string | number, any> },
-> {
-  target?: T;
+export interface IGetEnvOptions<T extends Record<string | number, any>> {
+  env?: T | NodeJS.ProcessEnv;
   defaultValue?: string | number;
 }
 
@@ -26,21 +24,26 @@ export const getEnv = <T extends { env: Record<string, any> }>(
   key: string,
   opts?: IGetEnvOptions<T>,
 ): string | number => {
-  const target = opts?.target ?? process;
-  const value = target.env[key];
+  try {
+    const target = opts?.env;
+    const value = target[key];
 
-  if (!value) {
-    const msg = `Environment variable ${key} is not set.`;
-    logger.warn(msg);
+    if (!value) {
+      const msg = `Environment variable ${key} is not set.`;
+      logger.warn(msg);
 
-    if (opts?.defaultValue) {
-      logger.info(`Using default value for ${key}: ${opts.defaultValue}`);
-      return opts.defaultValue;
+      if (opts?.defaultValue) {
+        logger.info(`Using default value for ${key}: ${opts.defaultValue}`);
+        return opts.defaultValue;
+      }
+
+      throw new Error(msg);
     }
-
-    throw new Error(msg);
+    return value;
+  } catch (error) {
+    logger.error(`Error retrieving environment variable ${key}:`, error);
+    throw error;
   }
-  return value;
 };
 
 export const isProd = (): boolean => getEnv('NODE_ENV') === EEnvKeys.PRODUCTION;

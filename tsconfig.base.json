@@ -26,5 +26,10 @@
       "@client/*": ["apps/client/src/*"],
       "@client/logger": ["libs/utils/src/lib/logger/logger.client.ts"],
     }
-  }
+  },
+  "include": [
+    "env.d.ts",
+    "apps/**/*.ts",
+    "libs/**/*.ts"
+  ]
 }

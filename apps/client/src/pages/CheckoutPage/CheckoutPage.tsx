@@ -15,9 +15,16 @@ import { loadStripe } from '@stripe/stripe-js';
 import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
 import { useCartStore } from '../../stores/useCartStore';
-import { getCartTotal } from '../../utils/getCartTotal';
+import { getEnv } from '@common/utils';
+import { cLogger } from '@client/logger';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+cLogger.info('meta', import.meta.env);
+
+const rawKey = getEnv('VITE_STRIPE_PUBLIC_KEY', {
+  env: import.meta.env,
+}) as string;
+
+const stripePromise = loadStripe(rawKey);
 
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
