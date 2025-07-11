@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useReducer } from 'react';
 import {
   Box, Typography, Paper, TextField, Button, Avatar, Stack,
   IconButton, CircularProgress, Dialog, DialogContent, Snackbar, Alert,
-  useMediaQuery, useTheme as useMuiTheme
+  useMediaQuery, useTheme as useMuiTheme,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { updateProfile } from 'firebase/auth';
@@ -16,44 +16,11 @@ import { Area } from 'react-easy-crop/types';
 import { getCroppedImg } from '../../utils/cropImage';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuthStore } from '../../stores/useAuthStore';
-
-interface State {
-  uploading: boolean;
-  cropDialogOpen: boolean;
-  selectedImage: File | null;
-  crop: { x: number; y: number };
-  zoom: number;
-  croppedAreaPixels: Area | null;
-}
-
-const initialState: State = {
-  uploading: false,
-  cropDialogOpen: false,
-  selectedImage: null,
-  crop: { x: 0, y: 0 },
-  zoom: 1,
-  croppedAreaPixels: null,
-};
-
-function reducer(state: State, action: any): State {
-  switch (action.type) {
-    case 'SET_UPLOADING': return { ...state, uploading: action.payload };
-    case 'SET_CROP_DIALOG_OPEN': return { ...state, cropDialogOpen: action.payload };
-    case 'SET_SELECTED_IMAGE': return { ...state, selectedImage: action.payload };
-    case 'SET_CROP': return { ...state, crop: action.payload };
-    case 'SET_ZOOM': return { ...state, zoom: action.payload };
-    case 'SET_CROPPED_AREA_PIXELS': return { ...state, croppedAreaPixels: action.payload };
-    default: return state;
-  }
-}
-
+import {reducer, initialState} from './LocalReducer';
 export default function UserProfilePage() {
   const user = useAuthStore((s) => s.user);
   const refreshUser = useAuthStore((s) => s.refreshUser);
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const { theme } = useThemeContext();
@@ -66,14 +33,19 @@ export default function UserProfilePage() {
     if (user) reset({ name: user.name || '', email: user.email || '' });
   }, [user, reset]);
 
-  useEffect(() => () => { if (imageSrc) URL.revokeObjectURL(imageSrc); }, [imageSrc]);
+  useEffect(() => {
+    return () => {
+      if (state.imageSrc) URL.revokeObjectURL(state.imageSrc);
+    };
+  }, [state.imageSrc]);
 
   const onSubmit = async (data: { name: string }) => {
     if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
     await updateProfile(auth.currentUser, { displayName: data.name });
-    await updateDoc(doc(db, 'users', auth.currentUser.uid), { name: data.name });
+    await updateDoc(doc(db, 'users', uid), { name: data.name });
     await refreshUser();
-    setToastOpen(true);
+    dispatch({ type: 'SET_TOAST_OPEN', payload: true });
   };
 
   const onCropComplete = useCallback((_: any, croppedAreaPixels: Area) => {
@@ -83,48 +55,43 @@ export default function UserProfilePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) {
-      setErrorMsg('❌ Please select a valid image file.');
+      dispatch({ type: 'SET_ERROR_MSG', payload: '❌ Please select a valid image file.' });
       return;
     }
+
     const objectUrl = URL.createObjectURL(file);
-    setImageSrc(objectUrl);
+    dispatch({ type: 'SET_IMAGE_SRC', payload: objectUrl });
     dispatch({ type: 'SET_SELECTED_IMAGE', payload: file });
     dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: true });
   };
 
- const handleUploadCroppedImage = async () => {
-  console.log("Uploading as:", auth.currentUser?.uid);
-
-  if (!imageSrc || !state.croppedAreaPixels || !auth.currentUser) return;
-
-  dispatch({ type: 'SET_UPLOADING', payload: true });
-
-  try {
-    const croppedBlob = await getCroppedImg(imageSrc, state.croppedAreaPixels, state.zoom);
-
-    console.log("Blob size:", croppedBlob?.size);
-    console.log("Blob type:", croppedBlob?.type);
-
+  const handleUploadCroppedImage = async () => {
+    if (!auth.currentUser || !state.imageSrc || !state.croppedAreaPixels) return;
     const uid = auth.currentUser.uid;
-    const storageRef = ref(storage, `avatars/${uid}`);
-    await uploadBytes(storageRef, croppedBlob!);
-    const photoURL = await getDownloadURL(storageRef);
+    dispatch({ type: 'SET_UPLOADING', payload: true });
 
-    console.log("✅ Uploaded avatar URL:", photoURL);
+    try {
+      const croppedBlob = await getCroppedImg(state.imageSrc, state.croppedAreaPixels, state.zoom);
+      const storageRef = ref(storage, `avatars/${uid}`);
+      await uploadBytes(storageRef, croppedBlob!);
+      const photoURL = await getDownloadURL(storageRef);
 
-    await updateProfile(auth.currentUser, { photoURL });
-    await updateDoc(doc(db, 'users', uid), { photoURL });
-    await refreshUser();
+      await updateProfile(auth.currentUser, { photoURL });
+      await updateDoc(doc(db, 'users', uid), { photoURL });
+      await refreshUser();
 
-    setToastOpen(true);
-    dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
-  } catch (err) {
-    console.error('❌ Upload failed', err);
-  setErrorMsg((err as any)?.message || '❌ Upload failed. Please try again.');
-  } finally {
-    dispatch({ type: 'SET_UPLOADING', payload: false });
-  }
-};
+      dispatch({ type: 'SET_TOAST_OPEN', payload: true });
+      dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false });
+    } catch (err) {
+      console.error('❌ Upload failed', err);
+      dispatch({
+        type: 'SET_ERROR_MSG',
+        payload: (err as any)?.message || '❌ Upload failed. Please try again.',
+      });
+    } finally {
+      dispatch({ type: 'SET_UPLOADING', payload: false });
+    }
+  };
 
   const handleAvatarDelete = async () => {
     if (!auth.currentUser) return;
@@ -136,15 +103,20 @@ export default function UserProfilePage() {
       await updateProfile(auth.currentUser, { photoURL: null });
       await updateDoc(doc(db, 'users', uid), { photoURL: null });
       await refreshUser();
-      setToastOpen(true);
+      dispatch({ type: 'SET_TOAST_OPEN', payload: true });
     } catch (err) {
       console.error('Failed to delete avatar:', err);
-      setErrorMsg('❌ Failed to delete avatar.');
+      dispatch({ type: 'SET_ERROR_MSG', payload: '❌ Failed to delete avatar.' });
     }
   };
 
-  if (!user) {
-    return <Typography variant="h6">No user data available.</Typography>;
+  if (!user || !user.uid) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography mt={2}>Loading user profile...</Typography>
+      </Box>
+    );
   }
 
   return (
@@ -155,7 +127,7 @@ export default function UserProfilePage() {
         <Stack spacing={3} mt={2} alignItems="center">
           <Box position="relative">
             <Avatar
-              src={imageSrc || user?.photoURL || undefined}
+              src={state.imageSrc || user?.photoURL || undefined}
               sx={{ width: 80, height: 80, border: '2px solid white' }}
             >
               {user?.name?.[0] || user?.email?.[0]}
@@ -197,19 +169,19 @@ export default function UserProfilePage() {
         </Stack>
       </Paper>
 
-      <Snackbar open={toastOpen} autoHideDuration={3000} onClose={() => setToastOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={state.toastOpen} autoHideDuration={3000} onClose={() => dispatch({ type: 'SET_TOAST_OPEN', payload: false })} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="success" sx={{ width: '100%' }}>✅ Profile updated</Alert>
       </Snackbar>
 
-      <Snackbar open={!!errorMsg} autoHideDuration={4000} onClose={() => setErrorMsg('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="error" sx={{ width: '100%' }}>{errorMsg}</Alert>
+      <Snackbar open={!!state.errorMsg} autoHideDuration={4000} onClose={() => dispatch({ type: 'SET_ERROR_MSG', payload: '' })} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="error" sx={{ width: '100%' }}>{state.errorMsg}</Alert>
       </Snackbar>
 
       <Dialog open={state.cropDialogOpen} onClose={() => dispatch({ type: 'SET_CROP_DIALOG_OPEN', payload: false })} fullWidth maxWidth="xs">
         <DialogContent sx={{ height: isMobile ? 250 : 300, position: 'relative' }}>
-          {imageSrc && (
+          {state.imageSrc && (
             <Cropper
-              image={imageSrc}
+              image={state.imageSrc}
               crop={state.crop}
               zoom={state.zoom}
               aspect={1}
