@@ -11,6 +11,7 @@ import {
 import { useCartStore } from '../../stores/useCartStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../../firebase';
+import api from '../../api/axios'; // ✅ Your axios instance
 
 export default function CheckoutSuccessPage() {
   const clearCart = useCartStore((s) => s.clearCart);
@@ -25,7 +26,6 @@ export default function CheckoutSuccessPage() {
     const confirmAndSaveOrder = async () => {
       try {
         const params = new URLSearchParams(location.search);
-        // Use payment_intent ID, NOT client secret here
         const paymentIntentId = params.get('payment_intent');
         if (!paymentIntentId) throw new Error('Missing payment intent ID');
 
@@ -33,39 +33,37 @@ export default function CheckoutSuccessPage() {
         if (!user) throw new Error('Not authenticated');
         const token = await user.getIdToken();
 
-        // Fetch payment intent by ID from backend
-        const res = await fetch(`/api/stripe/payment-intent/${paymentIntentId}`, {
+        // ✅ Get payment intent details
+        const paymentRes = await api.get(`/api/stripe/payment-intent/${paymentIntentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!res.ok) throw new Error('Failed to fetch payment intent');
-        const paymentIntent = await res.json();
+        const paymentIntent = paymentRes.data;
         if (!paymentIntent?.id) throw new Error('Payment intent not found');
 
-        // Save order in backend with full item info and userId
-        const saveRes = await fetch('/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        // ✅ Save order to backend
+        await api.post(
+          '/api/orders',
+          {
             userId: user.uid,
             paymentIntentId: paymentIntent.id,
             totalAmount: paymentIntent.amount,
             items: items.map((item) => ({
               productId: item.id,
               name: item.name,
-             price: Number(item.price),
+              price: Number(item.price),
               image: item.imageUrl,
               quantity: item.quantity,
             })),
-          }),
-        });
-
-        if (!saveRes.ok) throw new Error('Failed to save order');
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         clearCart();
         setToastOpen(true);

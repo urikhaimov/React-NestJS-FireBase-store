@@ -1,8 +1,8 @@
-// src/hooks/useAdminUsersQuery.ts
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/useAuthStore';
 import { auth } from '../firebase';
 import type { User } from '../types/User';
+import api from '../api/axios';
 
 export function useAdminUsersQuery() {
   const queryClient = useQueryClient();
@@ -16,32 +16,33 @@ export function useAdminUsersQuery() {
     queryKey: ['users'],
     queryFn: async () => {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch('/api/users', {
+      const res = await api.get('/api/users', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to fetch users');
-      return res.json();
+      return res.data;
     },
   });
 
   const updateUserRole = async (id: string, role: User['role']) => {
     const token = await auth.currentUser?.getIdToken();
-    await fetch(`/api/users/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role }),
-    });
+    await api.patch(
+      `/api/users/${id}`,
+      { role },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     queryClient.invalidateQueries({ queryKey: ['users'] });
   };
 
   const deleteUser = async (id: string) => {
     const token = await auth.currentUser?.getIdToken();
-    await fetch(`/api/users/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+    await api.delete(`/api/users/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     queryClient.invalidateQueries({ queryKey: ['users'] });
   };

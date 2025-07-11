@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { Category } from '../types/firebase';
 import { useSnackbar } from 'notistack';
 import { useOptimisticMutation } from './useOptimisticMutation';
+import { Category } from '../types/firebase';
+import api from '../api/axios';
+
 export const useCategories = () => {
   return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
-      const res = await axios.get('/api/categories');
+      const res = await api.get('/api/categories');
       return res.data;
     },
   });
@@ -19,7 +20,7 @@ export const useAddCategory = () => {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const res = await axios.post('/api/categories', { name });
+      const res = await api.post('/api/categories', { name });
       return res.data;
     },
     onError: (error: any) => {
@@ -35,9 +36,10 @@ export const useAddCategory = () => {
 
 export const useDeleteCategory = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/categories/${id}`);
+      await api.delete(`/api/categories/${id}`);
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['categories'] });
@@ -54,15 +56,10 @@ export const useDeleteCategory = () => {
   });
 };
 
-// hooks/useCategories.ts
 export function useUpdateCategory() {
   return useOptimisticMutation<{ id: string; name: string }, Category>({
     mutationFn: async ({ id, name }) => {
-      await fetch(`/api/categories/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
+      await api.put(`/api/categories/${id}`, { name });
     },
     queryKey: ['categories'],
     getItemId: (item) => item.id,

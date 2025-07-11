@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -17,6 +17,7 @@ import StripeCheckoutForm from './StripeCheckoutForm';
 import { getEnv } from '@common/utils';
 import { cLogger } from '@client/logger';
 import { useCartStore } from '@client/stores/useCartStore';
+import api from '../../api/axios'; // ✅ axiosInstance
 
 const rawKey = getEnv('VITE_STRIPE_PUBLIC_KEY', {
   env: import.meta.env,
@@ -31,7 +32,6 @@ export default function CheckoutPage() {
 
   const cart = useCartStore((s) => s.items);
 
-  // Adjust these for your business
   const shipping = 5.99;
   const taxRate = 0.17;
   const discount = 3.0;
@@ -59,23 +59,15 @@ export default function CheckoutPage() {
           name: item.name,
           price: Number(item.price),
           quantity: item.quantity,
-          image:
-            typeof item.imageUrl === 'string'
-              ? item.imageUrl
-              : (item.imageUrl ?? ''),
+          image: typeof item.imageUrl === 'string' ? item.imageUrl : (item.imageUrl ?? ''),
         }));
 
-        // Fix: Minimum amount must be 50 cents (50)
-        const safeAmount = Math.max(50, total);
+        const safeAmount = Math.max(50, total); // Stripe minimum
         console.log('Amount sent to backend (cents):', safeAmount);
 
-        const res = await fetch('/api/orders/create-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        const res = await api.post(
+          '/api/orders/create-payment-intent',
+          {
             amount: safeAmount,
             cart: sanitizedCart,
             ownerName: 'John Doe',
@@ -83,19 +75,16 @@ export default function CheckoutPage() {
             shipping,
             taxRate,
             discount,
-          }),
-        });
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(
-            errData.message || `Failed: ${res.status} ${res.statusText}`,
-          );
-        }
-
-        const data = await res.json();
-        if (!data.clientSecret) throw new Error('No clientSecret returned');
-        setClientSecret(data.clientSecret);
+        if (!res.data.clientSecret) throw new Error('No clientSecret returned');
+        setClientSecret(res.data.clientSecret);
       } catch (err: any) {
         cLogger.error('❌ Error fetching clientSecret:', err);
         setError(err.message || 'Something went wrong');
@@ -123,11 +112,8 @@ export default function CheckoutPage() {
       }}
     >
       <Paper elevation={1} sx={{ p: 3, width: '100%', maxWidth: 480 }}>
-        <Typography variant="h6" mb={2}>
-          Checkout
-        </Typography>
+        <Typography variant="h6" mb={2}>Checkout</Typography>
 
-        {/* Price breakdown */}
         <Stack spacing={1} mb={2}>
           <Typography>Subtotal: ${subtotal.toFixed(2)}</Typography>
           <Typography>Shipping: ${shipping.toFixed(2)}</Typography>

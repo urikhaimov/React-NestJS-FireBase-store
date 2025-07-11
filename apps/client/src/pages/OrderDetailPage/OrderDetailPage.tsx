@@ -13,14 +13,15 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { fetchOrderById } from '../../api/orderApi';
-import { formatCurrency } from '../../utils/format';
-import { useAuthReady } from '../../hooks/useAuthReady';
 import { Timestamp } from 'firebase/firestore';
-import LoadingProgress from '../../components/LoadingProgress';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+
+import { useAuthReady } from '../../hooks/useAuthReady';
+import { formatCurrency } from '../../utils/format';
+import LoadingProgress from '../../components/LoadingProgress';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
+import api from '../../api/axios'; // ✅ axiosInstance import
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +48,6 @@ export default function OrderDetailPage() {
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
 
-      // Header
       pdf.setFontSize(18);
       pdf.text('My Online Store', pageWidth / 2, 15, { align: 'center' });
 
@@ -57,7 +57,6 @@ export default function OrderDetailPage() {
       pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 38);
       pdf.text(`Customer: ${order.ownerName}`, 14, 46);
 
-      // Image below header
       const imgProps = pdf.getImageProperties(imgData);
       const imgWidth = pageWidth - 20;
       const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
@@ -76,7 +75,9 @@ export default function OrderDetailPage() {
       try {
         if (!user || !id) return;
         const token = await user.getIdToken();
-        const res = await fetchOrderById(id, token);
+        const res = await api.get(`/api/orders/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setOrder(res.data);
       } catch (err) {
         console.error('Failed to fetch order', err);
@@ -89,6 +90,7 @@ export default function OrderDetailPage() {
   }, [id, user, ready]);
 
   if (loading) return <LoadingProgress />;
+
   if (!order)
     return (
       <Box mt={4} textAlign="center">

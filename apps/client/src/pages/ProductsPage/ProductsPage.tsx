@@ -22,9 +22,7 @@ import type { Product } from '../../types/firebase';
 import { reducer, initialState, State, Action } from './LocalReducer';
 
 export default function ProductsPage() {
-  // Correctly type useReducer with State and Action:
   const [state, dispatch] = useReducer(reducer, initialState);
-
   const [products, setProducts] = useState<Product[]>([]);
   const [visibleCount, setVisibleCount] = useState(initialState.pageSize);
   const [loading, setLoading] = useState(true);
@@ -59,7 +57,6 @@ export default function ProductsPage() {
     loadProducts();
   }, [ready, user]);
 
-  // Date helper type guard
   const isDate = (val: unknown): val is Date => val instanceof Date;
 
   const filteredProducts = useMemo(() => {
