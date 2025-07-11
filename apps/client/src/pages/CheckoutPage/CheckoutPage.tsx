@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Paper,
-  CircularProgress,
-  Snackbar,
   Alert,
+  Box,
+  CircularProgress,
   Divider,
+  Paper,
+  Snackbar,
   Stack,
+  Typography,
 } from '@mui/material';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { useCartStore } from '../../stores/useCartStore';
 import { getEnv } from '@common/utils';
 import { cLogger } from '@client/logger';
-
-cLogger.info('meta', import.meta.env);
+import { useCartStore } from '@client/stores/useCartStore';
 
 const rawKey = getEnv('VITE_STRIPE_PUBLIC_KEY', {
   env: import.meta.env,
@@ -99,14 +97,18 @@ export default function CheckoutPage() {
         if (!data.clientSecret) throw new Error('No clientSecret returned');
         setClientSecret(data.clientSecret);
       } catch (err: any) {
-        console.error('❌ Error fetching clientSecret:', err);
+        cLogger.error('❌ Error fetching clientSecret:', err);
         setError(err.message || 'Something went wrong');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClientSecret();
+    fetchClientSecret().catch((err) => {
+      cLogger.error('❌ Error in fetchClientSecret:', err);
+      setError(err.message || 'Failed to fetch payment details');
+      setLoading(false);
+    });
   }, []);
 
   return (
