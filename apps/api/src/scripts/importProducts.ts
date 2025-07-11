@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
 import { IProduct } from '@common/types';
-import { ELoggerTypes, logger } from '@common/utils';
+import { logger } from '@common/utils';
 
 // ✅ Load Service Account
 const serviceAccountFile = path.resolve(__dirname, '../serviceAccountKey.json');
@@ -41,9 +41,9 @@ async function importProducts() {
   });
 
   await batch.commit();
-  logger[ELoggerTypes.INFO](`✅ Imported ${products.length} products.`);
+  logger.info(`✅ Imported ${products.length} products.`);
 }
 
 importProducts().catch((err) => {
-  logger[ELoggerTypes.ERROR]('🔥 Error importing products:', err);
+  logger.info('🔥 Error importing products:', err);
 });

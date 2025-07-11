@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { getEnv, isProd, ELoggerTypes, logger } from '@common/utils';
+import { getEnv, isProd, logger } from '@common/utils';
 import { setupSwagger } from './swagger';
 
 dotenv.config();
@@ -17,7 +17,7 @@ dotenv.config();
 async function appBootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const appPort = getEnv('APP_PORT', 3000);
+  const appPort = getEnv('APP_PORT', { defaultValue: 3000 });
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
@@ -39,7 +39,9 @@ async function appBootstrap() {
   });
 
   await app.listen(appPort);
-  logger[ELoggerTypes.INFO](`🚀 Server running at http://localhost:${appPort}/${globalPrefix}`)
+  logger.info(
+    `🚀 Server running at http://localhost:${appPort}/${globalPrefix}`,
+  );
 }
 
 /**
@@ -53,7 +55,9 @@ async function appBootstrap() {
  */
 async function swaggerBootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const swaggerPort = getEnv('SWAGGER_PORT', 3001);
+  const swaggerPort = getEnv('SWAGGER_PORT', {
+    defaultValue: 3001,
+  });
   const globalPrefix = 'api/v1';
 
   if (!isProd()) {
@@ -66,9 +70,9 @@ async function swaggerBootstrap() {
 }
 
 appBootstrap().then(() => {
-  logger[ELoggerTypes.INFO]('Bootstrap completed successfully');
+  logger.info('Bootstrap completed successfully');
 });
 
-swaggerBootstrap().then(()=>{
-  logger[ELoggerTypes.INFO]('Swagger bootstrap completed successfully');
+swaggerBootstrap().then(() => {
+  logger.info('Swagger bootstrap completed successfully');
 });

@@ -1,6 +1,6 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ELoggerTypes, logger } from '@common/utils';
+import { logger } from '@common/utils';
 
 type TSwaggerProps = {
   serverUrl: string;
@@ -10,7 +10,7 @@ export const buildSwagger = (
   app: NestExpressApplication,
   opts: TSwaggerProps,
 ) => {
-  logger[ELoggerTypes.INFO](`🚀 Swagger is enabled: ${opts.serverUrl}`);
+  logger.info(`🚀 Swagger is enabled: ${opts.serverUrl}`);
   const config = new DocumentBuilder()
     .setTitle('The API Swagger documentation')
     .setDescription('The API Swagger documentation')

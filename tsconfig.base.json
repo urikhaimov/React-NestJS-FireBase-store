@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "module": "CommonJS",
+    "module": "esnext",
     "moduleResolution": "Node",
     "baseUrl": ".",
     "lib": ["ES2023", "dom"],
@@ -23,6 +23,7 @@
     "paths": {
       "@common/types": ["libs/types/src/index.ts"],
       "@common/utils": ["libs/utils/src/index.ts"],
+      "@client/*": ["apps/client/src/*"],
     }
   }
 }

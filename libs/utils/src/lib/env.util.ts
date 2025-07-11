@@ -1,19 +1,41 @@
-import { ELoggerTypes, logger } from './logger.util';
+import { logger } from './logger';
 
 enum EEnvKeys {
   PRODUCTION = 'production',
   DEVELOPMENT = 'development',
 }
 
-export const getEnv = (key: string, defaultValue?: string | number): string | number => {
-  const value = process.env[key] as string;
+export interface IGetEnvOptions<
+  T extends { env: Record<string | number, any> },
+> {
+  target?: T;
+  defaultValue?: string | number;
+}
+
+/**
+ * Retrieves the value of an environment variable by key from the specified process target.
+ * Logs a warning if the variable is not set, and uses the provided default value if available.
+ * Throws an error if the variable is missing and no default value is specified.
+ *
+ * @param {string} key - The name of the environment variable to retrieve.
+ * @param {IGetEnvOptions} opts - Options including the process target and an optional default value.
+ * @returns The value of the environment variable, or the default value if specified.
+ * @throws Error if the environment variable is not set and no default value is provided.
+ */
+export const getEnv = <T extends { env: Record<string, any> }>(
+  key: string,
+  opts?: IGetEnvOptions<T>,
+): string | number => {
+  const target = opts?.target ?? process;
+  const value = target.env[key];
+
   if (!value) {
     const msg = `Environment variable ${key} is not set.`;
-    logger[ELoggerTypes.WARN](msg);
+    logger.warn(msg);
 
-    if (defaultValue) {
-      logger[ELoggerTypes.INFO](`Using default value for ${key}: ${defaultValue}`);
-      return defaultValue;
+    if (opts?.defaultValue) {
+      logger.info(`Using default value for ${key}: ${opts.defaultValue}`);
+      return opts.defaultValue;
     }
 
     throw new Error(msg);

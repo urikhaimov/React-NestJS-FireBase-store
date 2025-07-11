@@ -13,9 +13,9 @@ import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
 // Import OrderFilters properly or remove if not ready yet
 // import OrderFilters from './OrderFilters';
-import { useAuthReady } from '../../../hooks/useAuthReady';
-import LoadingProgress from '@/components/LoadingProgress';
-import { useOrders, Order } from '../../../hooks/useOrders';
+import { useAuthReady } from '@client/hooks/useAuthReady';
+import LoadingProgress from '@client/components/LoadingProgress';
+import { useOrders, Order } from '@client/hooks/useOrders';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminOrdersPage() {
@@ -47,7 +47,7 @@ export default function AdminOrdersPage() {
     const date =
       typeof order.createdAt === 'string'
         ? new Date(order.createdAt)
-        : order.createdAt?.toDate?.() ?? new Date();
+        : (order.createdAt?.toDate?.() ?? new Date());
 
     return (
       <Paper
@@ -74,7 +74,10 @@ export default function AdminOrdersPage() {
           Date: {date.toLocaleString() ?? 'Invalid date'}
         </Typography>
         <Typography variant="body2">Status: {order.status}</Typography>
-        <Button variant="outlined" onClick={() => navigate(`/admin/orders/${order.id}`)}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate(`/admin/orders/${order.id}`)}
+        >
           Edit
         </Button>
       </Paper>

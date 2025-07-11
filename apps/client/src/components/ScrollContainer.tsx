@@ -1,8 +1,9 @@
 // src/components/ScrollContainer.tsx
 import { Box } from '@mui/material';
 import { styled } from '@mui/system';
+import React from 'react';
 
-const ScrollContainer = styled(Box)(({ theme }) => ({
+const ScrollContainer: React.ComponentType<any> = styled(Box)(({ theme }) => ({
   overflowY: 'auto',
   overflowX: 'hidden',
   maxHeight: '100vh',

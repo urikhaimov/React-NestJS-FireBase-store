@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { auth, firestore } from 'firebase-admin';
 import { Request } from 'express';
-import { AppError, ECommonErrors, ELoggerTypes, logger } from '@common/utils';
+import { AppError, ECommonErrors, logger } from '@common/utils';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -16,7 +16,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       const err = new AppError(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
-      logger[ELoggerTypes.ERROR](err.message);
+      logger.error(err.message);
 
       throw new UnauthorizedException(
         ECommonErrors.MISSING_AUTHORIZATION_HEADER,
@@ -43,10 +43,7 @@ export class FirebaseAuthGuard implements CanActivate {
       };
 
       if (process.env.NODE_ENV !== 'production') {
-        logger[ELoggerTypes.INFO](
-          `[FirebaseAuthGuard] Authenticated user`,
-          request.user,
-        );
+        logger.info(`[FirebaseAuthGuard] Authenticated user`, request.user);
       }
 
       return true;
@@ -54,7 +51,7 @@ export class FirebaseAuthGuard implements CanActivate {
       const err = new AppError(
         ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,
       );
-      logger[ELoggerTypes.ERROR](err.message);
+      logger.error(err.message);
 
       throw new UnauthorizedException(
         ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,

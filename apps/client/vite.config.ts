@@ -3,9 +3,6 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import { defineConfig, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { csp } from './csp';
-import path from 'node:path';
-
-const rootDir = process.cwd(); // safer than hardcoding apps/frontend
 
 export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
   return defineConfig({
@@ -38,6 +35,7 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
       rollupOptions: {
         external: ['motion-dom'], // only if you're not using it directly
       },
+      emptyOutDir: true,
       outDir: '../../dist/apps/client',
       reportCompressedSize: true,
       commonjsOptions: { transformMixedEsModules: true },
@@ -48,12 +46,6 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
 
 export default createBaseViteConfig({
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@components': path.resolve(__dirname, 'src/components'),
-      '@pages': path.resolve(__dirname, 'src/pages'),
-      '@utils': path.resolve(__dirname, 'src/utils'),
-      '@config': path.resolve(__dirname, '../../libs/config'),
-    },
+    alias: {},
   },
 });
