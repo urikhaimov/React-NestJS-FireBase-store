@@ -46,5 +46,7 @@ export const getEnv = <T extends { env: Record<string, any> }>(
   }
 };
 
-export const isProd = (): boolean => getEnv('NODE_ENV') === EEnvKeys.PRODUCTION;
-export const isDev = (): boolean => getEnv('NODE_ENV') === EEnvKeys.DEVELOPMENT;
+export const isProd = (): boolean =>
+  getEnv('NODE_ENV', { env: process.env }) === EEnvKeys.PRODUCTION;
+export const isDev = (): boolean =>
+  getEnv('NODE_ENV', { env: process.env }) === EEnvKeys.DEVELOPMENT;
