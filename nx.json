@@ -11,6 +11,9 @@
       "@nx/vite": "21.2.2"
     }
   },
+  "tui": {
+    "enabled": true
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],

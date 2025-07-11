@@ -2,7 +2,6 @@ import { createLogger, format, transports } from 'winston';
 import { DATE_TIME_FORMAT } from './date.util';
 
 export enum ELoggerTypes {
-  LOG = 'log',
   INFO = 'info',
   WARN = 'warn',
   ERROR = 'error',
@@ -24,7 +23,7 @@ export const logger = createLogger({
   ),
   transports: [
     new transports.Console(),
-    new transports.File({ filename: '../../logs/api/error.log', level: 'error' }),
-    new transports.File({ filename: '../../logs/api/combined.log' }),
+    new transports.File({ filename: './logs/api/error.log', level: 'error' }),
+    new transports.File({ filename: './logs/api/combined.log' }),
   ],
 });
