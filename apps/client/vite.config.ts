@@ -22,14 +22,6 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
       },
     },
     plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
-    resolve: {
-      alias: {
-        '@': path.resolve(rootDir, 'src'),
-        '@components': path.resolve(rootDir, 'src/components'),
-        '@pages': path.resolve(rootDir, 'src/pages'),
-        '@utils': path.resolve(rootDir, 'src/utils'),
-      },
-    },
     server: {
       headers: {
         'Content-Security-Policy': csp,
@@ -46,7 +38,6 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
       rollupOptions: {
         external: ['motion-dom'], // only if you're not using it directly
       },
-      external: ['motion-dom'],
       outDir: '../../dist/apps/client',
       reportCompressedSize: true,
       commonjsOptions: { transformMixedEsModules: true },

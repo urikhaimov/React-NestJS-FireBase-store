@@ -1,3 +1,4 @@
+import React from 'react';
 import { TextField, MenuItem, TextFieldProps } from '@mui/material';
 
 interface FilterTextFieldProps extends Omit<TextFieldProps, 'onChange'> {
@@ -21,7 +22,9 @@ export default function FilterTextField({
       {...rest}
       label={label}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+        onChange(event.target.value)
+      }
       select={select}
     >
       {select &&

@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "baseUrl": ".",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "dom"],
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
