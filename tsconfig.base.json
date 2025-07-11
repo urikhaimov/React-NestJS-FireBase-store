@@ -24,6 +24,7 @@
       "@common/types": ["libs/types/src/index.ts"],
       "@common/utils": ["libs/utils/src/index.ts"],
       "@client/*": ["apps/client/src/*"],
+      "@client/logger": ["libs/utils/src/lib/logger/logger.client.ts"],
     }
   }
 }

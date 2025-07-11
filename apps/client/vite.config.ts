@@ -1,6 +1,7 @@
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import { defineConfig, UserConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import { csp } from './csp';
 
@@ -18,7 +19,12 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
         provider: 'v8' as const,
       },
     },
-    plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
+    plugins: [
+      tsconfigPaths(),
+      react(),
+      nxViteTsPaths(),
+      nxCopyAssetsPlugin(['*.md']),
+    ],
     server: {
       headers: {
         'Content-Security-Policy': csp,
@@ -46,6 +52,9 @@ export const createBaseViteConfig = (overrides?: UserConfig): UserConfig => {
 
 export default createBaseViteConfig({
   resolve: {
-    alias: {},
+    alias: {
+      '@': '/src',
+      '@client/logger': '../libs/utils/src/lib/logger/logger.client.ts',
+    },
   },
 });

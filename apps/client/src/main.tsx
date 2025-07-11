@@ -20,8 +20,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import { loadStoreConfig } from './utils/loadStoreConfig';
 
-import './index.css';
 import 'react-quill/dist/quill.snow.css';
+import './styles.less';
 
 // 💡 Store ID from localStorage, fallback to default
 const storeId = localStorage.getItem('storeId') || 'store1';
