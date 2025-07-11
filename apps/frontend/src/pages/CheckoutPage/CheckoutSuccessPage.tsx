@@ -12,6 +12,8 @@ import { useCartStore } from '../../stores/useCartStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../../firebase';
 
+import api from '../../api/axios'; // <-- axios instance import (adjust path if needed)
+
 export default function CheckoutSuccessPage() {
   const clearCart = useCartStore((s) => s.clearCart);
   const items = useCartStore((s) => s.items);
@@ -25,7 +27,6 @@ export default function CheckoutSuccessPage() {
     const confirmAndSaveOrder = async () => {
       try {
         const params = new URLSearchParams(location.search);
-        // Use payment_intent ID, NOT client secret here
         const paymentIntentId = params.get('payment_intent');
         if (!paymentIntentId) throw new Error('Missing payment intent ID');
 
@@ -34,24 +35,16 @@ export default function CheckoutSuccessPage() {
         const token = await user.getIdToken();
 
         // Fetch payment intent by ID from backend
-        const res = await fetch(`/api/stripe/payment-intent/${paymentIntentId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const { data: paymentIntent } = await api.get(`/api/stripe/payment-intent/${paymentIntentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error('Failed to fetch payment intent');
-        const paymentIntent = await res.json();
         if (!paymentIntent?.id) throw new Error('Payment intent not found');
 
         // Save order in backend with full item info and userId
-        const saveRes = await fetch('/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        await api.post(
+          '/api/orders',
+          {
             userId: user.uid,
             paymentIntentId: paymentIntent.id,
             totalAmount: paymentIntent.amount,
@@ -62,10 +55,14 @@ export default function CheckoutSuccessPage() {
               image: item.imageUrl,
               quantity: item.quantity,
             })),
-          }),
-        });
-
-        if (!saveRes.ok) throw new Error('Failed to save order');
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         clearCart();
         setToastOpen(true);
@@ -103,11 +100,7 @@ export default function CheckoutSuccessPage() {
             <Typography variant="body1" gutterBottom>
               Thank you for your order.
             </Typography>
-            <Button
-              variant="contained"
-              sx={{ mt: 2 }}
-              onClick={() => navigate('/')}
-            >
+            <Button variant="contained" sx={{ mt: 2 }} onClick={() => navigate('/')}>
               Back to Home
             </Button>
           </>
@@ -120,11 +113,7 @@ export default function CheckoutSuccessPage() {
         onClose={() => setToastOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={() => setToastOpen(false)}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
           Cart cleared. Order saved!
         </Alert>
       </Snackbar>

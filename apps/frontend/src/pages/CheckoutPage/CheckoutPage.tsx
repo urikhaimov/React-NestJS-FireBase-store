@@ -16,6 +16,7 @@ import { auth } from '../../firebase';
 import StripeCheckoutForm from './StripeCheckoutForm';
 import { useCartStore } from '../../stores/useCartStore';
 import { getCartTotal } from '../../utils/getCartTotal';
+import api from '../../api/axios';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
@@ -64,13 +65,9 @@ export default function CheckoutPage() {
         const safeAmount = Math.max(50, total);
         console.log('Amount sent to backend (cents):', safeAmount);
 
-        const res = await fetch('/api/orders/create-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        const { data } = await api.post(
+          '/api/orders/create-payment-intent',
+          {
             amount: safeAmount,
             cart: sanitizedCart,
             ownerName: 'John Doe',
@@ -78,17 +75,15 @@ export default function CheckoutPage() {
             shipping,
             taxRate,
             discount,
-          }),
-        });
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(
-            errData.message || `Failed: ${res.status} ${res.statusText}`,
-          );
-        }
-
-        const data = await res.json();
         if (!data.clientSecret) throw new Error('No clientSecret returned');
         setClientSecret(data.clientSecret);
       } catch (err: any) {
@@ -100,7 +95,7 @@ export default function CheckoutPage() {
     };
 
     fetchClientSecret();
-  }, []);
+  }, [cart, taxRate, discount, shipping, total]);
 
   return (
     <Box

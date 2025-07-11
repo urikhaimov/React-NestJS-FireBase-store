@@ -15,13 +15,12 @@ import ImageUploader, { CombinedImage } from '../../../components/ImageUploader'
 import { productFormReducer, initialProductFormState } from './productFormReducer';
 import FormTextField from '../../../components/FormTextField';
 
-// Firebase imports and initialization
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { firebaseApp } from '../../../firebase'; // Adjust this path if needed
+import { firebaseApp } from '../../../firebase';
+import api from '../../../api/axios'; // <-- axios instance import (adjust path)
 
 const storage = getStorage(firebaseApp);
 
-// Define your Product type (adjust fields as per your schema)
 type Product = {
   id: string;
   name: string;
@@ -32,7 +31,6 @@ type Product = {
   images: string[];
 };
 
-// FormState uses strings for price and stock because inputs handle strings
 type FormState = {
   name: string;
   description: string;
@@ -42,27 +40,30 @@ type FormState = {
   images: string[];
 };
 
-// Fetch product by ID
+// Fetch product by ID using axios
 async function fetchProduct(productId: string): Promise<Product> {
-  const res = await fetch(`/api/products/${productId}`);
-  if (!res.ok) throw new Error('Failed to fetch product');
-  return res.json();
+  const response = await api.get<Product>(`/api/products/${productId}`);
+  return response.data;
 }
 
-// Save product API
+// Fetch categories using axios
+async function fetchCategories() {
+  const response = await api.get('/api/categories');
+  return response.data;
+}
+
+// Save product API with axios
 async function saveProductApi(productId: string | null, data: FormState) {
-  const method = productId ? 'PUT' : 'POST';
+  const method = productId ? 'put' : 'post';
   const url = productId ? `/api/products/${productId}` : '/api/products';
-  const res = await fetch(url, {
+
+  const response = await api({
     method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    url,
+    data,
   });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to save product');
-  }
-  return res.json();
+
+  return response.data;
 }
 
 export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
@@ -89,13 +90,11 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     },
   });
 
-  // Load categories
+  // Load categories with axios
   useEffect(() => {
     async function loadCategories() {
       try {
-        const res = await fetch('/api/categories');
-        if (!res.ok) throw new Error('Failed to fetch categories');
-        const categories = await res.json();
+        const categories = await fetchCategories();
         dispatch({ type: 'SET_CATEGORIES', payload: categories });
       } catch (error) {
         console.error('Failed to load categories:', error);
@@ -104,14 +103,13 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     loadCategories();
   }, []);
 
-  // Load product data for editing
+  // Load product data for editing using react-query + axios
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['product', productId],
     queryFn: () => fetchProduct(productId!),
     enabled: !!productId && mode === 'edit',
   });
 
-  // When product loads, populate form and images state
   useEffect(() => {
     if (product) {
       dispatch({ type: 'SET_PRODUCT', payload: product });
@@ -137,11 +135,7 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   }, [product, reset]);
 
   // Mutation hook to save product data
-  const saveProductMutation = useMutation<
-    unknown,
-    Error,
-    FormState
-  >({
+  const saveProductMutation = useMutation<unknown, Error, FormState>({
     mutationFn: (formData) => saveProductApi(productId || null, formData),
     onSuccess: () => {
       if (productId) {
@@ -175,7 +169,8 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
       const storageRef = ref(storage, `products/${productDocId}/${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      uploadTask.on('state_changed',
+      uploadTask.on(
+        'state_changed',
         (snapshot) => {
           // Optional: handle progress here
         },
@@ -194,10 +189,8 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   // On form submit
   const onSubmit = async (data: FormState) => {
     try {
-      // Generate productDocId if adding new
       const productDocId = productId || crypto.randomUUID();
 
-      // Upload new images and get URLs
       const newImages = state.combinedImages.filter((img) => img.type === 'new');
       const uploadedUrls = await Promise.all(
         newImages.map((img) => {
@@ -206,15 +199,12 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
         })
       );
 
-      // Existing image URLs from state
       const existingUrls = state.combinedImages
         .filter((img) => img.type === 'existing')
         .map((img) => img.url);
 
-      // Combine all image URLs
       const allImageUrls = [...existingUrls, ...uploadedUrls];
 
-      // Call mutation to save product
       saveProductMutation.mutate({
         ...data,
         images: allImageUrls,
