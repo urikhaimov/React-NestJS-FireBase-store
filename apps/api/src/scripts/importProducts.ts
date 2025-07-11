@@ -3,7 +3,8 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
-import { IProduct } from '@backend/types/product.type';
+import { IProduct } from '@common/types';
+import { ELoggerTypes, logger } from '@common/utils';
 
 // ✅ Load Service Account
 const serviceAccountFile = path.resolve(__dirname, '../serviceAccountKey.json');
@@ -40,9 +41,9 @@ async function importProducts() {
   });
 
   await batch.commit();
-  console.log(`✅ Imported ${products.length} products.`);
+  logger[ELoggerTypes.INFO](`✅ Imported ${products.length} products.`);
 }
 
 importProducts().catch((err) => {
-  console.error('🔥 Error importing products:', err);
+  logger[ELoggerTypes.ERROR]('🔥 Error importing products:', err);
 });

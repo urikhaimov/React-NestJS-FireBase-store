@@ -1,6 +1,6 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ELoggerTypes, logger } from '@backend/utils/logger.util';
+import { ELoggerTypes, logger } from '@common/utils';
 
 type TSwaggerProps = {
   serverUrl: string;

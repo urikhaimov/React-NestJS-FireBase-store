@@ -1,0 +1,14 @@
+#!/bin/bash
+
+MAX_FILES=100  # Set the limit
+
+FILES_CHANGED=$(git diff --cached --name-only | wc -l)
+
+if [ "$FILES_CHANGED" -gt "$MAX_FILES" ]; then
+  echo "🔹 Limit files amount to commit is: $MAX_FILES"
+  echo "❌ Error: You are trying to commit more than $MAX_FILES files!"
+  exit 1
+fi
+
+# Run lint-staged with the specified options
+npx lint-staged -v -d --concurrent false --relative
