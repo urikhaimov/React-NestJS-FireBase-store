@@ -14,9 +14,9 @@ import {
   InputLabel,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import { useLogs } from '../../../hooks/useLogs';
-import type { SecurityLog } from '../../../api/logs';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
+import { useLogs } from '../../hooks/useLogs';
+import type { SecurityLog } from '../../api/logs';
 
 const CATEGORY_OPTIONS = [
   { id: '', label: 'All' },

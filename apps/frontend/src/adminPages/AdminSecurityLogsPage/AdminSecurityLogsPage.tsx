@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, CircularProgress,
 } from '@mui/material';
-import { useSecurityLogs } from '../../../hooks/useSecurityLogs';
+import { useSecurityLogs } from '../../hooks/useSecurityLogs';
 
 export default function AdminSecurityLogsPage() {
   const { data: logs, isLoading, error } = useSecurityLogs();

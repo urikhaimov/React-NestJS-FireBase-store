@@ -1,7 +1,7 @@
 import { Typography, Grid, Paper, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
 
 
 export default function AdminHomePage() {

@@ -11,13 +11,13 @@ import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
+import ImageUploader, { CombinedImage } from '../../components/ImageUploader';
 import { productFormReducer, initialProductFormState } from './productFormReducer';
-import FormTextField from '../../../components/FormTextField';
+import FormTextField from '../../components/FormTextField';
 
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { firebaseApp } from '../../../firebase';
-import api from '../../../api/axios'; // <-- axios instance import (adjust path)
+import { firebaseApp } from '../../firebase';
+import api from '../../api/axios'; // <-- axios instance import (adjust path)
 
 const storage = getStorage(firebaseApp);
 

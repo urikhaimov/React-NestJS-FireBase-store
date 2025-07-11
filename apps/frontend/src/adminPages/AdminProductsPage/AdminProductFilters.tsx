@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Button, Grid } from '@mui/material';
 import { Dayjs } from 'dayjs';
-import { Category } from '../../../hooks/useAllCategories';
+import { Category } from '../../hooks/useAllCategories';
 import { State, Action } from './LocalReducer';
-import AdminFilterLayout from '../../../components/admin/AdminFilterLayout';
-import FilterTextField from '../../../components/admin/FilterTextField';
-import FilterDatePicker from '../../../components/admin/FilterDatePicker';
+import AdminFilterLayout from '../../components/admin/AdminFilterLayout';
+import FilterTextField from '../../components/admin/FilterTextField';
+import FilterDatePicker from '../../components/admin/FilterDatePicker';
 
 export interface ProductFiltersProps {
   state: State;

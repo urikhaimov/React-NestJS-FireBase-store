@@ -1,6 +1,6 @@
-import { Product } from '../../../types/firebase';
-import { CombinedImage } from '../../../components/ImageUploader';
-import type { Category } from '../../../types/firebase';
+import { Product } from '../../types/firebase';
+import { CombinedImage } from '../../components/ImageUploader';
+import type { Category } from '../../types/firebase';
 
 export interface ProductFormState {
   product: Product | null;

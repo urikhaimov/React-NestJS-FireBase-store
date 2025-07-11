@@ -1,4 +1,4 @@
-import { Product } from '../../../types/firebase';
+import { Product } from '../../types/firebase';
 export type Props = {
   product: Product;
   onConfirmDelete: (id: string) => void;

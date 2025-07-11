@@ -23,12 +23,12 @@ import {
   CardActions
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import useDebounce from '../../../hooks/useDebouncedValue';
-import { useAdminUsersQuery } from '../../../hooks/useAdminUsersQuery';
-import type { User } from '../../../types/User';
-import type { Role } from '../../../types/Role';
-import LoadingProgress from '../../../components/LoadingProgress';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
+import useDebounce from '../../hooks/useDebouncedValue';
+import { useAdminUsersQuery } from '../../hooks/useAdminUsersQuery';
+import type { User } from '../../types/User';
+import type { Role } from '../../types/Role';
+import LoadingProgress from '../../components/LoadingProgress';
 
 export default function AdminUsersPage() {
   const { users, isLoading, error, updateUserRole, deleteUser } = useAdminUsersQuery();

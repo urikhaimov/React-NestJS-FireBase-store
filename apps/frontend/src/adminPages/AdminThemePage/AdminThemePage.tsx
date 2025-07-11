@@ -10,20 +10,20 @@ import {
 } from '@mui/material';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 
-import { useThemeSettings, ThemeSettings } from '../../../hooks/useThemeSettings';
+import { useThemeSettings, ThemeSettings } from '../../hooks/useThemeSettings';
 
-import LoadingProgress from '../../../components/LoadingProgress';
-import LogoUploader from '../../../components/LogoUploader';
-import BackgroundUploader from '../../../components/BackgroundUploader';
-import ThemePreviewCard from '../../../components/ThemePreviewCard';
-import ThemeImportExportPanel from '../../../components/ThemeImportExportPanel';
+import LoadingProgress from '../../components/LoadingProgress';
+import LogoUploader from '../../components/LogoUploader';
+import BackgroundUploader from '../../components/BackgroundUploader';
+import ThemePreviewCard from '../../components/ThemePreviewCard';
+import ThemeImportExportPanel from '../../components/ThemeImportExportPanel';
 
 import StoreNameField from './components/StoreNameField';
 import DarkModeToggle from './components/DarkModeToggle';
 import ColorPickerSection from './components/ColorPickerSection';
 import FontSelectorWithControls from './components/FontSelectorWithControls';
 import HomepageLayoutSelect from './components/HomepageLayoutSelect';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
 
 export default function AdminThemePage() {
   const muiTheme = useTheme();

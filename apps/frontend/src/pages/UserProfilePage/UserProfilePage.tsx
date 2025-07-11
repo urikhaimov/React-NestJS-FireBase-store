@@ -17,6 +17,7 @@ import { getCroppedImg } from '../../utils/cropImage';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuthStore } from '../../stores/useAuthStore';
 import {reducer, initialState} from './LocalReducer';
+import { useThemeStore } from '../../stores/useThemeStore';
 export default function UserProfilePage() {
   const user = useAuthStore((s) => s.user);
   const refreshUser = useAuthStore((s) => s.refreshUser);

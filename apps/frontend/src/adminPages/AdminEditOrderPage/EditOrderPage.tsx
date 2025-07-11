@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { useOrder, useUpdateOrder, Order } from '../../../hooks/useOrder';
+import { useOrder, useUpdateOrder, Order } from '../../hooks/useOrder';
 
 import OrderSummaryCard from './components/OrderSummaryCard';
 import OrderItemsTable from './components/OrderItemsTable';

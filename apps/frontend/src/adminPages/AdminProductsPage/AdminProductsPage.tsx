@@ -12,19 +12,19 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import { useAllCategories } from '../../../hooks/useAllCategories';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
+import { useAllCategories } from '../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import SortableProductCard from './SortableProductCard';
 import AdminProductFilters from './AdminProductFilters';
-import { fetchAllProducts } from '../../../api/products';
-import { auth } from '../../../firebase';
-import LoadingProgress from '../../../components/LoadingProgress';
-import { useProductMutations } from '../../../hooks/useProductMutations';
+import { fetchAllProducts } from '../../api/products';
+import { auth } from '../../firebase';
+import LoadingProgress from '../../components/LoadingProgress';
+import { useProductMutations } from '../../hooks/useProductMutations';
 import { useInView } from 'react-intersection-observer';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import type { Product } from '../../../types/firebase';
-import { db } from '../../../firebase';
+import type { Product } from '../../types/firebase';
+import { db } from '../../firebase';
 import { debounce } from 'lodash';
 
 

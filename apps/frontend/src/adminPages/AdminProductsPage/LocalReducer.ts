@@ -1,5 +1,5 @@
 import { Dayjs } from 'dayjs';
-import { Product } from '../../../types/firebase';
+import { Product } from '../../types/firebase';
 
 
 export interface State {

@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Product } from '../../../types/firebase';
+import { Product } from '../../types/firebase';
 import ProductAdminCard from './ProductAdminCard';
 
 type Props = {

@@ -10,12 +10,12 @@ import {
   Pagination,
 } from '@mui/material';
 import { VariableSizeList, ListChildComponentProps } from 'react-window';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
 // Import OrderFilters properly or remove if not ready yet
 // import OrderFilters from './OrderFilters';
-import { useAuthReady } from '../../../hooks/useAuthReady';
+import { useAuthReady } from '../../hooks/useAuthReady';
 import LoadingProgress from '@/components/LoadingProgress';
-import { useOrders, Order } from '../../../hooks/useOrders';
+import { useOrders, Order } from '../../hooks/useOrders';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminOrdersPage() {

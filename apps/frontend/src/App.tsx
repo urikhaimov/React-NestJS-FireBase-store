@@ -26,22 +26,22 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import CheckoutSuccessPage from './pages/CheckoutPage/CheckoutSuccessPage';
 import Layout from './layouts/MainLayout';
 import AdminDashboardLayout from './layouts/AdminDashboardLayout';
-import AdminThemePage from './pages/admin/AdminThemePage';
-import AdminLandingPage from './pages/admin/AdminLandingPage/AdminLandingPage';
-import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
-import AdminOrdersPage from './pages/admin/AdminOrdersPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminLogsPage from './pages/admin/AdminLogsPage';
-import EditOrderPage from './pages/admin/AdminEditOrderPage';
-import { ProductFormPage, AdminProductsPage } from './pages/admin/AdminProductsPage';
-import AdminHomePage from './pages/admin/AdminHomePage';
-
+import AdminThemePage from './adminPages/AdminThemePage';
+import AdminLandingPage from './adminPages/AdminLandingPage/AdminLandingPage';
+import AdminCategoriesPage from './adminPages/AdminCategoriesPage';
+import AdminOrdersPage from './adminPages/AdminOrdersPage';
+import AdminUsersPage from './adminPages/AdminUsersPage';
+import AdminLogsPage from './adminPages/AdminLogsPage';
+import EditOrderPage from './adminPages/AdminEditOrderPage';
+import { ProductFormPage, AdminProductsPage } from './adminPages/AdminProductsPage';
+import AdminHomePage from './adminPages/AdminHomePage';
+import AdminSecurityLogsPage from './adminPages/AdminSecurityLogsPage';
 import { useRedirect } from './context/RedirectContext';
 import { useAuthStore } from './stores/useAuthStore';
 import { useThemeStore } from './stores/useThemeStore';
 import { getThemeFromSettings } from './utils/themeBuilder';
 import { StripeProvider } from './stripe/StripeProvider';
-import AdminSecurityLogsPage from './pages/admin/AdminSecurityLogsPage';
+
 import './App.css';
 
 export default function App() {

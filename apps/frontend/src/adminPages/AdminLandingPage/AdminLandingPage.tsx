@@ -10,8 +10,8 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 
-import { useLandingPage, useUpdateLandingPage } from '../../../hooks/useLandingPage';
-import type { LandingPageData } from '../../../types/landing';
+import { useLandingPage, useUpdateLandingPage } from '../../hooks/useLandingPage';
+import type { LandingPageData } from '../../types/landing';
 
 export default function AdminLandingPage() {
   const { data, isLoading, isError } = useLandingPage();

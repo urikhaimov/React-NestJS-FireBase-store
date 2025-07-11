@@ -6,13 +6,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import AdminStickyPage from '../../layouts/AdminStickyPage';
 import {
   useCategories,
   useAddCategory,
   useDeleteCategory,
   useUpdateCategory,
-} from '../../../hooks/useCategories';
+} from '../../hooks/useCategories';
 import {
   categoryReducer,
   initialCategoryState,
