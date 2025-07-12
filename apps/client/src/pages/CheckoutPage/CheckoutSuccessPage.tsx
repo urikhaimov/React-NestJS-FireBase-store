@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,75 +7,12 @@ import {
   Button,
   CircularProgress,
 } from '@mui/material';
-import { useCartStore } from '../../stores/useCartStore';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { auth } from '../../firebase';
-import api from '../../api/axiosInstance'; // ✅ Your axios instance
+import { useNavigate } from 'react-router-dom';
+import { useConfirmOrder } from '../../hooks/useConfirmOrder';
 
 export default function CheckoutSuccessPage() {
-  const clearCart = useCartStore((s) => s.clearCart);
-  const items = useCartStore((s) => s.items);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const confirmAndSaveOrder = async () => {
-      try {
-        const params = new URLSearchParams(location.search);
-        const paymentIntentId = params.get('payment_intent');
-        if (!paymentIntentId) throw new Error('Missing payment intent ID');
-
-        const user = auth.currentUser;
-        if (!user) throw new Error('Not authenticated');
-        const token = await user.getIdToken();
-
-        // ✅ Get payment intent details
-        const paymentRes = await api.get(`/api/stripe/payment-intent/${paymentIntentId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const paymentIntent = paymentRes.data;
-        if (!paymentIntent?.id) throw new Error('Payment intent not found');
-
-        // ✅ Save order to backend
-        await api.post(
-          '/api/orders',
-          {
-            userId: user.uid,
-            paymentIntentId: paymentIntent.id,
-            totalAmount: paymentIntent.amount,
-            items: items.map((item) => ({
-              productId: item.id,
-              name: item.name,
-              price: Number(item.price),
-              image: item.imageUrl,
-              quantity: item.quantity,
-            })),
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        clearCart();
-        setToastOpen(true);
-      } catch (err: any) {
-        console.error('❌ Order save error:', err);
-        setError(err.message || 'Error saving order');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    confirmAndSaveOrder();
-  }, [clearCart, items, location.search]);
+  const { loading, toastOpen, setToastOpen, error } = useConfirmOrder();
 
   return (
     <Box

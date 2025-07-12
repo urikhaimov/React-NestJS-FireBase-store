@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+// src/pages/OrderDetailPage.tsx
+import React from 'react';
 import {
   Box,
   Typography,
@@ -13,85 +13,28 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Timestamp } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Timestamp } from 'firebase/firestore';
+import { useParams } from 'react-router-dom';
 
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { formatCurrency } from '../../utils/format';
 import LoadingProgress from '../../components/LoadingProgress';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import api from '../../api/axiosInstance'; // ✅ axiosInstance import
+import { useOrderDetails } from '../../hooks/useOrderDetails';
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, ready } = useAuthReady();
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState(false);
+  const { ready } = useAuthReady();
+  const { order, loading, error, downloading, downloadInvoice } = useOrderDetails(id, ready);
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleDownloadInvoice = async () => {
-    if (!order) return;
-    setDownloading(true);
-    try {
-      const input = document.getElementById('invoice-content');
-      if (!input) return;
-
-      const canvas = await html2canvas(input, {
-        scale: 2,
-        useCORS: true,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-
-      pdf.setFontSize(18);
-      pdf.text('My Online Store', pageWidth / 2, 15, { align: 'center' });
-
-      pdf.setFontSize(14);
-      pdf.text(`Invoice #${order.id}`, 14, 30);
-      pdf.setFontSize(12);
-      pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 38);
-      pdf.text(`Customer: ${order.ownerName}`, 14, 46);
-
-      const imgProps = pdf.getImageProperties(imgData);
-      const imgWidth = pageWidth - 20;
-      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-      pdf.addImage(imgData, 'PNG', 10, 55, imgWidth, imgHeight);
-      pdf.save(`invoice-${order.id}.pdf`);
-    } catch (err) {
-      console.error('Invoice generation failed:', err);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  useEffect(() => {
-    const loadOrder = async () => {
-      try {
-        if (!user || !id) return;
-        const token = await user.getIdToken();
-        const res = await api.get(`/api/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setOrder(res.data);
-      } catch (err) {
-        console.error('Failed to fetch order', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (ready) loadOrder();
-  }, [id, user, ready]);
-
   if (loading) return <LoadingProgress />;
 
-  if (!order)
+  if (error || !order)
     return (
       <Box mt={4} textAlign="center">
         <Typography>Order not found.</Typography>
@@ -163,7 +106,7 @@ export default function OrderDetailPage() {
 
           <Box mt={2} textAlign="center">
             <Button
-              onClick={handleDownloadInvoice}
+              onClick={downloadInvoice}
               variant="outlined"
               fullWidth
               disabled={downloading}
