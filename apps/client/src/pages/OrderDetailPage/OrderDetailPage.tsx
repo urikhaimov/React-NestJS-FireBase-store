@@ -15,14 +15,17 @@ import {
 } from '@mui/material';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Timestamp } from 'firebase/firestore';
 import { useParams } from 'react-router-dom';
 
 import { useAuthReady } from '../../hooks/useAuthReady';
-import { formatCurrency } from '../../utils/format';
-import LoadingProgress from '../../components/LoadingProgress';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { useOrderDetails } from '../../hooks/useOrderDetails';
+import { formatCurrency } from '../../utils/format';
+import { Order } from '../../types/order';
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleString();
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,26 +35,22 @@ export default function OrderDetailPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  if (loading) return <LoadingProgress />;
-
+  if (loading) return <CircularProgress sx={{ mt: 4, mx: 'auto', display: 'block' }} />;
   if (error || !order)
     return (
       <Box mt={4} textAlign="center">
-        <Typography>Order not found.</Typography>
+        <Typography color="error">Error loading order. Please try again.</Typography>
       </Box>
     );
 
-  const createdAt =
-    order.createdAt?.seconds != null
-      ? new Timestamp(order.createdAt.seconds, order.createdAt.nanoseconds).toDate()
-      : new Date(order.createdAt);
+  const { status, email, ownerName, total, createdAt, payment, shippingAddress, delivery, items, statusHistory } = order;
 
   return (
     <PageWithStickyFilters>
       <Box
         id="invoice-content"
         sx={{
-          maxWidth: 600,
+          maxWidth: 700,
           mx: 'auto',
           mt: 3,
           px: isMobile ? 1 : 3,
@@ -64,14 +63,28 @@ export default function OrderDetailPage() {
 
         <Paper elevation={3} sx={{ p: isMobile ? 2 : 3, borderRadius: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
-            <strong>Status:</strong> {order.status}
+            <strong>Status:</strong> {status}
           </Typography>
-          <Typography><strong>Customer:</strong> {order.ownerName}</Typography>
-          <Typography><strong>Date:</strong> {createdAt.toLocaleString()}</Typography>
-          <Typography><strong>Total:</strong> {formatCurrency(order.amount)}</Typography>
-          <Typography><strong>Payment:</strong> Visa ending in 4242</Typography>
-          <Typography><strong>Shipping Address:</strong> 123 Main St, Tel Aviv, Israel</Typography>
-          <Typography><strong>ETA:</strong> July 8, 2025</Typography>
+          <Typography><strong>Customer:</strong> {ownerName} ({email})</Typography>
+          <Typography><strong>Date:</strong> {formatDate(createdAt)}</Typography>
+          <Typography><strong>Total:</strong> {formatCurrency(total || 0)}</Typography>
+
+          <Typography>
+            <strong>Payment:</strong> {payment.method} ({payment.status})
+            {payment.transactionId && ` • TX: ${payment.transactionId}`}
+          </Typography>
+
+          <Typography>
+            <strong>Shipping Address:</strong>{' '}
+            {[shippingAddress.fullName, shippingAddress.street, shippingAddress.city, shippingAddress.country].filter(Boolean).join(', ')}
+          </Typography>
+
+          {delivery?.eta && (
+            <Typography><strong>ETA:</strong> {delivery.eta}</Typography>
+          )}
+          {delivery?.trackingNumber && (
+            <Typography><strong>Tracking Number:</strong> {delivery.trackingNumber}</Typography>
+          )}
 
           <Divider sx={{ my: 2 }} />
 
@@ -79,7 +92,7 @@ export default function OrderDetailPage() {
             Items
           </Typography>
           <List dense disablePadding>
-            {order.items.map((item: any, idx: number) => (
+            {items.map((item, idx) => (
               <ListItem key={idx} disablePadding sx={{ py: 1 }}>
                 <ListItemText
                   primary={`${item.name} × ${item.quantity}`}
@@ -95,12 +108,15 @@ export default function OrderDetailPage() {
           <Typography variant="h6" gutterBottom>
             Order Timeline
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • Order placed: {createdAt.toLocaleString()} <br />
-            • Payment confirmed <br />
-            • Packed for shipping <br />
-            • Estimated delivery: July 8, 2025
-          </Typography>
+          {statusHistory?.length ? (
+            statusHistory.map((entry, idx) => (
+              <Typography variant="body2" color="text.secondary" key={idx}>
+                • {entry.status} – {formatDate(entry.timestamp)} (by {entry.changedBy})
+              </Typography>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">No status history available.</Typography>
+          )}
 
           <Divider sx={{ my: 2 }} />
 

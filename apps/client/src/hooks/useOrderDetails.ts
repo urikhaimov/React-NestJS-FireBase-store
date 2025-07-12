@@ -16,7 +16,7 @@ export const useOrderDetails = (id?: string, enabled = true) => {
     queryKey: ['orderDetails', id],
     queryFn: async () => {
       if (!id) throw new Error('Missing order ID');
-      const res = await api.get(`/api/orders/${id}`);
+      const res = await api.get(`/orders/${id}`);
       return res.data;
     },
     enabled: enabled && !!id,

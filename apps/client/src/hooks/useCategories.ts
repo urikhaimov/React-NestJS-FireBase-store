@@ -8,7 +8,7 @@ export const useCategories = () => {
   return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
-      const res = await api.get('/api/categories');
+      const res = await api.get('/categories');
       return res.data;
     },
   });
@@ -20,7 +20,7 @@ export const useAddCategory = () => {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const res = await api.post('/api/categories', { name });
+      const res = await api.post('/categories', { name });
       return res.data;
     },
     onError: (error: any) => {
@@ -39,7 +39,7 @@ export const useDeleteCategory = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/api/categories/${id}`);
+      await api.delete(`/categories/${id}`);
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['categories'] });
@@ -59,7 +59,7 @@ export const useDeleteCategory = () => {
 export function useUpdateCategory() {
   return useOptimisticMutation<{ id: string; name: string }, Category>({
     mutationFn: async ({ id, name }) => {
-      await api.put(`/api/categories/${id}`, { name });
+      await api.put(`/categories/${id}`, { name });
     },
     queryKey: ['categories'],
     getItemId: (item) => item.id,

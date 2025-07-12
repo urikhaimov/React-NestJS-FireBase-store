@@ -10,14 +10,14 @@ export interface ThemeSettings {
 }
 
 export const getThemeSettings = async (): Promise<ThemeSettings> => {
-  const response = await api.get<ThemeSettings>('/api/theme-settings');
+  const response = await api.get<ThemeSettings>('/theme-settings');
   return response.data;
 };
 
 export const updateThemeSettings = async (
   data: Partial<ThemeSettings>
 ): Promise<ThemeSettings> => {
-  const response = await api.post<ThemeSettings>('/api/theme-settings', data);
+  const response = await api.post<ThemeSettings>('/theme-settings', data);
   return response.data;
 };
 

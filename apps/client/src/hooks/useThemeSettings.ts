@@ -22,7 +22,7 @@ export function useThemeSettings() {
   const { data, isLoading, isError } = useQuery<ThemeSettings, Error>({
     queryKey: THEME_SETTINGS_QUERY_KEY,
     queryFn: async () => {
-      const res: AxiosResponse<ThemeSettings> = await axios.get('/api/theme-settings');
+      const res: AxiosResponse<ThemeSettings> = await axios.get('/theme-settings');
       return res.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
@@ -31,7 +31,7 @@ export function useThemeSettings() {
 
   // Mutation to save/update theme settings
   const mutation = useMutation<AxiosResponse<any>, Error, ThemeSettings>({
-    mutationFn: (newSettings) => axios.post('/api/theme-settings', newSettings),
+    mutationFn: (newSettings) => axios.post('/theme-settings', newSettings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: THEME_SETTINGS_QUERY_KEY });
     },
