@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axiosInstance';
 import { useCartStore } from '../stores/useCartStore';
-import { cLogger } from '../logger';
+import { cLogger } from '@client/logger';
 
 export const useStripeClientSecret = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -28,7 +28,10 @@ export const useStripeClientSecret = () => {
           name: item.name,
           price: Number(item.price),
           quantity: item.quantity,
-          image: typeof item.imageUrl === 'string' ? item.imageUrl : (item.imageUrl ?? ''),
+          image:
+            typeof item.imageUrl === 'string'
+              ? item.imageUrl
+              : (item.imageUrl ?? ''),
         }));
 
         const safeAmount = Math.max(50, total);
