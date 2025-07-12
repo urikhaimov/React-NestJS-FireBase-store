@@ -21,7 +21,7 @@ import { useAuthReady } from '../../hooks/useAuthReady';
 import { formatCurrency } from '../../utils/format';
 import LoadingProgress from '../../components/LoadingProgress';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
-import api from '../../api/axios'; // ✅ axiosInstance import
+import api from '../../api/axiosInstance'; // ✅ axiosInstance import
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();

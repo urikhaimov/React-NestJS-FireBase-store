@@ -1,6 +1,6 @@
 // src/hooks/useThemeHooks.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/axios';
+import api from '../api/axiosInstance';
 import { ThemeSettings } from '../api/theme';
 
 // GET theme settings

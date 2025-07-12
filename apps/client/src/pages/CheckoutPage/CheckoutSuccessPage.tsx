@@ -11,7 +11,7 @@ import {
 import { useCartStore } from '../../stores/useCartStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../../firebase';
-import api from '../../api/axios'; // ✅ Your axios instance
+import api from '../../api/axiosInstance'; // ✅ Your axios instance
 
 export default function CheckoutSuccessPage() {
   const clearCart = useCartStore((s) => s.clearCart);

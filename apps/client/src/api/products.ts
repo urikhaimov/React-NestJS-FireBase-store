@@ -18,7 +18,7 @@ import {
 import { db, storage } from '../firebase';
 import type { Product } from '../types/firebase';
 import { uploadFilesAndReturnUrls } from '../utils/uploadFilesAndReturnUrls';
-import axios from '../api/axios';
+import axios from './axiosInstance';
 
 // -------------------------
 // Types

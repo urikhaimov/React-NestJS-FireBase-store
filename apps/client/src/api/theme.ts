@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import api from './axios';
+import api from './axiosInstance';
 
 export interface ThemeSettings {
   primaryColor: string;

@@ -1,4 +1,4 @@
-import api from './axios'; // make sure this points to your axios config file
+import api from './axiosInstance'; // make sure this points to your axios config file
 import { ThemeSettings } from '../types/theme';
 
 export const fetchThemeSettings = async (): Promise<ThemeSettings> => {

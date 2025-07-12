@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/useAuthStore';
 import { auth } from '../firebase';
 import type { User } from '../types/User';
-import api from '../api/axios';
+import api from '../api/axiosInstance';
 
 export function useAdminUsersQuery() {
   const queryClient = useQueryClient();

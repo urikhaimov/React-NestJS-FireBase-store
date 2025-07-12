@@ -17,7 +17,7 @@ import StripeCheckoutForm from './StripeCheckoutForm';
 import { getEnv } from '@common/utils';
 import { cLogger } from '@client/logger';
 import { useCartStore } from '@client/stores/useCartStore';
-import api from '../../api/axios'; // ✅ axiosInstance
+import api from '../../api/axiosInstance'; // ✅ axiosInstance
 
 const rawKey = getEnv('VITE_STRIPE_PUBLIC_KEY', {
   env: import.meta.env,
