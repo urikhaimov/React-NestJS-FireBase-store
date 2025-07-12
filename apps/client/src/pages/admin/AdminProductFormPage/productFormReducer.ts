@@ -9,7 +9,8 @@ export interface ProductFormState {
   categories: Category[];
   showSuccessSnackbar: boolean;
   showLimitSnackbar: boolean;
-  ready: boolean; // ✅ NEW
+  ready: boolean;
+  deletedImageIds: string[]; // ✅ Track deleted existing image URLs (without token)
 }
 
 export const initialProductFormState: ProductFormState = {
@@ -19,7 +20,8 @@ export const initialProductFormState: ProductFormState = {
   categories: [],
   showSuccessSnackbar: false,
   showLimitSnackbar: false,
-  ready: false, // ✅ NEW
+  ready: false,
+  deletedImageIds: [], // ✅ Init to empty array
 };
 
 type Action =
@@ -31,7 +33,8 @@ type Action =
   | { type: 'SET_UPLOADING_IMAGES'; payload: boolean }
   | { type: 'SET_SHOW_SUCCESS_SNACKBAR'; payload: boolean }
   | { type: 'SET_SHOW_LIMIT_SNACKBAR'; payload: boolean }
-  | { type: 'SET_READY'; payload: boolean }; // ✅ NEW
+  | { type: 'SET_READY'; payload: boolean }
+  | { type: 'ADD_DELETED_IMAGE_ID'; payload: string }; // ✅ NEW
 
 export function productFormReducer(
   state: ProductFormState,
@@ -72,8 +75,14 @@ export function productFormReducer(
     case 'SET_SHOW_LIMIT_SNACKBAR':
       return { ...state, showLimitSnackbar: action.payload };
 
-    case 'SET_READY': // ✅ NEW
+    case 'SET_READY':
       return { ...state, ready: action.payload };
+
+    case 'ADD_DELETED_IMAGE_ID':
+      return {
+        ...state,
+        deletedImageIds: [...state.deletedImageIds, action.payload],
+      };
 
     default:
       return state;

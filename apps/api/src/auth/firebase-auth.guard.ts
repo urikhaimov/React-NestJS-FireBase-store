@@ -6,7 +6,13 @@ import {
 } from '@nestjs/common';
 import { auth, firestore } from 'firebase-admin';
 import { Request } from 'express';
-import { AppError, ECommonErrors, logger } from '@common/utils';
+import { AppError, ECommonErrors, getEnv, logger } from '@common/utils';
+
+interface AuthenticatedUser {
+  uid: string;
+  email: string;
+  role: string;
+}
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -16,11 +22,8 @@ export class FirebaseAuthGuard implements CanActivate {
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       const err = new AppError(ECommonErrors.MISSING_AUTHORIZATION_HEADER);
-      logger.error(err.message);
-
-      throw new UnauthorizedException(
-        ECommonErrors.MISSING_AUTHORIZATION_HEADER,
-      );
+      logger.error(`[FirebaseAuthGuard] ${err.message}`);
+      throw new UnauthorizedException(err.message);
     }
 
     const token = authHeader.split(' ')[1];
@@ -28,34 +31,33 @@ export class FirebaseAuthGuard implements CanActivate {
     try {
       const decodedToken = await auth().verifyIdToken(token);
 
-      // 🔍 Get role from Firestore (users/{uid}.role)
+      // 🔍 Fetch user role from Firestore
       const userDoc = await firestore()
         .collection('users')
         .doc(decodedToken.uid)
         .get();
+
       const role = userDoc.exists ? userDoc.data()?.role || 'user' : 'user';
 
-      // ✅ Attach user to request
-      request.user = {
+      // ✅ Attach user to request (ensure Express typing is extended elsewhere)
+      (request as Request & { user?: AuthenticatedUser }).user = {
         uid: decodedToken.uid,
         email: decodedToken.email || '',
         role,
       };
 
-      if (process.env.NODE_ENV !== 'production') {
+      const isProd = getEnv('NODE_ENV', { defaultValue: 'development' }) === 'production';
+      if (!isProd) {
         logger.info(`[FirebaseAuthGuard] Authenticated user`, request.user);
       }
 
       return true;
-    } catch (error) {
-      const err = new AppError(
-        ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,
+    } catch (error: any) {
+      logger.error(
+        `[FirebaseAuthGuard] Token verification failed: ${error.message || error}`,
       );
-      logger.error(err.message);
-
-      throw new UnauthorizedException(
-        ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED,
-      );
+      const err = new AppError(ECommonErrors.FIREBASE_TOKEN_VERIFICATION_FAILED);
+      throw new UnauthorizedException(err.message);
     }
   }
 }

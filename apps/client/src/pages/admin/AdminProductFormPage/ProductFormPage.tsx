@@ -68,8 +68,8 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
 
     dispatch({ type: 'SET_PRODUCT', payload: product });
 
-    const images: CombinedImage[] = product.images.map((url) => ({
-      id: url,
+    const images: CombinedImage[] = product.images.map((url, index) => ({
+      id: `existing-${url}`,
       url,
       type: 'existing',
     }));
@@ -79,8 +79,9 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   }, [product, reset]);
 
   const handleImageDrop = (files: File[]) => {
-    const newImages: CombinedImage[] = files.map((file) => ({
-      id: URL.createObjectURL(file),
+    const timestamp = Date.now();
+    const newImages: CombinedImage[] = files.map((file, idx) => ({
+      id: `${file.name}-${timestamp}-${idx}`,
       url: URL.createObjectURL(file),
       type: 'new',
       file,
@@ -125,7 +126,10 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
       );
 
       const existingUrls = state.combinedImages
-        .filter((img) => img.type === 'existing')
+        .filter(
+          (img) =>
+            img.type === 'existing' && !state.deletedImageIds?.includes(img.id.replace('existing-', ''))
+        )
         .map((img) => img.url);
 
       const allImageUrls = [...existingUrls, ...uploadedUrls];
@@ -153,7 +157,6 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
 
       dispatch({ type: 'SET_SHOW_SUCCESS_SNACKBAR', payload: true });
       dispatch({ type: 'SET_UPLOADING_IMAGES', payload: false });
-
       alert('Product saved successfully!');
       navigate('/admin/products');
     } catch (error) {
@@ -253,12 +256,18 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
               <ImageUploader
                 images={state.combinedImages}
                 onDrop={handleImageDrop}
-                onRemove={(id) =>
+                onRemove={(id) => {
+                  const imageToDelete = state.combinedImages.find((img) => img.id === id);
+
+                  if (imageToDelete?.type === 'existing') {
+                    dispatch({ type: 'ADD_DELETED_IMAGE_ID', payload: imageToDelete.id.replace('existing-', '') });
+                  }
+
                   dispatch({
                     type: 'SET_COMBINED_IMAGES',
                     payload: state.combinedImages.filter((img) => img.id !== id),
-                  })
-                }
+                  });
+                }}
                 onReorderAll={(newOrder) =>
                   dispatch({ type: 'SET_COMBINED_IMAGES', payload: newOrder })
                 }
