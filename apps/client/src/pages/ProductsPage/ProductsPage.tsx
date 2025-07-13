@@ -38,7 +38,7 @@ export default function ProductsPage() {
       if (!ready || !user) return;
       try {
         const token = await user.getIdToken();
-        const res = await fetchAllProducts(token);
+        const res = await fetchAllProducts();
 
         if (!Array.isArray(res.data)) {
           console.error('❌ Invalid product response (not an array):', res.data);

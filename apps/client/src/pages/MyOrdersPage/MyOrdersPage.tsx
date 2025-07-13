@@ -66,7 +66,7 @@ export default function MyOrdersPage() {
         }
 
         const idToken = await user.getIdToken();
-        const fetchFn = () => fetchMyOrders(idToken).then(res => res.data);
+        const fetchFn = () => fetchMyOrders().then(res => res.data);
         const list = await retryWithBackoff(fetchFn);
 
         const converted = list.map((order: any) => ({
