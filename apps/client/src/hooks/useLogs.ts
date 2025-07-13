@@ -4,7 +4,7 @@ import { SecurityLog } from '../api/logs';
 
 export function fetchLogs(categoryId?: string): Promise<SecurityLog[]> {
   // Adjust your API endpoint as needed
-  const url = categoryId ? `/api/logs?category=${categoryId}` : '/api/logs';
+  const url = categoryId ? `/logs?category=${categoryId}` : '/api/logs';
   return axios.get(url).then(res => res.data);
 }
 

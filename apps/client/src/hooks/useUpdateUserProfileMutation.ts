@@ -7,7 +7,7 @@ export const useUpdateUserProfileMutation = (uid: string) => {
 
   return useMutation({
     mutationFn: async (data: { name?: string; photoURL?: string }) => {
-      await axios.put(`/api/users/${uid}`, data);
+      await axios.put(`/users/${uid}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['userProfile', uid]);

@@ -29,7 +29,7 @@ export function useOrder(id?: string) {
     queryKey: ['order', id],
     queryFn: async () => {
       if (!id) throw new Error('Order ID is required');
-      const response = await axios.get(`/api/orders/${id}`);
+      const response = await axios.get(`/orders/${id}`);
       return response.data as Order;
     },
     enabled: !!id,
@@ -64,7 +64,7 @@ export function useUpdateOrder(id?: string): UseMutationResult<void, Error, Upda
         ];
       }
 
-      await axios.put(`/api/orders/${id}`, payload);
+      await axios.put(`/orders/${id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order', id] });

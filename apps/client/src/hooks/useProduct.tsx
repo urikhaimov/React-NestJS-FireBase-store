@@ -22,7 +22,7 @@ export function useProduct(
     queryKey: ['product', productId],
     queryFn: async () => {
       if (!productId) return null;
-      const { data } = await axios.get<Product>(`/api/products/${productId}`);
+      const { data } = await axios.get<Product>(`/products/${productId}`);
       return data;
     },
     enabled: !!productId,
