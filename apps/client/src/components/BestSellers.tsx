@@ -1,15 +1,4 @@
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  startAfter,
-  QueryDocumentSnapshot,
-  DocumentData,
-} from 'firebase/firestore';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { db } from '../firebase';
+// src/components/BestSellers.tsx
 import {
   Box,
   Grid,
@@ -19,50 +8,16 @@ import {
 } from '@mui/material';
 import ProductCard from './ProductCard';
 import LoadingProgress from './LoadingProgress';
-import type { Product } from '../types/firebase';
-
-const PAGE_SIZE = 4;
+import { useBestSellers } from '../hooks/useBestSellers';
 
 export default function BestSellers() {
-  const fetchProducts = async ({
-    pageParam,
-  }: {
-    pageParam?: QueryDocumentSnapshot<DocumentData>;
-  }) => {
-    const baseRef = collection(db, 'products');
-    const bestSellersQuery = pageParam
-      ? query(baseRef, orderBy('order'), startAfter(pageParam), limit(PAGE_SIZE))
-      : query(baseRef, orderBy('order'), limit(PAGE_SIZE));
-
-    const snap = await getDocs(bestSellersQuery);
-    const products: Product[] = snap.docs.map((doc) => ({
-      ...(doc.data() as Product),
-      id: doc.id,
-    }));
-
-    const nextCursor =
-      snap.docs.length === PAGE_SIZE ? snap.docs[snap.docs.length - 1] : undefined;
-
-    return { products, nextCursor };
-  };
-
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteQuery({
-    queryKey: ['best-sellers'],
-    queryFn: fetchProducts,
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.products.length || lastPage.products.length < PAGE_SIZE) {
-        return undefined; // 🛑 no more pages
-      }
-      return lastPage.nextCursor;
-    },
-  });
+  } = useBestSellers();
 
   const allProducts = data?.pages.flatMap((page) => page.products) || [];
 
