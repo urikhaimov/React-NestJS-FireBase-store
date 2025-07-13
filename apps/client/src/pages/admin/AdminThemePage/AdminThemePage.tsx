@@ -1,18 +1,21 @@
 import React, { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Box,
-  TextField,
   Button,
-  Switch,
   FormControlLabel,
-  Typography,
-  Stack,
   MenuItem,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
 } from '@mui/material';
-import { themePresets, loadGoogleFont } from '../../../constants/themePresets';
-import { useThemeSettings, useUpdateThemeSettingsMutation } from '../../../hooks/useThemeHooks';
-import { ThemeSettings } from '../../../api/theme';
+import { loadGoogleFont, themePresets } from '@client/constants/themePresets';
+import {
+  useThemeSettings,
+  useUpdateThemeSettingsMutation,
+} from '@client/hooks/useThemeHooks';
+import { ThemeSettings } from '@client/api/theme';
 
 export default function AdminThemePage() {
   const { data, isLoading } = useThemeSettings();
@@ -32,7 +35,7 @@ export default function AdminThemePage() {
 
   // Load Google font on fontFamily change
   useEffect(() => {
-    if (selectedFont) loadGoogleFont(selectedFont);
+    loadGoogleFont(selectedFont);
   }, [selectedFont]);
 
   // Reset form when data is loaded
@@ -56,7 +59,9 @@ export default function AdminThemePage() {
 
   return (
     <Box p={3}>
-      <Typography variant="h5" gutterBottom>Edit Theme</Typography>
+      <Typography variant="h5" gutterBottom>
+        Edit Theme
+      </Typography>
 
       <Stack direction="row" spacing={2} mb={3}>
         {Object.keys(themePresets).map((key) => (

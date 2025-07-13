@@ -1,7 +1,7 @@
 // src/hooks/useThemeHooks.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/axiosInstance';
-import { ThemeSettings } from '../api/theme';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '@client/api/axiosInstance';
+import { ThemeSettings } from '@client/api/theme';
 
 // GET theme settings
 export function useThemeSettings() {
@@ -23,8 +23,8 @@ export function useUpdateThemeSettingsMutation() {
       const { data } = await api.post('/theme-settings', newSettings);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['themeSettings'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['themeSettings'] });
     },
   });
 }
