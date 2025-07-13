@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance';
+import axiosInstance from '../api/axiosInstance';
 
 // No token needed here – it's handled in interceptor
 export function fetchAllProducts() {

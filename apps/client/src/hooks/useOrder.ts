@@ -1,5 +1,5 @@
 import type { Order } from '../types/order';
-import api from './axiosInstance'; // ✅ This has auth interceptor pre-attached
+import api from '../api/axiosInstance'; // ✅ This has auth interceptor pre-attached
 
 // Fetch orders for the logged-in user
 export function fetchMyOrders() {

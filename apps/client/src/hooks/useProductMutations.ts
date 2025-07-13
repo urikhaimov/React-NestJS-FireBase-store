@@ -4,11 +4,11 @@ import {
   updateProduct,
   deleteProduct,
   reorderProducts
-} from '../api/products';
+} from './useProducts';
 
 
 import type { Product, NewProduct } from '../types/firebase';
-import type { UpdateProductPayload } from '../api/products';
+import type { UpdateProductPayload } from './useProducts';
 
 interface ReorderPayload {
   orderList: { id: string; order: number }[];

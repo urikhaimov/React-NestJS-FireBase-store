@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { Dayjs } from 'dayjs';
 
-import { fetchAllProducts } from '../../api/products';
+import { fetchAllProducts } from '../../hooks/useProducts';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../stores/useCartStore';

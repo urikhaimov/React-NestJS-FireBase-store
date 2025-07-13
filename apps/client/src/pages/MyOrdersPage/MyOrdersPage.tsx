@@ -24,7 +24,7 @@ import { FixedSizeList as ListWindow, ListChildComponentProps } from 'react-wind
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
 import UserOrderFilters from './UserOrderFilters';
 import { useAuthReady } from '../../hooks/useAuthReady';
-import { fetchMyOrders } from '../../api/orderApi';
+import { fetchMyOrders } from '../../hooks/useOrder';
 import LoadingProgress from '../../components/LoadingProgress';
 import { Timestamp } from 'firebase/firestore';
 import { formatCurrency } from '../../utils/format';
