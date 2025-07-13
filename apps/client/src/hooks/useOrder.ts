@@ -1,22 +1,63 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseMutationResult,
+} from '@tanstack/react-query';
+import {
+  fetchOrderById,
+  updateOrderById,
+} from '../api/orderApi';
+import { useSafeAuth } from './useGetSafeAuth';
 import type { Order } from '../types/order';
-import api from '../api/axiosInstance'; // ✅ This has auth interceptor pre-attached
 
-// Fetch orders for the logged-in user
-export function fetchMyOrders() {
-  return api.get<Order[]>('/orders/mine');
+// Fetch single order
+function useOrder(id?: string) {
+  return useQuery<Order, Error>({
+    queryKey: ['order', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Order ID is required');
+      const { data } = await fetchOrderById(id);
+      return data;
+    },
+    enabled: !!id,
+    refetchOnWindowFocus: false,
+  });
 }
 
-// Fetch all orders (admin only)
-export function fetchAllOrders() {
-  return api.get<Order[]>('/orders');
+// Update single order
+function useUpdateOrder(id?: string): UseMutationResult<void, Error, Partial<Order> & { previousStatus?: string }> {
+  const queryClient = useQueryClient();
+  const { user: admin } = useSafeAuth();
+
+  return useMutation({
+    mutationFn: async (update: Partial<Order> & { previousStatus?: string }) => {
+      if (!id) throw new Error('Order ID is required');
+      if (!admin) throw new Error('Admin user required');
+
+      const patch: Partial<Order> = {
+        ...update,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (update.status && update.status !== update.previousStatus) {
+        patch.statusHistory = [
+          ...(update.statusHistory || []),
+          {
+            status: update.status,
+            timestamp: new Date().toISOString(),
+            changedBy: admin.name || admin.email || 'admin',
+          },
+        ];
+      }
+
+      await updateOrderById(id, patch);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+    },
+  });
 }
 
-// Fetch single order by ID
-export function fetchOrderById(id: string) {
-  return api.get<Order>(`/orders/${id}`);
-}
-
-// Update an order by ID (admin)
-export function updateOrderById(id: string, data: Partial<Order>) {
-  return api.patch<Order>(`/orders/${id}`, data);
-}
+// ✅ Export everything needed
+export { useOrder, useUpdateOrder, Order };

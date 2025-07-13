@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
+
 import { useOrder, useUpdateOrder, Order } from '../../../hooks/useOrder';
 
 import OrderSummaryCard from './components/OrderSummaryCard';
@@ -34,7 +35,7 @@ export default function EditOrderPage() {
     formState: { isSubmitting },
   } = useForm<Order>({
     defaultValues: order || {
-      status: '',
+       status: 'pending', // ✅ must match one of the allowed union types
       notes: '',
       delivery: { provider: '', trackingNumber: '', eta: '' },
       items: [],
