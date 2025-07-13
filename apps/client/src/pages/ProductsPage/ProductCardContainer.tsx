@@ -1,10 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Product } from '../../types/firebase';
 import ProductCard from './ProductCard';
+import { IProduct } from '@common/types';
 
 type Props = {
-  product: Product;
+  product: IProduct;
   onConfirmDelete: (id: string) => void;
   onAddToCart?: () => void; // ✅ added callback
   disabled?: boolean;
@@ -16,13 +16,8 @@ export default function ProductCardContainer({
   onAddToCart,
   disabled = false,
 }: Props) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: product.id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: product.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),

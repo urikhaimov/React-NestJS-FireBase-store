@@ -1,10 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Product } from '../../../types/firebase';
 import ProductAdminCard from './ProductAdminCard';
+import { IProduct } from '@common/types';
 
 type Props = {
-  product: Product;
+  product: IProduct;
   onConfirmDelete: (id: string) => void;
   disabled?: boolean;
 };
@@ -35,7 +35,6 @@ export default function SortableProductCard({
   return (
     <div ref={setNodeRef} style={style}>
       <ProductAdminCard
-       
         product={product}
         onConfirmDelete={onConfirmDelete}
         disabled={disabled}

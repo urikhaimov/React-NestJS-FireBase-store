@@ -1,4 +1,4 @@
-// src/api/theme.ts
+import api from './axiosInstance';
 
 export type ThemeSettings = {
   darkMode: boolean;
@@ -17,4 +17,11 @@ export type ThemeSettings = {
   showSidebar?: boolean;
   stickyHeader?: boolean;
   // optionally add footerLinks, announcementBar, etc.
+};
+
+export const updateThemeSettings = async (
+  settings: Partial<ThemeSettings>,
+): Promise<ThemeSettings> => {
+  const { data } = await api.post<ThemeSettings>('/theme-settings', settings);
+  return data;
 };

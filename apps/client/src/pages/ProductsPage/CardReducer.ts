@@ -1,8 +1,7 @@
-import { Product } from '../../types/firebase';
-export type Props = {
-  product: Product;
-  
+import { IProduct } from '@common/types';
 
+export type Props = {
+  product: IProduct;
 };
 
 // Reducer state and actions
@@ -30,8 +29,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, dialogOpen: false };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
-      case 'RESET':
-  return initialState;
+    case 'RESET':
+      return initialState;
     default:
       return state;
   }

@@ -1,29 +1,38 @@
-import React, { useReducer, useMemo, useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import {
+  Alert,
   Box,
+  CircularProgress,
   Divider,
+  Snackbar,
   useMediaQuery,
   useTheme,
-  Snackbar,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
-import { useAllCategories } from '../../../hooks/useAllCategories';
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useAllCategories } from '@client/hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import SortableProductCard from './SortableProductCard';
 import AdminProductFilters from './AdminProductFilters';
-import { auth, db } from '../../../firebase';
-import { useProductMutations } from '../../../hooks/useProductMutations';
+import { auth, db } from '@client/firebase';
+import { useProductMutations } from '@client/hooks/useProductMutations';
 import { useInView } from 'react-intersection-observer';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import type { Product } from '../../../types/firebase';
-import LoadingProgress from '../../../components/LoadingProgress';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { debounce } from 'lodash';
+import { IProduct } from '@common/types';
+import AdminStickyPage from '@client/layouts/AdminStickyPage';
+import LoadingProgress from '@client/components/LoadingProgress';
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -48,19 +57,28 @@ export default function AdminProductsPage() {
         p.description?.toLowerCase().includes(term);
 
       const matchesCategory =
-        !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
+        !state.selectedCategoryId ||
+        p.categoryId?.toString() === state.selectedCategoryId;
 
       let createdAtDate: Date | null = null;
       if (p.createdAt) {
-        createdAtDate = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
+        createdAtDate =
+          typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
       }
 
       const matchesDate =
-        !state.createdAfter || (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
+        !state.createdAfter ||
+        (createdAtDate &&
+          createdAtDate.getTime() >= state.createdAfter.valueOf());
 
       return matchesText && matchesCategory && matchesDate;
     });
-  }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
+  }, [
+    state.products,
+    state.searchTerm,
+    state.selectedCategoryId,
+    state.createdAfter,
+  ]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -87,13 +105,13 @@ export default function AdminProductsPage() {
         updatedProducts.splice(
           idx + state.products.indexOf(visibleProducts[0]),
           0,
-          product
+          product,
         );
       }
     });
 
     const uniqueUpdated = Array.from(
-      new Map(updatedProducts.map((p) => [p.id, p])).values()
+      new Map(updatedProducts.map((p) => [p.id, p])).values(),
     );
 
     dispatch({ type: 'SET_PRODUCTS', payload: uniqueUpdated });
@@ -117,17 +135,23 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const q = query(collection(db, 'products'), orderBy('order'));
 
-    const debouncedSetProducts = debounce((products: Product[]) => {
+    const debouncedSetProducts = debounce((products: IProduct[]) => {
       dispatch({ type: 'SET_PRODUCTS_SORTED', payload: products });
     }, 300);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const products: Product[] = snapshot.docs.map((doc) => ({
-        ...(doc.data() as Product),
+      const products: IProduct[] = snapshot.docs.map((doc) => ({
+        ...(doc.data() as IProduct),
         id: doc.id,
       }));
 
-      const invalid = products.filter((p) => !p || typeof p !== 'object' || !p.id || typeof p.price === 'undefined');
+      const invalid = products.filter(
+        (p) =>
+          !p ||
+          typeof p !== 'object' ||
+          !p.id ||
+          typeof p.price === 'undefined',
+      );
       if (invalid.length > 0) {
         console.warn('⚠️ Invalid products found:', invalid);
       }
@@ -174,7 +198,10 @@ export default function AdminProductsPage() {
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts
-                .filter((p): p is Product => !!p && typeof p === 'object' && 'id' in p && 'price' in p)
+                .filter(
+                  (p): p is IProduct =>
+                    !!p && typeof p === 'object' && 'id' in p && 'price' in p,
+                )
                 .map((product) => (
                   <Box
                     key={product.id}
@@ -190,8 +217,15 @@ export default function AdminProductsPage() {
                     />
                   </Box>
                 ))}
-              <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
-                {visibleCount < filteredProducts.length && <CircularProgress size={28} />}
+              <Box
+                ref={sentinelRef}
+                display="flex"
+                justifyContent="center"
+                py={3}
+              >
+                {visibleCount < filteredProducts.length && (
+                  <CircularProgress size={28} />
+                )}
               </Box>
             </SortableContext>
           </DndContext>

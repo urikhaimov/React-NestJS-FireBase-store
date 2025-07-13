@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '../api/axiosInstance'; // adjust a path as needed
-import type { Product } from '../types/firebase';
+import axiosInstance from '../api/axiosInstance';
+import { IProduct } from '@common/types'; // adjust a path as needed
 
 export function useProductById(id?: string) {
-  return useQuery<Product>({
+  return useQuery<IProduct>({
     queryKey: ['product', id],
     queryFn: async () => {
       if (!id) throw new Error('Product ID is required');

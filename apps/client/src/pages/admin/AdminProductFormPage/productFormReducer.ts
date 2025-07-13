@@ -1,12 +1,11 @@
-import { Product } from '../../../types/firebase';
-import { CombinedImage } from '../../../components/ImageUploader';
-import type { Category } from '../../../types/firebase';
+import { CombinedImage } from '@client/components/ImageUploader';
+import { IProduct, TCategory } from '@common/types';
 
 export interface ProductFormState {
-  product: Product | null;
+  product: IProduct | null;
   combinedImages: CombinedImage[];
   isUploadingImages: boolean;
-  categories: Category[];
+  categories: TCategory[];
   showSuccessSnackbar: boolean;
   showLimitSnackbar: boolean;
   ready: boolean;
@@ -25,8 +24,8 @@ export const initialProductFormState: ProductFormState = {
 };
 
 type Action =
-  | { type: 'SET_PRODUCT'; payload: Product }
-  | { type: 'SET_CATEGORIES'; payload: Category[] }
+  | { type: 'SET_PRODUCT'; payload: IProduct }
+  | { type: 'SET_CATEGORIES'; payload: TCategory[] }
   | { type: 'SET_COMBINED_IMAGES'; payload: CombinedImage[] }
   | { type: 'ADD_COMBINED_IMAGES'; payload: CombinedImage[] }
   | { type: 'SET_UPLOAD_PROGRESS'; payload: { id: string; progress: number } }
@@ -38,7 +37,7 @@ type Action =
 
 export function productFormReducer(
   state: ProductFormState,
-  action: Action
+  action: Action,
 ): ProductFormState {
   switch (action.type) {
     case 'SET_PRODUCT':
@@ -62,7 +61,7 @@ export function productFormReducer(
         combinedImages: state.combinedImages.map((img) =>
           img.id === action.payload.id
             ? { ...img, progress: action.payload.progress }
-            : img
+            : img,
         ),
       };
 

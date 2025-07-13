@@ -1,29 +1,29 @@
 import {
+  Button,
   Card,
+  CardActions,
   CardContent,
   CardMedia,
-  CardActions,
-  Typography,
-  IconButton,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Button,
+  DialogTitle,
+  IconButton,
+  Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import { useNavigate } from 'react-router-dom';
-import { useReducer } from 'react';
-import { deleteProduct } from '../../../hooks/useDeleteProduct';
-import { reducer, initialState } from './CardReducer';
-import type { Product } from '../../../types/firebase';
+import React, { useReducer } from 'react';
+import { initialState, reducer } from './CardReducer';
+import { IProduct } from '@common/types';
+import { deleteProduct } from '@client/hooks/useProducts';
 
 export type Props = {
-  product: Product;
+  product: IProduct;
   onConfirmDelete: (id: string) => void;
   disabled?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -38,7 +38,7 @@ export default function ProductAdminCard({
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { dialogOpen, loading } = state;
-const formattedPrice = Number(product.price).toFixed(2);
+  const formattedPrice = Number(product.price).toFixed(2);
   const handleDeleteClick = () => {
     dispatch({ type: 'OPEN_DIALOG' });
   };
@@ -77,7 +77,9 @@ const formattedPrice = Number(product.price).toFixed(2);
             objectFit: 'cover',
             mx: { xs: 'auto', sm: 0 },
           }}
-          image={product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'}
+          image={
+            product.images?.[0] || 'https://picsum.photos/seed/fallback/100/100'
+          }
           alt={product.name}
         />
 
@@ -130,15 +132,23 @@ const formattedPrice = Number(product.price).toFixed(2);
         </CardActions>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => dispatch({ type: 'CLOSE_DIALOG' })} fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => dispatch({ type: 'CLOSE_DIALOG' })}
+        fullWidth
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{product.name}</strong>?
+            This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => dispatch({ type: 'CLOSE_DIALOG' })} disabled={loading}>
+          <Button
+            onClick={() => dispatch({ type: 'CLOSE_DIALOG' })}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button

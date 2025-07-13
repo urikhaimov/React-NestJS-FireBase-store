@@ -1,13 +1,19 @@
 // src/pages/ProductsPage/ProductsPage.tsx
-import React, { useReducer, useMemo, useEffect, useRef, useCallback, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import {
+  Alert,
   Box,
-  Typography,
   CircularProgress,
   Snackbar,
-  Alert,
+  Typography,
 } from '@mui/material';
-import { Dayjs } from 'dayjs';
 
 import { fetchAllProducts } from '../../hooks/useProducts';
 import { useAuthReady } from '../../hooks/useAuthReady';
@@ -17,13 +23,13 @@ import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import UserProductFilters from './UserProductFilters';
 import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
-import type { Product } from '../../types/firebase';
 
-import { reducer, initialState, State, Action } from './LocalReducer';
+import { initialState, reducer } from './LocalReducer';
+import { IProduct } from '@common/types';
 
 export default function ProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
   const [visibleCount, setVisibleCount] = useState(initialState.pageSize);
   const [loading, setLoading] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -41,7 +47,10 @@ export default function ProductsPage() {
         const res = await fetchAllProducts();
 
         if (!Array.isArray(res.data)) {
-          console.error('❌ Invalid product response (not an array):', res.data);
+          console.error(
+            '❌ Invalid product response (not an array):',
+            res.data,
+          );
           setProducts([]);
           return;
         }
@@ -67,7 +76,8 @@ export default function ProductsPage() {
         (p.description?.toLowerCase().includes(txt) ?? false);
 
       const inCat =
-        !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
+        !state.selectedCategoryId ||
+        p.categoryId.toString() === state.selectedCategoryId;
 
       const inDate =
         !state.createdAfter ||
@@ -90,7 +100,9 @@ export default function ProductsPage() {
 
           if (!productDate) return false;
 
-          return productDate.getTime() >= state.createdAfter!.toDate().getTime();
+          return (
+            productDate.getTime() >= state.createdAfter!.toDate().getTime()
+          );
         })();
 
       const inStock = !state.inStockOnly || p.stock > 0;
@@ -112,7 +124,7 @@ export default function ProductsPage() {
         setVisibleCount((prev) => prev + state.pageSize);
       }
     },
-    [filteredProducts.length, visibleCount, state.pageSize]
+    [filteredProducts.length, visibleCount, state.pageSize],
   );
 
   useEffect(() => {

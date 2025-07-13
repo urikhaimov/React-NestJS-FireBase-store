@@ -1,9 +1,8 @@
+import { IProduct } from '@common/types';
 import { Dayjs } from 'dayjs';
-import { Product } from '../../../types/firebase';
-
 
 export interface State {
-  products: Product[];
+  products: IProduct[];
   lastDoc: any;
   loading: boolean;
   hasMore: boolean;
@@ -13,15 +12,14 @@ export interface State {
   page: number;
   pageSize: number;
   successMessage: string;
-  pendingDelete: Product | null;
+  pendingDelete: IProduct | null;
   reorderPending: boolean; // 🆕
 }
 
-
 export type Action =
-  | { type: 'SET_PRODUCTS'; payload: Product[] }
-  | { type: 'SET_PRODUCTS_SORTED'; payload: Product[] }
-  | { type: 'ADD_PRODUCTS'; payload: Product[] }
+  | { type: 'SET_PRODUCTS'; payload: IProduct[] }
+  | { type: 'SET_PRODUCTS_SORTED'; payload: IProduct[] }
+  | { type: 'ADD_PRODUCTS'; payload: IProduct[] }
   | { type: 'REMOVE_PRODUCT'; payload: string }
   | { type: 'SET_LAST_DOC'; payload: any }
   | { type: 'SET_LOADING'; payload: boolean }
@@ -35,10 +33,9 @@ export type Action =
   | { type: 'SET_PAGE'; payload: number }
   | { type: 'SET_SUCCESS_MESSAGE'; payload: string }
   | { type: 'CLEAR_SUCCESS_MESSAGE' }
-  | { type: 'SET_PENDING_DELETE'; payload: Product | null }
+  | { type: 'SET_PENDING_DELETE'; payload: IProduct | null }
   | { type: 'SET_REORDER_PENDING'; payload: boolean } // 🆕
   | { type: 'RESET_PAGINATION'; payload: State };
-
 
 export const initialState: State = {
   products: [],
@@ -54,7 +51,6 @@ export const initialState: State = {
   pendingDelete: null,
   reorderPending: false, // 🆕
 };
-
 
 export function resetPagination(state: State): State {
   return {
@@ -77,12 +73,17 @@ export function reducer(state: State, action: Action): State {
     case 'SET_PRODUCTS_SORTED':
       return {
         ...state,
-        products: [...action.payload].sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999)),
+        products: [...action.payload].sort(
+          (a, b) => (a.order ?? 9999) - (b.order ?? 9999),
+        ),
       };
     case 'ADD_PRODUCTS':
       return { ...state, products: [...state.products, ...action.payload] };
     case 'REMOVE_PRODUCT':
-      return { ...state, products: state.products.filter((p) => p.id !== action.payload) };
+      return {
+        ...state,
+        products: state.products.filter((p) => p.id !== action.payload),
+      };
     case 'SET_LAST_DOC':
       return { ...state, lastDoc: action.payload };
     case 'SET_LOADING':

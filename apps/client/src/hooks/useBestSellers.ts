@@ -1,7 +1,7 @@
 // src/hooks/useBestSellers.ts
 import { useInfiniteQuery } from '@tanstack/react-query';
-import axiosInstance from '../api/axiosInstance'; // or just `axios` if you're not customizing
-import type { Product } from '../types/firebase';
+import axiosInstance from '../api/axiosInstance';
+import { IProduct } from '@common/types'; // or just `axios` if you're not customizing
 
 const PAGE_SIZE = 4;
 
@@ -21,8 +21,11 @@ export function useBestSellers() {
       }
 
       return {
-        products: res.data.products as Product[],
-        nextOffset: res.data.products.length < PAGE_SIZE ? undefined : pageParam + PAGE_SIZE,
+        products: res.data.products as IProduct[],
+        nextOffset:
+          res.data.products.length < PAGE_SIZE
+            ? undefined
+            : pageParam + PAGE_SIZE,
       };
     },
     initialPageParam: 0,

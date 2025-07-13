@@ -1,6 +1,7 @@
-import { Product } from '../../../types/firebase';
+import { IProduct } from '@common/types';
+
 export type Props = {
-  product: Product;
+  product: IProduct;
   onConfirmDelete: (id: string) => void;
   disabled?: boolean;
 };
@@ -30,8 +31,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, dialogOpen: false };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
-      case 'RESET':
-  return initialState;
+    case 'RESET':
+      return initialState;
     default:
       return state;
   }

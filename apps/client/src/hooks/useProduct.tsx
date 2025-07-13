@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { Product } from '../types/firebase'; // adjust path to your Product type
+import { IProduct } from '@common/types';
 
 export function useProduct(productId?: string) {
-  return useQuery<Product | null>({
+  return useQuery<IProduct | null>({
     queryKey: ['product', productId],
     queryFn: async () => {
       if (!productId) return null;

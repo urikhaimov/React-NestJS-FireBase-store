@@ -1,14 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createProduct,
-  updateProduct,
   deleteProduct,
-  reorderProducts
+  reorderProducts,
+  updateProduct,
 } from './useProducts';
 
-
-import type { Product, NewProduct } from '../types/firebase';
-import type { UpdateProductPayload } from './useProducts';
+import { cLogger } from '@client/logger';
+import { IProduct, TUpdateProduct } from '@common/types';
 
 interface ReorderPayload {
   orderList: { id: string; order: number }[];
@@ -19,10 +18,9 @@ export const useProductMutations = () => {
   const queryClient = useQueryClient();
 
   const create = useMutation({
-    mutationFn: (newProduct: NewProduct) =>
-      createProduct(newProduct, newProduct.createdBy),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+    mutationFn: (newProduct: IProduct) => createProduct(newProduct),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error) => {
       console.error('Create product failed:', error);
@@ -35,10 +33,10 @@ export const useProductMutations = () => {
       data,
       keepImageUrls,
       newImageFiles,
-    }: UpdateProductPayload & { id: string }) =>
+    }: TUpdateProduct & { id: string }) =>
       updateProduct(id, { data, keepImageUrls, newImageFiles }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error) => {
       console.error('Update product failed:', error);
@@ -47,24 +45,24 @@ export const useProductMutations = () => {
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteProduct(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error) => {
-      console.error('Delete product failed:', error);
+      cLogger.error('Delete product failed:', error);
     },
   });
 
   const reorder = useMutation({
     mutationFn: async ({ orderList, token }: ReorderPayload) => {
-      return reorderProducts(orderList, token);
+      return reorderProducts(orderList);
     },
     // ❌ remove this for now to prevent snapping back
     // onSuccess: () => {
     //   queryClient.invalidateQueries({ queryKey: ['products'] });
     // },
     onError: (error) => {
-      console.error('Reorder products failed:', error);
+      cLogger.error('Reorder products failed:', error);
     },
   });
 
