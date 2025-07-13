@@ -10,15 +10,12 @@ import {
   Stack,
   MenuItem,
 } from '@mui/material';
-import {
-  ThemeSettings,
-  useThemeSettingsQuery,
-  useUpdateThemeSettingsMutation,
-} from '../../../api/theme';
 import { themePresets, loadGoogleFont } from '../../../constants/themePresets';
+import { useThemeSettings, useUpdateThemeSettingsMutation } from '../../../hooks/useThemeHooks';
+import { ThemeSettings } from '../../../api/theme';
 
 export default function AdminThemePage() {
-  const { data, isLoading } = useThemeSettingsQuery();
+  const { data, isLoading } = useThemeSettings();
   const { mutate, isPending } = useUpdateThemeSettingsMutation();
 
   const {
@@ -29,14 +26,19 @@ export default function AdminThemePage() {
     formState: { errors },
   } = useForm<ThemeSettings>({
     defaultValues: data,
-    values: data,
   });
 
   const selectedFont = watch('fontFamily');
 
+  // Load Google font on fontFamily change
   useEffect(() => {
     if (selectedFont) loadGoogleFont(selectedFont);
   }, [selectedFont]);
+
+  // Reset form when data is loaded
+  useEffect(() => {
+    if (data) reset(data);
+  }, [data, reset]);
 
   const onSubmit = (values: ThemeSettings) => {
     mutate(values);
@@ -48,7 +50,9 @@ export default function AdminThemePage() {
     loadGoogleFont(preset.fontFamily);
   };
 
-  if (isLoading || !data) return <div>Loading theme settings...</div>;
+  if (isLoading || !data) {
+    return <Typography sx={{ p: 3 }}>Loading theme settings...</Typography>;
+  }
 
   return (
     <Box p={3}>
@@ -118,7 +122,7 @@ export default function AdminThemePage() {
             )}
           />
           <Button type="submit" variant="contained" disabled={isPending}>
-            Save Theme
+            {isPending ? 'Saving...' : 'Save Theme'}
           </Button>
         </Stack>
       </Box>
