@@ -1,7 +1,5 @@
-import { deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import axiosInstance from '../api/axiosInstance';
 
-export async function deleteProduct(productId: string) {
-  const productRef = doc(db, 'products', productId);
-  await deleteDoc(productRef);
+export async function deleteProduct(productId: string): Promise<void> {
+  await axiosInstance.delete(`/products/${productId}`);
 }

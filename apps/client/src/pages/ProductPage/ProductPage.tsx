@@ -1,49 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
   Button,
   Grid,
   Paper,
+  CircularProgress,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-
-
-import { db } from '../../firebase';
 import { useCartStore } from '../../stores/useCartStore';
-import ImageGallery from '../../components/ImageGallery';
-import DOMPurify from 'dompurify';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
+import DOMPurify from 'dompurify';
+import ImageGallery from '../../components/ImageGallery';
+import { useProductById } from '../../hooks/useProductById';
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
   const addToCart = useCartStore((state) => state.addToCart);
+  const {
+    data: product,
+    isLoading,
+    error,
+  } = useProductById(id ? decodeURIComponent(id) : undefined);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        if (!id) return;
-        const ref = doc(db, 'products', decodeURIComponent(id));
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setProduct({ id: snap.id, ...snap.data() });
-        }
-      } catch (error) {
-        console.error('Error loading product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isLoading) return <CircularProgress />;
+  if (error || !product) return <Typography>Product not found.</Typography>;
 
-    fetchProduct();
-  }, [id]);
-
-  if (loading) return <Typography>Loading...</Typography>;
-  if (!product) return <Typography>Product not found.</Typography>;
-  console.log('Product details:', product);
   return (
     <PageWithStickyFilters>
       <Grid container spacing={4}>
@@ -57,7 +38,7 @@ export default function ProductDetailsPage() {
               {product.name}
             </Typography>
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              ${product.price?.toFixed(2)}
+              ${Number(product.price).toFixed(2)}
             </Typography>
             <Box
               sx={{ mb: 2 }}
@@ -81,5 +62,3 @@ export default function ProductDetailsPage() {
     </PageWithStickyFilters>
   );
 }
-
-// ✅ Inline ImageGallery component

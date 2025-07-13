@@ -1,6 +1,6 @@
+// src/hooks/useAllCategories.ts
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import axiosInstance  from '../api/axiosInstance'; // make sure this is preconfigured with baseURL
 
 export interface Category {
   id: string;
@@ -8,14 +8,11 @@ export interface Category {
 }
 
 export function useAllCategories() {
-  return useQuery({
+  return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
-      const snap = await getDocs(collection(db, 'categories'));
-      return snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Category[];
+      const response = await axiosInstance.get('/categories');
+      return response.data;
     },
   });
 }

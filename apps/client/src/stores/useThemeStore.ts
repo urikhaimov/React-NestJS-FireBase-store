@@ -1,41 +1,22 @@
-import { create } from 'zustand';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// src/stores/useThemeStore.ts
 
-export type ThemeSettings = {
-  storeName: string;
-  darkMode: boolean;
-  primaryColor: string;
-  secondaryColor: string;
-  font: string;
-  fontSize: number;           // ✅ added
-  fontWeight: number;         // ✅ added
-  logoUrl: string;
-  backgroundImageUrl?: string;
-  faviconUrl?: string;
-  homepageLayout: 'hero' | 'carousel' | 'grid';
-  productCardVariant: 'compact' | 'detailed';
-  categoryStyle: 'tabs' | 'dropdown' | 'grid';
-  showSidebar: boolean;
-  maxWidth: 'lg' | 'xl' | 'full';
-  stickyHeader: boolean;
-  announcementBar?: {
-    text: string;
-    backgroundColor: string;
-    textColor: string;
-  };
-  footerLinks?: { label: string; url: string }[];
-};
+import { create } from 'zustand';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+} from '@tanstack/react-query';
+import axiosInstance from '../api/axiosInstance';
+import type { ThemeSettings } from '../types/theme';
 
 interface ThemeState {
   themeSettings: ThemeSettings;
   isLoading: boolean;
   error: string | null;
-
   updateTheme: (newSettings: Partial<ThemeSettings>) => void;
-  toggleDarkMode: () => Promise<void>;
+  toggleDarkMode: () => void;
   setTheme: (settings: ThemeSettings) => void;
-  loadTheme: () => Promise<void>;
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -45,8 +26,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     primaryColor: '#1976d2',
     secondaryColor: '#ff4081',
     font: 'Roboto',
-    fontSize: 16,                 // ✅ default font size
-    fontWeight: 400,              // ✅ default font weight
+    fontFamily: 'Roboto', // ✅ Required by type
+    fontSize: 16,
+    fontWeight: 400,
     logoUrl: '',
     homepageLayout: 'hero',
     productCardVariant: 'compact',
@@ -58,90 +40,32 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   isLoading: true,
   error: null,
 
-  updateTheme: (newSettings) =>
+  updateTheme: (newSettings) => {
     set((state) => ({
       themeSettings: {
         ...state.themeSettings,
         ...newSettings,
       },
-    })),
-
-  setTheme: (settings) =>
-    set(() => ({
-      themeSettings: settings,
-      isLoading: false,
-      error: null,
-    })),
-
-  loadTheme: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const ref = doc(db, 'theme', 'settings');
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        const fallback: ThemeSettings = {
-          storeName: data.storeName ?? 'My Store',
-          darkMode: data.darkMode ?? false,
-          primaryColor: data.primaryColor ?? '#1976d2',
-          secondaryColor: data.secondaryColor ?? '#ff4081',
-          font: data.font ?? 'Roboto',
-          fontSize: data.fontSize ?? 16,
-          fontWeight: data.fontWeight ?? 400,
-          logoUrl: data.logoUrl ?? '',
-          backgroundImageUrl: data.backgroundImageUrl,
-          faviconUrl: data.faviconUrl,
-          homepageLayout: data.homepageLayout ?? 'hero',
-          productCardVariant: data.productCardVariant ?? 'compact',
-          categoryStyle: data.categoryStyle ?? 'tabs',
-          showSidebar: data.showSidebar ?? true,
-          maxWidth: data.maxWidth ?? 'xl',
-          stickyHeader: data.stickyHeader ?? true,
-          announcementBar: data.announcementBar,
-          footerLinks: data.footerLinks,
-        };
-
-        set({ themeSettings: fallback, isLoading: false });
-      } else {
-        throw new Error('No theme document found');
-      }
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
-    }
+    }));
   },
 
-toggleDarkMode: async () => {
-  const current = get().themeSettings;
-  const updated = {
-    ...current,
-    darkMode: !current.darkMode,
-    font: current.font || 'Roboto',
-    fontSize: current.fontSize ?? 16,
-    fontWeight: current.fontWeight ?? 400,
-    storeName: current.storeName || 'My Store',
-    logoUrl: current.logoUrl || '',
-    homepageLayout: current.homepageLayout || 'hero',
-    productCardVariant: current.productCardVariant || 'compact',
-    categoryStyle: current.categoryStyle || 'tabs',
-    showSidebar: current.showSidebar ?? true,
-    maxWidth: current.maxWidth || 'xl',
-    stickyHeader: current.stickyHeader ?? true,
-  };
+  setTheme: (settings) => {
+    set({ themeSettings: settings, isLoading: false, error: null });
+  },
 
-  // ✅ Remove undefined fields before saving
-  const cleanUpdated = Object.fromEntries(
-    Object.entries(updated).filter(([_, v]) => v !== undefined)
-  );
+  toggleDarkMode: async () => {
+    const current = get().themeSettings;
+    const updated = {
+      ...current,
+      darkMode: !current.darkMode,
+    };
 
-  try {
-    const ref = doc(db, 'theme', 'settings');
-    await setDoc(ref, cleanUpdated, { merge: true });
-    set({ themeSettings: updated });
-  } catch (error) {
-    set({ error: 'Failed to toggle dark mode' });
-    console.error('❌ Failed to toggle dark mode:', error);
-  }
-},
-
-
+    try {
+      await axiosInstance.put('/theme/settings', updated);
+      set({ themeSettings: updated });
+    } catch (error) {
+      console.error('❌ Failed to toggle dark mode:', error);
+      set({ error: 'Failed to toggle dark mode' });
+    }
+  },
 }));
