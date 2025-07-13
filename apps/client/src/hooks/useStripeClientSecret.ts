@@ -35,7 +35,7 @@ export const useStripeClientSecret = () => {
         }));
 
         const safeAmount = Math.max(50, total);
-        const res = await api.post('/api/orders/create-payment-intent', {
+        const res = await api.post('/orders/create-payment-intent', {
           amount: safeAmount,
           cart: sanitizedCart,
           ownerName: 'John Doe',
