@@ -1,5 +1,5 @@
 // useLandingPage.ts (React Query v5)
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import type { LandingPageData } from '../types/landing';
 
@@ -24,8 +24,10 @@ export function useUpdateLandingPage() {
     mutationFn: async (updatedData) => {
       await axios.post('/api/landing-page', updatedData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LANDING_PAGE_QUERY_KEY.queryKey });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: LANDING_PAGE_QUERY_KEY.queryKey,
+      });
     },
   });
 }

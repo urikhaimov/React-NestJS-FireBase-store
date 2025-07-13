@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import  axiosInstance  from '../api/axiosInstance'; // adjust path as needed
+import axiosInstance from '../api/axiosInstance'; // adjust a path as needed
 import type { Product } from '../types/firebase';
 
 export function useProductById(id?: string) {

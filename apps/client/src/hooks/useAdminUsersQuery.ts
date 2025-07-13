@@ -21,12 +21,12 @@ export function useAdminUsersQuery() {
 
   const updateUserRole = async (id: string, role: User['role']) => {
     await api.patch(`/users/${id}`, { role });
-    queryClient.invalidateQueries({ queryKey: ['users'] });
+    await queryClient.invalidateQueries({ queryKey: ['users'] });
   };
 
   const deleteUser = async (id: string) => {
     await api.delete(`/users/${id}`);
-    queryClient.invalidateQueries({ queryKey: ['users'] });
+    await queryClient.invalidateQueries({ queryKey: ['users'] });
   };
 
   return { users, isLoading, error, updateUserRole, deleteUser };

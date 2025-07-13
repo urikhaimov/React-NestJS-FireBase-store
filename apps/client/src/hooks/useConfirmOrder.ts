@@ -4,6 +4,7 @@ import { useCartStore } from '../stores/useCartStore';
 import { useLocation } from 'react-router-dom';
 import { auth } from '../firebase';
 import api from '../api/axiosInstance';
+import { cLogger } from '@client/logger';
 
 export function useConfirmOrder() {
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,9 @@ export function useConfirmOrder() {
         const user = auth.currentUser;
         if (!user) throw new Error('Not authenticated');
 
-        const paymentRes = await api.get(`/stripe/payment-intent/${paymentIntentId}`);
+        const paymentRes = await api.get(
+          `/stripe/payment-intent/${paymentIntentId}`,
+        );
         const paymentIntent = paymentRes.data;
         if (!paymentIntent?.id) throw new Error('Payment intent not found');
 
@@ -43,14 +46,18 @@ export function useConfirmOrder() {
         clearCart();
         setToastOpen(true);
       } catch (err: any) {
-        console.error('❌ Order save error:', err);
+        cLogger.error('❌ Order save error:', err);
         setError(err.message || 'Error saving order');
       } finally {
         setLoading(false);
       }
     };
 
-    confirmAndSaveOrder();
+    confirmAndSaveOrder().catch((err) => {
+      cLogger.error('❌ useConfirmOrder error:', err);
+      setError(err.message || 'Error confirming order');
+      setLoading(false);
+    });
   }, [clearCart, items, location.search]);
 
   return {
@@ -60,4 +67,3 @@ export function useConfirmOrder() {
     error,
   };
 }
-    

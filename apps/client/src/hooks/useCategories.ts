@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useOptimisticMutation } from './useOptimisticMutation';
 import { Category } from '../types/firebase';
@@ -24,12 +24,13 @@ export const useAddCategory = () => {
       return res.data;
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to add category';
+      const message =
+        error?.response?.data?.message || 'Failed to add category';
       enqueueSnackbar(message, { variant: 'error' });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       enqueueSnackbar('Category added', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      await queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
   });
 };
@@ -44,14 +45,17 @@ export const useDeleteCategory = () => {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['categories'] });
       const previous = queryClient.getQueryData<Category[]>(['categories']);
-      queryClient.setQueryData(['categories'], previous?.filter((c) => c.id !== id));
+      queryClient.setQueryData(
+        ['categories'],
+        previous?.filter((c) => c.id !== id),
+      );
       return { previous };
     },
     onError: (_err, _id, context) => {
       queryClient.setQueryData(['categories'], context?.previous);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
   });
 };

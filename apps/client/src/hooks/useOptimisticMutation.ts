@@ -1,5 +1,9 @@
 // hooks/useOptimisticMutation.ts
-import { useMutation, useQueryClient, MutationFunction } from '@tanstack/react-query';
+import {
+  MutationFunction,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 
 interface UseOptimisticMutationOptions<TVariables, TItem = any> {
@@ -34,8 +38,8 @@ export function useOptimisticMutation<TVariables, TItem = any>({
         old.map((item) =>
           getItemId(item) === getItemId(variables as any)
             ? getOptimisticUpdate(item, variables)
-            : item
-        )
+            : item,
+        ),
       );
 
       return { previous };
@@ -52,8 +56,8 @@ export function useOptimisticMutation<TVariables, TItem = any>({
       enqueueSnackbar(successMessage, { variant: 'success' });
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey });
     },
   });
 }

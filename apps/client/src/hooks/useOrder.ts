@@ -1,17 +1,14 @@
 import {
-  useQuery,
   useMutation,
-  useQueryClient,
   UseMutationResult,
+  useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
-import {
-  fetchOrderById,
-  updateOrderById,
-} from '../api/orderApi';
+import { fetchOrderById, updateOrderById } from '../api/orderApi';
 import { useSafeAuth } from './useGetSafeAuth';
 import type { Order } from '../types/order';
 
-// Fetch single order
+// Fetch a single order
 function useOrder(id?: string) {
   return useQuery<Order, Error>({
     queryKey: ['order', id],
@@ -25,13 +22,21 @@ function useOrder(id?: string) {
   });
 }
 
-// Update single order
-function useUpdateOrder(id?: string): UseMutationResult<void, Error, Partial<Order> & { previousStatus?: string }> {
+// Update a single order
+function useUpdateOrder(
+  id?: string,
+): UseMutationResult<
+  void,
+  Error,
+  Partial<Order> & { previousStatus?: string }
+> {
   const queryClient = useQueryClient();
   const { user: admin } = useSafeAuth();
 
   return useMutation({
-    mutationFn: async (update: Partial<Order> & { previousStatus?: string }) => {
+    mutationFn: async (
+      update: Partial<Order> & { previousStatus?: string },
+    ) => {
       if (!id) throw new Error('Order ID is required');
       if (!admin) throw new Error('Admin user required');
 
@@ -53,8 +58,8 @@ function useUpdateOrder(id?: string): UseMutationResult<void, Error, Partial<Ord
 
       await updateOrderById(id, patch);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['order', id] });
     },
   });
 }
