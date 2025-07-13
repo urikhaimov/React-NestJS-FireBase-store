@@ -47,10 +47,12 @@ export class ProductsController {
     return this.productsService.remove(id);
   }
 
-  @Get(':id')
-  async getOne(@Param('id') id: string) {
-    return this.productsService.findById(id);
-  }
+@Get(':id')
+async getOne(@Param('id') id: string) {
+  const product = await this.productsService.findById(id);
+  console.log('✅ Found product:', product);
+  return product;
+}
 
   @Post('reorder')
   @UseGuards(FirebaseAuthGuard) // or your custom guard

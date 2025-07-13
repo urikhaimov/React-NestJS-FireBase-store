@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -7,7 +7,7 @@ import {
   Button,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import ReactQuill from 'react-quill';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, updateDoc, serverTimestamp, collection } from 'firebase/firestore';
@@ -31,15 +31,18 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
+  const hasResetOnce = useRef(false); // 🛡️ Prevent infinite reset
 
-  const { data: product, isLoading } = useProduct(productId);
-  const { data: categories = [] } = useCategories();
-
+  const { data: product, isLoading: productLoading } = useProduct(productId);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  console.log('ProductFormPage product:', product);
+  console.log('ProductFormPage categories:', categories);
   const {
     register,
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { isSubmitting, errors },
   } = useForm<FormState>({
     defaultValues: {
@@ -51,32 +54,59 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     },
   });
 
+  const watchedCategoryId = useWatch({ control, name: 'categoryId' });
+
+  const isReady =
+    mode === 'add'
+      ? !categoriesLoading
+      : !productLoading && !categoriesLoading && product && categories.length > 0;
+
   useEffect(() => {
     dispatch({ type: 'SET_CATEGORIES', payload: categories });
   }, [categories]);
 
   useEffect(() => {
-    if (!product) return;
+    if (!product || categories.length === 0 || hasResetOnce.current) return;
 
-    reset({
-      name: product.name,
-      description: product.description,
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      categoryId: product.categoryId || '',
-    });
+    try {
+      const {
+        name = '',
+        description = '',
+        price = 0,
+        stock = 0,
+        categoryId = '',
+        images = [],
+      } = product;
 
-    dispatch({ type: 'SET_PRODUCT', payload: product });
+      const validCategoryId = categories.some((c) => c.id === categoryId)
+        ? categoryId
+        : '';
 
-    const images: CombinedImage[] = product.images.map((url, index) => ({
-      id: `existing-${url}`,
-      url,
-      type: 'existing',
-    }));
+      reset({
+        name,
+        description,
+        price: price.toString(),
+        stock: stock.toString(),
+        categoryId: validCategoryId,
+      });
 
-    dispatch({ type: 'SET_COMBINED_IMAGES', payload: images });
-    dispatch({ type: 'SET_READY', payload: true });
-  }, [product, reset]);
+      const formattedImages: CombinedImage[] = Array.isArray(images)
+        ? images.map((url) => ({
+            id: `existing-${url}`,
+            url,
+            type: 'existing',
+          }))
+        : [];
+
+      dispatch({ type: 'SET_PRODUCT', payload: product });
+      dispatch({ type: 'SET_COMBINED_IMAGES', payload: formattedImages });
+      dispatch({ type: 'SET_READY', payload: true });
+
+      hasResetOnce.current = true;
+    } catch (err) {
+      console.error('🛑 Failed during reset or image conversion:', err);
+    }
+  }, [product, categories]);
 
   const handleImageDrop = (files: File[]) => {
     const timestamp = Date.now();
@@ -166,7 +196,13 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
     }
   };
 
-  if (isLoading) return <Typography>Loading product...</Typography>;
+  if (!isReady) {
+    return (
+      <Box p={3}>
+        <Typography>Loading product or categories...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box p={3} height="100%" overflow="auto">
@@ -248,6 +284,12 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
                 value: cat.id,
               }))}
             />
+
+            {!state.categories.some((c) => c.id === watchedCategoryId) && watchedCategoryId && (
+              <Typography color="error">
+                ⚠️ Invalid category ID: {watchedCategoryId}
+              </Typography>
+            )}
 
             <Box>
               <Typography variant="subtitle2" mb={1}>

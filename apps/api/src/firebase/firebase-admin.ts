@@ -3,7 +3,7 @@ import * as serviceAccount from './service-account.json';
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-  storageBucket: 'onlinestoretemplate-59d3e.appspot.com', // ✅ IMPORTANT!
+  storageBucket: 'onlinestoretemplate-59d3e.firebasestorage.app', // ✅ IMPORTANT!
 });
 
 const adminDb = admin.firestore();

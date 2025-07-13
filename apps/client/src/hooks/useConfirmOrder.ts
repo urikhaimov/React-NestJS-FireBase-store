@@ -23,11 +23,11 @@ export function useConfirmOrder() {
         const user = auth.currentUser;
         if (!user) throw new Error('Not authenticated');
 
-        const paymentRes = await api.get(`/api/stripe/payment-intent/${paymentIntentId}`);
+        const paymentRes = await api.get(`/stripe/payment-intent/${paymentIntentId}`);
         const paymentIntent = paymentRes.data;
         if (!paymentIntent?.id) throw new Error('Payment intent not found');
 
-        await api.post('/api/orders', {
+        await api.post('/orders', {
           userId: user.uid,
           paymentIntentId: paymentIntent.id,
           totalAmount: paymentIntent.amount,

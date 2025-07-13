@@ -1,33 +1,17 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { Product } from '../types/firebase'; // adjust path to your Product type
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  categoryId?: string;
-  images: string[];
-}
-
-export function useProduct(
-  productId?: string,
-  options?: Omit<
-    UseQueryOptions<Product | null, Error, Product | null, readonly [string, string?]>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery<Product | null, Error, Product | null, readonly [string, string?]>({
+export function useProduct(productId?: string) {
+  return useQuery<Product | null>({
     queryKey: ['product', productId],
     queryFn: async () => {
       if (!productId) return null;
-      const { data } = await axios.get<Product>(`/products/${productId}`);
-      return data;
+
+      const res = await axios.get(`/products/${productId}`);
+      console.log('🧪 Product response:', res.data); // <--- Add this
+      return res.data;
     },
     enabled: !!productId,
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
-    ...options,
   });
 }

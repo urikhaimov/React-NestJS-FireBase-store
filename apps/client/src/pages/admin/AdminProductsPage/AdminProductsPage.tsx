@@ -1,4 +1,4 @@
-import React, { useReducer, useMemo, useEffect, useRef, useState } from 'react';
+import React, { useReducer, useMemo, useEffect, useState } from 'react';
 import {
   Box,
   Divider,
@@ -8,8 +8,8 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import AdminStickyPage from '../../../layouts/AdminStickyPage';
@@ -17,16 +17,13 @@ import { useAllCategories } from '../../../hooks/useAllCategories';
 import { initialState, reducer } from './LocalReducer';
 import SortableProductCard from './SortableProductCard';
 import AdminProductFilters from './AdminProductFilters';
-import { fetchAllProducts } from '../../../api/products';
-import { auth } from '../../../firebase';
-import LoadingProgress from '../../../components/LoadingProgress';
+import { auth, db } from '../../../firebase';
 import { useProductMutations } from '../../../hooks/useProductMutations';
 import { useInView } from 'react-intersection-observer';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { Product } from '../../../types/firebase';
-import { db } from '../../../firebase';
+import LoadingProgress from '../../../components/LoadingProgress';
 import { debounce } from 'lodash';
-
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -40,27 +37,30 @@ export default function AdminProductsPage() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
 
-const filteredProducts = useMemo(() => {
-  const term = state.searchTerm.toLowerCase();
-  return state.products.filter((p) => {
-    const matchesText =
-      p.name.toLowerCase().includes(term) ||
-      p.description?.toLowerCase().includes(term);
-    const matchesCategory =
-      !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
+  const filteredProducts = useMemo(() => {
+    const term = (state.searchTerm || '').toLowerCase();
 
-    let createdAtDate: Date | null = null;
-    if (p.createdAt) {
-      createdAtDate = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
-    }
+    return state.products.filter((p) => {
+      if (!p || typeof p !== 'object' || !p.name) return false;
 
-    const matchesDate =
-      !state.createdAfter || (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
+      const matchesText =
+        p.name?.toLowerCase().includes(term) ||
+        p.description?.toLowerCase().includes(term);
 
-    return matchesText && matchesCategory && matchesDate;
-  });
-}, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
+      const matchesCategory =
+        !state.selectedCategoryId || p.categoryId === state.selectedCategoryId;
 
+      let createdAtDate: Date | null = null;
+      if (p.createdAt) {
+        createdAtDate = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
+      }
+
+      const matchesDate =
+        !state.createdAfter || (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
+
+      return matchesText && matchesCategory && matchesDate;
+    });
+  }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -117,17 +117,20 @@ const filteredProducts = useMemo(() => {
   useEffect(() => {
     const q = query(collection(db, 'products'), orderBy('order'));
 
-    // Debounced state update
     const debouncedSetProducts = debounce((products: Product[]) => {
       dispatch({ type: 'SET_PRODUCTS_SORTED', payload: products });
-    }, 300); // adjust debounce time as needed
+    }, 300);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const products: Product[] = snapshot.docs.map((doc) => ({
-
         ...(doc.data() as Product),
         id: doc.id,
       }));
+
+      const invalid = products.filter((p) => !p || typeof p !== 'object' || !p.id || typeof p.price === 'undefined');
+      if (invalid.length > 0) {
+        console.warn('⚠️ Invalid products found:', invalid);
+      }
 
       debouncedSetProducts(products);
     });
@@ -137,6 +140,7 @@ const filteredProducts = useMemo(() => {
       debouncedSetProducts.cancel();
     };
   }, []);
+
   useEffect(() => {
     if (inView && visibleCount < filteredProducts.length) {
       const timeout = setTimeout(() => {
@@ -169,21 +173,23 @@ const filteredProducts = useMemo(() => {
               items={state.products.map((p) => p.id)}
               strategy={verticalListSortingStrategy}
             >
-              {visibleProducts.map((product) => (
-                <Box
-                  key={product.id}
-                  mb={2}
-                  sx={{ opacity: state.reorderPending ? 0.4 : 1 }}
-                >
-                  <SortableProductCard
-                    product={product}
-                    disabled={state.reorderPending}
-                    onConfirmDelete={(id) =>
-                      dispatch({ type: 'REMOVE_PRODUCT', payload: id })
-                    }
-                  />
-                </Box>
-              ))}
+              {visibleProducts
+                .filter((p): p is Product => !!p && typeof p === 'object' && 'id' in p && 'price' in p)
+                .map((product) => (
+                  <Box
+                    key={product.id}
+                    mb={2}
+                    sx={{ opacity: state.reorderPending ? 0.4 : 1 }}
+                  >
+                    <SortableProductCard
+                      product={product}
+                      disabled={state.reorderPending}
+                      onConfirmDelete={(id) =>
+                        dispatch({ type: 'REMOVE_PRODUCT', payload: id })
+                      }
+                    />
+                  </Box>
+                ))}
               <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
                 {visibleCount < filteredProducts.length && <CircularProgress size={28} />}
               </Box>

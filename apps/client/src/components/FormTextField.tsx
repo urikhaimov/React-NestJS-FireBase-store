@@ -3,7 +3,6 @@ import {
   TextField,
   TextFieldProps,
   MenuItem,
-  SelectProps,
   Select,
   FormControl,
   InputLabel,
@@ -20,7 +19,7 @@ import {
 
 interface Props extends Omit<TextFieldProps, 'error' | 'defaultValue'> {
   label: string;
-  register?: UseFormRegisterReturn; // optional if using Controller
+  register?: UseFormRegisterReturn;
   errorObject?: FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
   control?: Control<any>;
   name?: string;
@@ -51,7 +50,9 @@ export default function FormTextField({
           render={({ field }) => (
             <Select
               {...field}
+              value={field.value ?? ''}
               displayEmpty
+              disabled={selectOptions.length === 0}
               sx={{
                 bgcolor: 'background.paper',
                 color: 'text.primary',

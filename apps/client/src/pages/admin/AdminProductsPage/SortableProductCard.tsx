@@ -35,7 +35,7 @@ export default function SortableProductCard({
   return (
     <div ref={setNodeRef} style={style}>
       <ProductAdminCard
-        key={product.id} // ✅ key must be here too
+       
         product={product}
         onConfirmDelete={onConfirmDelete}
         disabled={disabled}
