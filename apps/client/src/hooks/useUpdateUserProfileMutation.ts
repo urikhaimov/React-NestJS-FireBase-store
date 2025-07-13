@@ -10,7 +10,7 @@ export const useUpdateUserProfileMutation = (uid: string) => {
       await axios.put(`/users/${uid}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['userProfile', uid]);
+     queryClient.invalidateQueries({ queryKey: ['userProfile', uid] });
     },
   });
 };
