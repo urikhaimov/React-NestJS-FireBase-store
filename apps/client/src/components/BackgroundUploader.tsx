@@ -101,7 +101,7 @@ export default function BackgroundUploader({
 
       {value && (
         <Box
-          mt={}
+          mt={2}
           height={150}
           borderRadius={2}
           sx={{
