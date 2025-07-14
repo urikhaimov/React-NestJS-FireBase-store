@@ -8,7 +8,19 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "precommit": "lint-staged",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "lint-staged": {
+    "*.{json,mdx}": "npx prettier --write",
+    "*.less": [
+      "npx prettier --write",
+      "stylelint \"**/*.less\" --fix --color -f string verbose"
+    ],
+    "*.{js,ts,jsx,tsx}": [
+      "npx prettier --write",
+      "eslint --fix"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
