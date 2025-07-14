@@ -1,29 +1,32 @@
 // src/components/BackgroundUploader.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
-  Typography,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Slider,
-  CircularProgress,
+  Typography,
 } from '@mui/material';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../utils/cropImage';
 import { storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useStoreContext } from '../stores/useStoreContext';
 import { useDropzone } from 'react-dropzone';
 
 interface BackgroundUploaderProps {
- value?: string;
+  value?: string;
   onChange: (url: string) => void;
 }
 
-export default function BackgroundUploader({ value, onChange }: BackgroundUploaderProps) {
+export default function BackgroundUploader({
+  value,
+  onChange,
+}: BackgroundUploaderProps) {
   const { storeId } = useStoreContext();
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -32,12 +35,15 @@ export default function BackgroundUploader({ value, onChange }: BackgroundUpload
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [openCropDialog, setOpenCropDialog] = useState(false);
 
-const onCropComplete = useCallback(
-  (_: unknown, croppedPixels: { x: number; y: number; width: number; height: number }) => {
-    setCroppedAreaPixels(croppedPixels);
-  },
-  []
-);
+  const onCropComplete = useCallback(
+    (
+      _: unknown,
+      croppedPixels: { x: number; y: number; width: number; height: number },
+    ) => {
+      setCroppedAreaPixels(croppedPixels);
+    },
+    [],
+  );
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -95,7 +101,7 @@ const onCropComplete = useCallback(
 
       {value && (
         <Box
-          mt={2}
+          mt={}
           height={150}
           borderRadius={2}
           sx={{
