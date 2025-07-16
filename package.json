@@ -19,9 +19,8 @@
     ],
     "*.{js,ts,jsx,tsx}": [
       "npx prettier --write",
-      "eslint --fix"
-    ],
-    "*.js": "eslint --cache --fix"
+      "eslint --cache --fix"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
