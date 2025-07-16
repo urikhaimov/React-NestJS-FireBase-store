@@ -14,7 +14,7 @@ const defaultThemeSettings: ThemeSettings = {
   fontFamily: 'Roboto, sans-serif',
 };
 
-@Controller('theme-settings')
+@Controller('theme/settings')
 export class ThemeSettingsController {
   private currentSettings = { ...defaultThemeSettings };
 
