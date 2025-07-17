@@ -1,14 +1,14 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "installation": {
-    "version": "21.2.2",
+    "version": "21.2.4",
     "plugins": {
-      "@nx/eslint": "21.2.2",
-      "@nx/jest": "21.2.2",
-      "@nx/nest": "21.2.2",
-      "@nx/react": "21.2.2",
-      "@nx/webpack": "21.2.2",
-      "@nx/vite": "21.2.2"
+      "@nx/eslint": "21.2.4",
+      "@nx/jest": "21.2.4",
+      "@nx/nest": "21.2.4",
+      "@nx/react": "21.2.4",
+      "@nx/webpack": "21.2.4",
+      "@nx/vite": "21.2.4"
     }
   },
   "tui": {
