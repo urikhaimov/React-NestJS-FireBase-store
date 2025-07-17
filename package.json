@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky init",
+    "prepare": "husky",
     "nx:all": "npx nx run-many --target=build --all",
     "nx:latest": "npx nx migrate latest"
   },
