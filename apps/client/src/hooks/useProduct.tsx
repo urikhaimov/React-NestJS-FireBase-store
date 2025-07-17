@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import { IProduct } from '@common/types';
 
 export function useProduct(productId?: string) {
@@ -8,7 +8,7 @@ export function useProduct(productId?: string) {
     queryFn: async () => {
       if (!productId) return null;
 
-      const res = await axios.get(`/products/${productId}`);
+      const res = await axiosInstance.get(`/products/${productId}`);
       console.log('🧪 Product response:', res.data); // <--- Add this
       return res.data;
     },

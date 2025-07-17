@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import { SecurityLog } from '../api/logs';
 
 export async function fetchLogs(categoryId?: string): Promise<SecurityLog[]> {
   // Adjust your API endpoint as needed
   const url = categoryId ? `/logs?category=${categoryId}` : '/api/logs';
-  const res = await axios.get(url);
+  const res = await axiosInstance.get(url);
   return res.data;
 }
 

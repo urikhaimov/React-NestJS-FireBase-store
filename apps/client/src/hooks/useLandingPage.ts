@@ -1,6 +1,6 @@
 // useLandingPage.ts (React Query v5)
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import type { LandingPageData } from '../types/landing';
 
 const LANDING_PAGE_QUERY_KEY = { queryKey: ['landingPage'] };
@@ -9,7 +9,7 @@ export function useLandingPage() {
   return useQuery<LandingPageData, Error>({
     queryKey: LANDING_PAGE_QUERY_KEY.queryKey,
     queryFn: async () => {
-      const response = await axios.get('/api/landing-page');
+      const response = await axiosInstance.get('/landing-page');
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
@@ -22,7 +22,7 @@ export function useUpdateLandingPage() {
 
   return useMutation<void, Error, LandingPageData>({
     mutationFn: async (updatedData) => {
-      await axios.post('/api/landing-page', updatedData);
+      await axiosInstance.post('/landing-page', updatedData);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

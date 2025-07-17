@@ -19,6 +19,7 @@ import { useUserProfileQuery } from '../../hooks/useUserProfileQuery';
 import { useUpdateUserProfileMutation } from '../../hooks/useUpdateUserProfileMutation';
 import { useUploadAvatarMutation } from '../../hooks/useUploadAvatarMutation';
 import AvatarUploader from '../../components/AvatarUploader';
+import LoadingProgress from '@client/components/LoadingProgress';
 
 type State = {
   toastOpen: boolean;
@@ -89,9 +90,7 @@ export default function UserProfilePage() {
 
   if (loading || !authInitialized || userDocLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
+     <LoadingProgress />
     );
   }
 

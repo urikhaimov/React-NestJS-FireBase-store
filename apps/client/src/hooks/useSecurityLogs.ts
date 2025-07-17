@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 
 export interface SecurityLog {
   id: string;
@@ -16,7 +16,7 @@ export function useSecurityLogs() {
   return useQuery<SecurityLog[], Error>({
     queryKey: ['securityLogs'],
     queryFn: async () => {
-      const response = await axios.get('/api/admin/security-logs');
+      const response = await axiosInstance.get('/admin/security-logs');
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
