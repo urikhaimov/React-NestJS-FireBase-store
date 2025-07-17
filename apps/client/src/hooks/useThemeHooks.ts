@@ -8,7 +8,7 @@ export function useThemeSettings() {
   return useQuery<ThemeSettings>({
     queryKey: ['themeSettings'],
     queryFn: async () => {
-      const { data } = await api.get('/theme-settings');
+      const { data } = await api.get('/theme/settings');
       return data;
     },
   });
@@ -20,7 +20,7 @@ export function useUpdateThemeSettingsMutation() {
 
   return useMutation({
     mutationFn: async (newSettings: ThemeSettings) => {
-      const { data } = await api.post('/theme-settings', newSettings);
+      const { data } = await api.post('/theme/settings', newSettings);
       return data;
     },
     onSuccess: async () => {

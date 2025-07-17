@@ -22,6 +22,6 @@ export type ThemeSettings = {
 export const updateThemeSettings = async (
   settings: Partial<ThemeSettings>,
 ): Promise<ThemeSettings> => {
-  const { data } = await api.post<ThemeSettings>('/theme-settings', settings);
+  const { data } = await api.post<ThemeSettings>('/theme/settings', settings);
   return data;
 };
