@@ -9,7 +9,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky init"
+    "prepare": "husky init",
+    "nx:all": "npx nx run-many --target=build --all",
+    "nx:latest": "npx nx migrate latest"
   },
   "lint-staged": {
     "*.{json,mdx}": "npx prettier --write",
