@@ -222,7 +222,7 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   return (
     <Box
       sx={{
-        mt: `${headerHeight}px`,
+        mt: `${headerHeight+20}px`,
         mb: `${footerHeight}px`,
         minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
 

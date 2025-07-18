@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   Paper,
   TextField,
   Button,
@@ -10,16 +9,24 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Stack,
 } from '@mui/material';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-
+import { headerHeight, footerHeight } from '@client/config/themeConfig';
 import { useOrder, useUpdateOrder, Order } from '../../../hooks/useOrder';
 
 import OrderSummaryCard from './components/OrderSummaryCard';
 import OrderItemsTable from './components/OrderItemsTable';
 import OrderStatusBadge from './components/OrderStatusBadge';
-const STATUS_OPTIONS = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+
+const STATUS_OPTIONS = [
+  'pending',
+  'confirmed',
+  'shipped',
+  'delivered',
+  'cancelled',
+];
 
 export default function EditOrderPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +42,7 @@ export default function EditOrderPage() {
     formState: { isSubmitting },
   } = useForm<Order>({
     defaultValues: order || {
-       status: 'pending', // ✅ must match one of the allowed union types
+      status: 'pending',
       notes: '',
       delivery: { provider: '', trackingNumber: '', eta: '' },
       items: [],
@@ -62,25 +69,40 @@ export default function EditOrderPage() {
   if (isError)
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="error">Error loading order: {error?.message}</Typography>
+        <Typography color="error">
+          Error loading order: {error?.message}
+        </Typography>
       </Box>
     );
 
   return (
-    <Box sx={{ px: { xs: 1, sm: 3 }, py: 2 }}>
+    <Box
+      sx={{
+        mt: `${headerHeight+20}px`,
+        mb: `${footerHeight}px`,
+        minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
+        mx: 'auto',
+      }}
+    >
       <Typography variant="h5" gutterBottom>
         Edit Order #{order?.id ?? ''}
       </Typography>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2, mb: 2 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+        <Stack flex={2} spacing={2}>
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Order Status</Typography>
             <Controller
               name="status"
               control={control}
               render={({ field }) => (
-                <TextField {...field} select fullWidth label="Status" margin="normal">
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Status"
+                  margin="normal"
+                >
                   {STATUS_OPTIONS.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option.toUpperCase()}
@@ -89,44 +111,51 @@ export default function EditOrderPage() {
                 </TextField>
               )}
             />
-            {/* Assume OrderStatusBadge is imported and used here */}
             <OrderStatusBadge status={currentStatus} />
           </Paper>
 
-          <Paper sx={{ p: 2, mb: 2 }}>
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Delivery Information</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  name="delivery.provider"
-                  control={control}
-                  render={({ field }) => <TextField {...field} label="Provider" fullWidth />}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  name="delivery.trackingNumber"
-                  control={control}
-                  render={({ field }) => <TextField {...field} label="Tracking Number" fullWidth />}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  name="delivery.eta"
-                  control={control}
-                  render={({ field }) => <TextField {...field} label="ETA (ISO or text)" fullWidth />}
-                />
-              </Grid>
-            </Grid>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Controller
+                name="delivery.provider"
+                control={control}
+                render={({ field }) => (
+                  <TextField {...field} label="Provider" fullWidth />
+                )}
+              />
+              <Controller
+                name="delivery.trackingNumber"
+                control={control}
+                render={({ field }) => (
+                  <TextField {...field} label="Tracking Number" fullWidth />
+                )}
+              />
+            </Stack>
+            <Box mt={2}>
+              <Controller
+                name="delivery.eta"
+                control={control}
+                render={({ field }) => (
+                  <TextField {...field} label="ETA (ISO or text)" fullWidth />
+                )}
+              />
+            </Box>
           </Paper>
 
-          <Paper sx={{ p: 2, mb: 2 }}>
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Admin Notes</Typography>
             <Controller
               name="notes"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Internal Notes" fullWidth multiline rows={3} />
+                <TextField
+                  {...field}
+                  label="Internal Notes"
+                  fullWidth
+                  multiline
+                  rows={3}
+                />
               )}
             />
           </Paper>
@@ -136,17 +165,25 @@ export default function EditOrderPage() {
             onClick={handleSubmit(onSubmit)}
             disabled={updateOrderMutation.status === 'pending' || isSubmitting}
           >
-            {updateOrderMutation.status === 'pending' ? <CircularProgress size={24} /> : 'Save Changes'}
+            {updateOrderMutation.status === 'pending' ? (
+              <CircularProgress size={24} />
+            ) : (
+              'Save Changes'
+            )}
           </Button>
-        </Grid>
+        </Stack>
 
-        <Grid item xs={12} md={4}>
+        <Stack flex={1} spacing={2}>
           <OrderSummaryCard order={order!} />
           <OrderItemsTable items={order?.items ?? []} />
-        </Grid>
-      </Grid>
+        </Stack>
+      </Stack>
 
-      <Snackbar open={toastOpen} autoHideDuration={4000} onClose={() => setToastOpen(false)}>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={() => setToastOpen(false)}
+      >
         <Alert severity="success" onClose={() => setToastOpen(false)}>
           Order updated successfully!
         </Alert>
