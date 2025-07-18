@@ -15,11 +15,11 @@ export const useOrderDetails = (id?: string, enabled = true) => {
   } = useQuery<Order>({
     queryKey: ['orderDetails', id],
     queryFn: async () => {
-      if (!id) throw new Error('Missing order ID');
+      if (!id) return Promise.reject(new Error('Missing ID'));
       const res = await api.get(`/orders/${id}`);
       return res.data;
     },
-    enabled: enabled && !!id,
+    enabled: !!id && enabled,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -30,11 +30,7 @@ export const useOrderDetails = (id?: string, enabled = true) => {
       const input = document.getElementById('invoice-content');
       if (!input) return;
 
-      const canvas = await html2canvas(input, {
-        scale: 2,
-        useCORS: true,
-      });
-
+      const canvas = await html2canvas(input, { scale: 2, useCORS: true });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();

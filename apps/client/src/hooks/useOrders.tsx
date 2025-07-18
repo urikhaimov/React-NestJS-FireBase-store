@@ -8,6 +8,11 @@ export interface Order {
   total: number;
   createdAt: string | { toDate?: () => Date };
   status: string;
+  payment?: {
+    method?: string;
+    status?: string;
+    transactionId?: string;
+  };
 }
 
 export async function fetchOrders(): Promise<Order[]> {

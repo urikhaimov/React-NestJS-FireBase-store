@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { Grid, Box, Button } from '@mui/material';
+import {
+  Box,
+  Button,
+  Fab,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+
 import { FilterState, FilterAction } from './LocalReducer';
 import UserFilterLayout from '../../components/UserFilterLayout';
 import UserFilterTextField from '../../components/UserFilterTextField';
@@ -14,9 +23,11 @@ interface Props {
 }
 
 export default function UserOrderFilters({ state, dispatch }: Props) {
-  const [showFilters, setShowFilters] = useState(false); // ⬅ Hidden by default
+  const [showFilters, setShowFilters] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const hasFilters =
+  const hasFilters = Boolean(
     state.email ||
     state.status !== 'all' ||
     state.minTotal ||
@@ -25,20 +36,26 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
     state.endDate ||
     state.minPrice ||
     state.maxPrice ||
-    state.inStockOnly;
+    state.inStockOnly
+  );
+
+  const parseNumber = (val: string): number | undefined => {
+    const num = parseFloat(val);
+    return isNaN(num) ? undefined : num;
+  };
 
   return (
     <UserFilterLayout
-      title="Filters"
+      title=""
       collapsedByDefault
-      hasFilters={!!hasFilters}
+      hasFilters={hasFilters}
       onClear={() => dispatch({ type: 'RESET_FILTERS' })}
       actions={
         <Box display="flex" gap={2}>
-          <Button variant="outlined" onClick={() => setShowFilters((prev) => !prev)}>
+          <Button variant="outlined" onClick={() => setShowFilters(prev => !prev)}>
             {showFilters ? 'Hide Filters' : 'Show Filters'}
           </Button>
-          {hasFilters && (
+          {!isMobile && hasFilters && (
             <Button
               variant="outlined"
               color="warning"
@@ -51,130 +68,122 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
       }
     >
       {showFilters ? (
-        <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1 }}>
-          <Grid container spacing={2} sx={{ width: '100%' }}>
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="User Email"
-                value={state.email}
-                onChange={(val) => dispatch({ type: 'setEmail', payload: val })}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Status"
-                select
-                value={state.status}
-                onChange={(val) => dispatch({ type: 'setStatus', payload: val })}
-                options={statusOptions.map((s) => ({ value: s, label: s }))}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Min Total"
-                type="number"
-                value={state.minTotal?.toString() || ''}
-                onChange={(val) =>
-                  dispatch({ type: 'setMinTotal', payload: parseFloat(val) })
+        <Box
+          sx={{
+            ...(isMobile
+              ? {
+                  position: 'fixed',
+                  top: 64,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  bgcolor: 'background.paper',
+                  zIndex: 1200,
+                  overflowY: 'auto',
+                  p: 2,
                 }
-                fullWidth
-              />
-            </Grid>
+              : {
+                  maxHeight: 400,
+                  overflowY: 'auto',
+                  pr: 1,
+                }),
+          }}
+        >
+          <Stack spacing={2}>
+            <UserFilterTextField
+              label="User Email"
+              value={state.email}
+              onChange={(val) => dispatch({ type: 'setEmail', payload: val })}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Max Total"
-                type="number"
-                value={state.maxTotal?.toString() || ''}
-                onChange={(val) =>
-                  dispatch({ type: 'setMaxTotal', payload: parseFloat(val) })
-                }
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="Status"
+              select
+              value={state.status}
+              onChange={(val) => dispatch({ type: 'setStatus', payload: val })}
+              options={statusOptions.map((s) => ({ value: s, label: s }))}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Min Price"
-                type="number"
-                value={state.minPrice?.toString() || ''}
-                onChange={(val) =>
-                  dispatch({ type: 'setMinPrice', payload: parseFloat(val) })
-                }
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="Min Total"
+              type="number"
+              value={state.minTotal?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMinTotal', payload: parseNumber(val) })}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Max Price"
-                type="number"
-                value={state.maxPrice?.toString() || ''}
-                onChange={(val) =>
-                  dispatch({ type: 'setMaxPrice', payload: parseFloat(val) })
-                }
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="Max Total"
+              type="number"
+              value={state.maxTotal?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMaxTotal', payload: parseNumber(val) })}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="In Stock Only"
-                select
-                value={state.inStockOnly ? 'yes' : 'no'}
-                onChange={(val) =>
-                  dispatch({ type: 'setInStockOnly', payload: val === 'yes' })
-                }
-                options={[
-                  { value: 'no', label: 'All' },
-                  { value: 'yes', label: 'In Stock Only' },
-                ]}
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="Min Price"
+              type="number"
+              value={state.minPrice?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMinPrice', payload: parseNumber(val) })}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterDatePicker
-                label="Start Date"
-                value={state.startDate ? dayjs(state.startDate) : null}
-                onChange={(date: Dayjs | null) =>
-                  dispatch({ type: 'setStartDate', payload: date?.toDate() || null })
-                }
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="Max Price"
+              type="number"
+              value={state.maxPrice?.toString() || ''}
+              onChange={(val) => dispatch({ type: 'setMaxPrice', payload: parseNumber(val) })}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterDatePicker
-                label="End Date"
-                value={state.endDate ? dayjs(state.endDate) : null}
-                onChange={(date: Dayjs | null) =>
-                  dispatch({ type: 'setEndDate', payload: date?.toDate() || null })
-                }
-                fullWidth
-              />
-            </Grid>
+            <UserFilterTextField
+              label="In Stock Only"
+              select
+              value={state.inStockOnly ? 'yes' : 'no'}
+              onChange={(val) =>
+                dispatch({ type: 'setInStockOnly', payload: val === 'yes' })
+              }
+              options={[
+                { value: 'no', label: 'All' },
+                { value: 'yes', label: 'In Stock Only' },
+              ]}
+              fullWidth
+            />
 
-            <Grid item xs={12}>
-              <UserFilterTextField
-                label="Sort By"
-                select
-                value={state.sortDirection}
-                onChange={(val) =>
-                  dispatch({ type: 'setSortDirection', payload: val as 'asc' | 'desc' })
-                }
-                options={[
-                  { value: 'desc', label: 'Newest' },
-                  { value: 'asc', label: 'Oldest' },
-                ]}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
+            <UserFilterDatePicker
+              label="Start Date"
+              value={state.startDate ? dayjs(state.startDate) : null}
+              onChange={(date: Dayjs | null) =>
+                dispatch({ type: 'setStartDate', payload: date?.toDate() || null })
+              }
+              fullWidth
+            />
+
+            <UserFilterDatePicker
+              label="End Date"
+              value={state.endDate ? dayjs(state.endDate) : null}
+              onChange={(date: Dayjs | null) =>
+                dispatch({ type: 'setEndDate', payload: date?.toDate() || null })
+              }
+              fullWidth
+            />
+
+            <UserFilterTextField
+              label="Sort By"
+              select
+              value={state.sortDirection}
+              onChange={(val) =>
+                dispatch({ type: 'setSortDirection', payload: val as 'asc' | 'desc' })
+              }
+              options={[
+                { value: 'desc', label: 'Newest' },
+                { value: 'asc', label: 'Oldest' },
+              ]}
+              fullWidth
+            />
+          </Stack>
         </Box>
       ) : (
         hasFilters && (
@@ -182,6 +191,24 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
             Filters are active. Click "Show Filters" to edit.
           </Box>
         )
+      )}
+
+      {/* FAB shown on mobile when filters are active */}
+      {isMobile && hasFilters && (
+        <Fab
+          color="warning"
+          size="medium"
+          aria-label="reset"
+          onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+          sx={{
+            position: 'fixed',
+            bottom: 80,
+            right: 16,
+            zIndex: 1300,
+          }}
+        >
+          <RestartAltIcon />
+        </Fab>
       )}
     </UserFilterLayout>
   );
