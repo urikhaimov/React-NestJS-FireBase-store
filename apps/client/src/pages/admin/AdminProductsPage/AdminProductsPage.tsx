@@ -53,7 +53,7 @@ export default function AdminProductsPage() {
       if (!p || typeof p !== 'object' || !p.name) return false;
 
       const matchesText =
-        p.name?.toLowerCase().includes(term) ||
+        p.name.toLowerCase().includes(term) ||
         p.description?.toLowerCase().includes(term);
 
       const matchesCategory =
@@ -68,17 +68,11 @@ export default function AdminProductsPage() {
 
       const matchesDate =
         !state.createdAfter ||
-        (createdAtDate &&
-          createdAtDate.getTime() >= state.createdAfter.valueOf());
+        (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
 
       return matchesText && matchesCategory && matchesDate;
     });
-  }, [
-    state.products,
-    state.searchTerm,
-    state.selectedCategoryId,
-    state.createdAfter,
-  ]);
+  }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -92,12 +86,11 @@ export default function AdminProductsPage() {
 
     const oldIndex = visibleProducts.findIndex((p) => p.id === active.id);
     const newIndex = visibleProducts.findIndex((p) => p.id === over.id);
-
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reorderedVisible = arrayMove(visibleProducts, oldIndex, newIndex);
-
     const updatedProducts = [...state.products];
+
     reorderedVisible.forEach((product, idx) => {
       const globalIndex = updatedProducts.findIndex((p) => p.id === product.id);
       if (globalIndex !== -1) {
@@ -105,14 +98,12 @@ export default function AdminProductsPage() {
         updatedProducts.splice(
           idx + state.products.indexOf(visibleProducts[0]),
           0,
-          product,
+          product
         );
       }
     });
 
-    const uniqueUpdated = Array.from(
-      new Map(updatedProducts.map((p) => [p.id, p])).values(),
-    );
+    const uniqueUpdated = Array.from(new Map(updatedProducts.map((p) => [p.id, p])).values());
 
     dispatch({ type: 'SET_PRODUCTS', payload: uniqueUpdated });
 
@@ -146,11 +137,7 @@ export default function AdminProductsPage() {
       }));
 
       const invalid = products.filter(
-        (p) =>
-          !p ||
-          typeof p !== 'object' ||
-          !p.id ||
-          typeof p.price === 'undefined',
+        (p) => !p || typeof p !== 'object' || !p.id || typeof p.price === 'undefined'
       );
       if (invalid.length > 0) {
         console.warn('⚠️ Invalid products found:', invalid);
@@ -176,8 +163,8 @@ export default function AdminProductsPage() {
 
   return (
     <PageWithStickyFilters
-      title="Admin Products"
-      filters={
+      
+      sidebar={
         <AdminProductFilters
           state={state}
           dispatch={dispatch}
@@ -191,17 +178,14 @@ export default function AdminProductsPage() {
       {state.loading ? (
         <LoadingProgress />
       ) : (
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: '40vh', px: 2 }}>
+        <Box sx={{ flexGrow: 1, px: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 240px)' }}>
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
               items={state.products.map((p) => p.id)}
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts
-                .filter(
-                  (p): p is IProduct =>
-                    !!p && typeof p === 'object' && 'id' in p && 'price' in p,
-                )
+                .filter((p): p is IProduct => !!p && typeof p === 'object' && 'id' in p && 'price' in p)
                 .map((product) => (
                   <Box
                     key={product.id}
@@ -217,15 +201,8 @@ export default function AdminProductsPage() {
                     />
                   </Box>
                 ))}
-              <Box
-                ref={sentinelRef}
-                display="flex"
-                justifyContent="center"
-                py={3}
-              >
-                {visibleCount < filteredProducts.length && (
-                  <CircularProgress size={28} />
-                )}
+              <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
+                {visibleCount < filteredProducts.length && <CircularProgress size={28} />}
               </Box>
             </SortableContext>
           </DndContext>

@@ -16,6 +16,7 @@ import {
   useUpdateThemeSettingsMutation,
 } from '@client/hooks/useThemeHooks';
 import { ThemeSettings } from '@client/api/theme';
+import { headerHeight, footerHeight } from '@client/config/themeConfig';
 
 export default function AdminThemePage() {
   const { data, isLoading } = useThemeSettings();
@@ -58,7 +59,15 @@ export default function AdminThemePage() {
   }
 
   return (
-    <Box p={3}>
+    <Box
+      sx={{
+        mt: `${headerHeight}px`,
+        mb: `${footerHeight}px`,
+        minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
+       
+        mx: 'auto',
+      }}
+    >
       <Typography variant="h5" gutterBottom>
         Edit Theme
       </Typography>

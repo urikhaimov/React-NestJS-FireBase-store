@@ -10,9 +10,12 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 
-import { useLandingPage, useUpdateLandingPage } from '../../../hooks/useLandingPage';
+import {
+  useLandingPage,
+  useUpdateLandingPage,
+} from '../../../hooks/useLandingPage';
 import type { LandingPageData } from '../../../types/landing';
-
+import { headerHeight, footerHeight } from '@client/config/themeConfig';
 export default function AdminLandingPage() {
   const { data, isLoading, isError } = useLandingPage();
   const updateMutation = useUpdateLandingPage();
@@ -69,7 +72,15 @@ export default function AdminLandingPage() {
   const saving = updateMutation.status === 'pending';
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
+    <Box
+      sx={{
+        mt: `${headerHeight}px`,
+        mb: `${footerHeight}px`,
+        minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
+
+        mx: 'auto',
+      }}
+    >
       <Typography variant="h4" mb={3}>
         Edit Landing Page
       </Typography>
@@ -96,7 +107,13 @@ export default function AdminLandingPage() {
           name="subtitle"
           control={control}
           render={({ field }) => (
-            <TextField label="Subtitle" fullWidth margin="normal" {...field} disabled={saving} />
+            <TextField
+              label="Subtitle"
+              fullWidth
+              margin="normal"
+              {...field}
+              disabled={saving}
+            />
           )}
         />
 
@@ -104,7 +121,13 @@ export default function AdminLandingPage() {
           name="bannerImageUrl"
           control={control}
           render={({ field }) => (
-            <TextField label="Banner Image URL" fullWidth margin="normal" {...field} disabled={saving} />
+            <TextField
+              label="Banner Image URL"
+              fullWidth
+              margin="normal"
+              {...field}
+              disabled={saving}
+            />
           )}
         />
 
@@ -112,7 +135,13 @@ export default function AdminLandingPage() {
           name="ctaButtonText"
           control={control}
           render={({ field }) => (
-            <TextField label="CTA Button Text" fullWidth margin="normal" {...field} disabled={saving} />
+            <TextField
+              label="CTA Button Text"
+              fullWidth
+              margin="normal"
+              {...field}
+              disabled={saving}
+            />
           )}
         />
 
@@ -120,7 +149,13 @@ export default function AdminLandingPage() {
           name="ctaButtonLink"
           control={control}
           render={({ field }) => (
-            <TextField label="CTA Button Link" fullWidth margin="normal" {...field} disabled={saving} />
+            <TextField
+              label="CTA Button Link"
+              fullWidth
+              margin="normal"
+              {...field}
+              disabled={saving}
+            />
           )}
         />
 

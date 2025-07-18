@@ -1,24 +1,29 @@
 import React, { useEffect, useReducer, useRef } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Stack,
-  Button,
-} from '@mui/material';
+import { Box, Typography, Paper, Stack, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import ReactQuill from 'react-quill';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, updateDoc, serverTimestamp, collection } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+} from 'firebase/firestore';
 
 import { storage, db } from '../../../firebase';
 import { useProduct } from '../../../hooks/useProduct';
-import ImageUploader, { CombinedImage } from '../../../components/ImageUploader';
-import { productFormReducer, initialProductFormState } from './productFormReducer';
+import ImageUploader, {
+  CombinedImage,
+} from '../../../components/ImageUploader';
+import {
+  productFormReducer,
+  initialProductFormState,
+} from './productFormReducer';
 import FormTextField from '../../../components/FormTextField';
 import { useCategories } from '../../../hooks/useCategories';
-
+import { headerHeight, footerHeight } from '@client/config/themeConfig';
 export type FormState = {
   name: string;
   description: string;
@@ -30,11 +35,15 @@ export type FormState = {
 export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const [state, dispatch] = useReducer(productFormReducer, initialProductFormState);
+  const [state, dispatch] = useReducer(
+    productFormReducer,
+    initialProductFormState,
+  );
   const hasResetOnce = useRef(false); // 🛡️ Prevent infinite reset
 
   const { data: product, isLoading: productLoading } = useProduct(productId);
-  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useCategories();
   console.log('ProductFormPage product:', product);
   console.log('ProductFormPage categories:', categories);
   const {
@@ -59,7 +68,10 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   const isReady =
     mode === 'add'
       ? !categoriesLoading
-      : !productLoading && !categoriesLoading && product && categories.length > 0;
+      : !productLoading &&
+        !categoriesLoading &&
+        product &&
+        categories.length > 0;
 
   useEffect(() => {
     dispatch({ type: 'SET_CATEGORIES', payload: categories });
@@ -132,7 +144,7 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
         async () => {
           const url = await getDownloadURL(uploadTask.snapshot.ref);
           resolve(url);
-        }
+        },
       );
     });
   }
@@ -147,18 +159,21 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
         productDocId = newDocRef.id;
       }
 
-      const newImages = state.combinedImages.filter((img) => img.type === 'new');
+      const newImages = state.combinedImages.filter(
+        (img) => img.type === 'new',
+      );
       const uploadedUrls = await Promise.all(
         newImages.map((img) => {
           if (!img.file) throw new Error('Missing file for upload');
           return uploadFile(img.file, productDocId);
-        })
+        }),
       );
 
       const existingUrls = state.combinedImages
         .filter(
           (img) =>
-            img.type === 'existing' && !state.deletedImageIds?.includes(img.id.replace('existing-', ''))
+            img.type === 'existing' &&
+            !state.deletedImageIds?.includes(img.id.replace('existing-', '')),
         )
         .map((img) => img.url);
 
@@ -205,7 +220,15 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
   }
 
   return (
-    <Box p={3} height="100%" overflow="auto">
+    <Box
+      sx={{
+        mt: `${headerHeight}px`,
+        mb: `${footerHeight}px`,
+        minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
+
+        mx: 'auto',
+      }}
+    >
       <Paper elevation={1} sx={{ p: 3, maxWidth: 700, mx: 'auto' }}>
         <Typography variant="h6" mb={2}>
           {mode === 'add' ? 'Add New Product' : 'Edit Product'}
@@ -252,7 +275,11 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
                       },
                     }}
                   >
-                    <ReactQuill theme="snow" value={field.value} onChange={field.onChange} />
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </Box>
                 </Box>
               )}
@@ -285,11 +312,12 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
               }))}
             />
 
-            {!state.categories.some((c) => c.id === watchedCategoryId) && watchedCategoryId && (
-              <Typography color="error">
-                ⚠️ Invalid category ID: {watchedCategoryId}
-              </Typography>
-            )}
+            {!state.categories.some((c) => c.id === watchedCategoryId) &&
+              watchedCategoryId && (
+                <Typography color="error">
+                  ⚠️ Invalid category ID: {watchedCategoryId}
+                </Typography>
+              )}
 
             <Box>
               <Typography variant="subtitle2" mb={1}>
@@ -299,15 +327,22 @@ export default function ProductFormPage({ mode }: { mode: 'add' | 'edit' }) {
                 images={state.combinedImages}
                 onDrop={handleImageDrop}
                 onRemove={(id) => {
-                  const imageToDelete = state.combinedImages.find((img) => img.id === id);
+                  const imageToDelete = state.combinedImages.find(
+                    (img) => img.id === id,
+                  );
 
                   if (imageToDelete?.type === 'existing') {
-                    dispatch({ type: 'ADD_DELETED_IMAGE_ID', payload: imageToDelete.id.replace('existing-', '') });
+                    dispatch({
+                      type: 'ADD_DELETED_IMAGE_ID',
+                      payload: imageToDelete.id.replace('existing-', ''),
+                    });
                   }
 
                   dispatch({
                     type: 'SET_COMBINED_IMAGES',
-                    payload: state.combinedImages.filter((img) => img.id !== id),
+                    payload: state.combinedImages.filter(
+                      (img) => img.id !== id,
+                    ),
                   });
                 }}
                 onReorderAll={(newOrder) =>

@@ -1,4 +1,3 @@
-// src/layouts/PageWithStickyFilters.tsx
 import {
   Box,
   Drawer,
@@ -17,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 interface Props {
   children: ReactNode;
   sidebar: ReactNode;
+  actions?: ReactNode; // ✅ Add this
   title?: string;
   subtitle?: string;
   mobileOpen?: boolean;
@@ -26,6 +26,7 @@ interface Props {
 export default function PageWithStickyFilters({
   children,
   sidebar,
+  actions,
   mobileOpen = false,
   onMobileClose,
 }: Props) {
@@ -94,6 +95,7 @@ export default function PageWithStickyFilters({
             pb: footerHeight / 2,
           }}
         >
+          {actions && <Box mb={2}>{actions}</Box>} {/* ✅ Inject actions */}
           {children}
         </Box>
       </Box>

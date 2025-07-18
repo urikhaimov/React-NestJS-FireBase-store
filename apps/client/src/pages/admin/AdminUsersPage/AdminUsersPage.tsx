@@ -74,30 +74,32 @@ export default function AdminUsersPage() {
     [filteredUsers, page]
   );
 
-  if (isLoading)
-    return (
-      <LoadingProgress />
-    );
-  if (error)
-    return <Typography p={4}>❌ Error loading users</Typography>;
+  if (isLoading) return <LoadingProgress />;
+  if (error) return <Typography p={4}>❌ Error loading users</Typography>;
 
   return (
-    <PageWithStickyFilters title="Manage Users">
-      <Box mb={2}>
-        <TextField
-          fullWidth
-          label="Search by email"
-          variant="outlined"
-          size="small"
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-            setPage(1); // Reset page on search
-          }}
-        />
-      </Box>
-
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, py: 3, height: '50vh' }}>
+    <PageWithStickyFilters
+      title="Manage Users"
+      sidebar={
+        <Box display="flex" flexDirection="column" gap={2}>
+          <TextField
+            label="Search by email"
+            variant="outlined"
+            size="small"
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setPage(1); // Reset page on search
+            }}
+            fullWidth
+          />
+          <Typography variant="body2" color="text.secondary">
+            Showing {filteredUsers.length} users
+          </Typography>
+        </Box>
+      }
+    >
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 1, py: 1 }}>
         <List>
           {paginatedUsers.map((user) => (
             <Card key={user.id} sx={{ mb: 2, p: 1 }}>
@@ -140,18 +142,17 @@ export default function AdminUsersPage() {
                 </IconButton>
               </CardActions>
             </Card>
-
           ))}
         </List>
-      </Box>
 
-      <Box display="flex" justifyContent="center" mt={2}>
-        <Pagination
-          count={Math.ceil(filteredUsers.length / usersPerPage)}
-          page={page}
-          onChange={(_, value) => setPage(value)}
-          color="primary"
-        />
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filteredUsers.length / usersPerPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
       </Box>
 
       <Dialog
