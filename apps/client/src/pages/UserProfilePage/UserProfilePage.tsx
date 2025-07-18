@@ -6,11 +6,14 @@ import {
   TextField,
   Button,
   Stack,
-  CircularProgress,
   Snackbar,
   Alert,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -18,30 +21,19 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { useUserProfileQuery } from '../../hooks/useUserProfileQuery';
 import { useUpdateUserProfileMutation } from '../../hooks/useUpdateUserProfileMutation';
 import { useUploadAvatarMutation } from '../../hooks/useUploadAvatarMutation';
-import AvatarUploader from '../../components/AvatarUploader';
+import { useDeleteAvatarMutation } from '../../hooks/useDeleteAvatarMutation';
+import AvatarUploaderWithCrop from '@client/components/AvatarUploaderWithCrop';
 import LoadingProgress from '@client/components/LoadingProgress';
-
-type State = {
-  toastOpen: boolean;
-  errorMsg: string;
-};
-
-type Action =
-  | { type: 'SET_TOAST_OPEN'; payload: boolean }
-  | { type: 'SET_ERROR_MSG'; payload: string };
-
-const initialState: State = {
-  toastOpen: false,
-  errorMsg: '',
-};
-
-function reducer(state: State, action: Action): State {
-  return { ...state, [action.type.replace('SET_', '').toLowerCase()]: action.payload };
-}
+import { reducer, initialState } from './LocalReducer';
+import {
+  localUIReducer,
+  initialLocalUIState,
+} from './LocalUIReducer';
 
 export default function UserProfilePage() {
   const { user, loading, authInitialized } = useAuthStore();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [uiState, uiDispatch] = useReducer(localUIReducer, initialLocalUIState);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
@@ -55,6 +47,7 @@ export default function UserProfilePage() {
   const { data: userDoc, isLoading: userDocLoading } = useUserProfileQuery(user?.uid);
   const updateMutation = useUpdateUserProfileMutation(user?.uid || '');
   const uploadAvatarMutation = useUploadAvatarMutation(user?.uid || '');
+  const deleteAvatarMutation = useDeleteAvatarMutation(user?.uid || '');
 
   useEffect(() => {
     if (user && userDoc) {
@@ -68,30 +61,42 @@ export default function UserProfilePage() {
   const onSubmit = async (data: { name: string }) => {
     try {
       await updateMutation.mutateAsync({ name: data.name });
+      dispatch({ type: 'SET_TOAST_MESSAGE', payload: 'Profile updated' });
       dispatch({ type: 'SET_TOAST_OPEN', payload: true });
     } catch (err) {
-      console.error('❌ Update failed:', err);
       dispatch({ type: 'SET_ERROR_MSG', payload: 'Failed to update profile.' });
     }
   };
 
   const handleAvatarUpload = async (file: File) => {
     try {
+      uiDispatch({ type: 'SET_UPLOADING', payload: true });
       await uploadAvatarMutation.mutateAsync(file);
+      uiDispatch({ type: 'INCREMENT_AVATAR_VER' });
+      dispatch({ type: 'SET_TOAST_MESSAGE', payload: 'Profile updated' });
       dispatch({ type: 'SET_TOAST_OPEN', payload: true });
     } catch (err: any) {
-      console.error('❌ Avatar upload failed:', err);
-      dispatch({
-        type: 'SET_ERROR_MSG',
-        payload: err?.message || 'Avatar upload failed.',
-      });
+      dispatch({ type: 'SET_ERROR_MSG', payload: err?.message || 'Avatar upload failed.' });
+    } finally {
+      uiDispatch({ type: 'SET_UPLOADING', payload: false });
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      await deleteAvatarMutation.mutateAsync();
+      uiDispatch({ type: 'INCREMENT_AVATAR_VER' });
+      dispatch({ type: 'SET_TOAST_MESSAGE', payload: 'Avatar deleted' });
+      dispatch({ type: 'SET_TOAST_OPEN', payload: true });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR_MSG', payload: 'Failed to delete avatar' });
+    } finally {
+      uiDispatch({ type: 'SET_DELETE_DIALOG', payload: false });
     }
   };
 
   if (loading || !authInitialized || userDocLoading) {
-    return (
-     <LoadingProgress />
-    );
+    return <LoadingProgress />;
   }
 
   if (!user) {
@@ -111,26 +116,17 @@ export default function UserProfilePage() {
       px={muiTheme.spacing(2)}
       py={muiTheme.spacing(4)}
     >
-      <Paper
-        sx={{
-          p: { xs: 2, sm: 3 },
-          width: '100%',
-          maxWidth: 500,
-          mx: 'auto',
-          backgroundColor: muiTheme.palette.background.paper,
-        }}
-      >
+      <Paper sx={{ p: { xs: 2, sm: 3 }, width: '100%', maxWidth: 500, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom textAlign="center">
           My Profile
         </Typography>
 
         <Stack spacing={3} mt={2} alignItems="center">
-          <AvatarUploader
-            avatarUrl={userDoc?.photoURL ?? null}
-            onDrop={handleAvatarUpload}
-            errorMessage={state.errorMsg}
-            showSnackbar={!!state.errorMsg}
-            onCloseSnackbar={() => dispatch({ type: 'SET_ERROR_MSG', payload: '' })}
+          <AvatarUploaderWithCrop
+            avatarUrl={userDoc?.photoURL ? `${userDoc.photoURL}?v=${uiState.avatarVer}` : null}
+            onCropUpload={handleAvatarUpload}
+            onDeleteAvatar={() => uiDispatch({ type: 'SET_DELETE_DIALOG', payload: true })}
+            disabled={uiState.avatarUploading || isSubmitting}
           />
 
           <Box component="form" onSubmit={handleSubmit(onSubmit)} width="100%">
@@ -162,11 +158,14 @@ export default function UserProfilePage() {
       <Snackbar
         open={state.toastOpen}
         autoHideDuration={3000}
-        onClose={() => dispatch({ type: 'SET_TOAST_OPEN', payload: false })}
+        onClose={() => {
+          dispatch({ type: 'SET_TOAST_OPEN', payload: false });
+          dispatch({ type: 'SET_TOAST_MESSAGE', payload: '' });
+        }}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert severity="success" sx={{ width: '100%' }}>
-          ✅ Profile updated
+          {state.toastMessage}
         </Alert>
       </Snackbar>
 
@@ -180,6 +179,26 @@ export default function UserProfilePage() {
           {state.errorMsg}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={uiState.deleteDialogOpen}
+        onClose={() => uiDispatch({ type: 'SET_DELETE_DIALOG', payload: false })}
+      >
+        <DialogTitle>Reset Avatar</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to reset your avatar to the default?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => uiDispatch({ type: 'SET_DELETE_DIALOG', payload: false })}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="error" onClick={handleAvatarDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

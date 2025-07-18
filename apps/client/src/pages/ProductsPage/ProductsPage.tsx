@@ -1,8 +1,6 @@
-// src/pages/ProductsPage/ProductsPage.tsx
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useReducer,
   useRef,
   useState,
@@ -10,29 +8,32 @@ import React, {
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   Snackbar,
   Typography,
 } from '@mui/material';
+import { FixedSizeList as List } from 'react-window';
 
 import { fetchAllProducts } from '../../hooks/useProducts';
 import { useAuthReady } from '../../hooks/useAuthReady';
 import { useCategories } from '../../hooks/useCategories';
 import { useCartStore } from '../../stores/useCartStore';
+
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import UserProductFilters from './UserProductFilters';
 import ProductCardContainer from './ProductCardContainer';
 import LoadingProgress from '../../components/LoadingProgress';
-
-import { initialState, reducer } from './LocalReducer';
+import { footerHeight, headerHeight } from '../../config/themeConfig';
+import { initialState, reducer as filterReducer } from './LocalReducer';
 import { IProduct } from '@common/types';
+import { uiReducer, initialUIState } from './LocalUiReducer';
 
 export default function ProductsPage() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(filterReducer, initialState);
+  const [uiState, uiDispatch] = useReducer(uiReducer, initialUIState);
   const [products, setProducts] = useState<IProduct[]>([]);
-  const [visibleCount, setVisibleCount] = useState(initialState.pageSize);
-  const [loading, setLoading] = useState(true);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [renderCount, setRenderCount] = useState(20); // start with 20
   const observerRef = useRef<HTMLDivElement | null>(null);
 
   const { user, ready } = useAuthReady();
@@ -45,21 +46,16 @@ export default function ProductsPage() {
       try {
         const token = await user.getIdToken();
         const res = await fetchAllProducts();
-
         if (!Array.isArray(res.data)) {
-          console.error(
-            '❌ Invalid product response (not an array):',
-            res.data,
-          );
+          console.error('❌ Invalid product response:', res.data);
           setProducts([]);
           return;
         }
-
         setProducts(res.data);
       } catch (err) {
         console.error('❌ Failed to load products:', err);
       } finally {
-        setLoading(false);
+        uiDispatch({ type: 'setLoading', payload: false });
       }
     };
 
@@ -68,147 +64,120 @@ export default function ProductsPage() {
 
   const isDate = (val: unknown): val is Date => val instanceof Date;
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const txt = state.search.toLowerCase();
-      const inText =
-        p.name.toLowerCase().includes(txt) ||
-        (p.description?.toLowerCase().includes(txt) ?? false);
+  const filteredProducts = products.filter((p) => {
+    const txt = state.search.toLowerCase();
+    const inText =
+      p.name.toLowerCase().includes(txt) ||
+      (p.description?.toLowerCase().includes(txt) ?? false);
 
-      const inCat =
-        !state.selectedCategoryId ||
-        p.categoryId.toString() === state.selectedCategoryId;
+    const inCat =
+      !state.selectedCategoryId ||
+      p.categoryId.toString() === state.selectedCategoryId;
 
-      const inDate =
-        !state.createdAfter ||
-        (() => {
-          if (!p.createdAt) return false;
+    const inDate =
+      !state.createdAfter ||
+      (() => {
+        if (!p.createdAt) return false;
+        let productDate: Date | null = null;
+        if (typeof p.createdAt === 'string') productDate = new Date(p.createdAt);
+        else if (typeof (p.createdAt as any)?.toDate === 'function')
+          productDate = (p.createdAt as any).toDate();
+        else if (isDate(p.createdAt)) productDate = p.createdAt;
+        if (!productDate) return false;
+        return productDate.getTime() >= state.createdAfter!.toDate().getTime();
+      })();
 
-          let productDate: Date | null = null;
+    const inStock = !state.inStockOnly || p.stock > 0;
 
-          if (typeof p.createdAt === 'string') {
-            productDate = new Date(p.createdAt);
-          } else if (
-            p.createdAt !== null &&
-            typeof p.createdAt === 'object' &&
-            typeof (p.createdAt as any)?.toDate === 'function'
-          ) {
-            productDate = (p.createdAt as any).toDate();
-          } else if (isDate(p.createdAt)) {
-            productDate = p.createdAt;
-          }
+    const inPriceRange =
+      (state.minPrice === null || p.price >= state.minPrice) &&
+      (state.maxPrice === null || p.price <= state.maxPrice);
 
-          if (!productDate) return false;
+    return inText && inCat && inDate && inStock && inPriceRange;
+  });
 
-          return (
-            productDate.getTime() >= state.createdAfter!.toDate().getTime()
-          );
-        })();
+  const loadMore = () => {
+    if (renderCount < filteredProducts.length) {
+      setRenderCount((prev) => prev + 20);
+    }
+  };
 
-      const inStock = !state.inStockOnly || p.stock > 0;
+  const onItemsRendered = ({
+    visibleStopIndex,
+  }: {
+    overscanStartIndex: number;
+    overscanStopIndex: number;
+    visibleStartIndex: number;
+    visibleStopIndex: number;
+  }) => {
+    if (visibleStopIndex >= renderCount - 5) {
+      loadMore();
+    }
+  };
 
-      const inPriceRange =
-        (state.minPrice === null || p.price >= state.minPrice) &&
-        (state.maxPrice === null || p.price <= state.maxPrice);
-
-      return inText && inCat && inDate && inStock && inPriceRange;
-    });
-  }, [products, state]);
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-
-  const handleIntersect = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0];
-      if (entry.isIntersecting && visibleCount < filteredProducts.length) {
-        setVisibleCount((prev) => prev + state.pageSize);
-      }
-    },
-    [filteredProducts.length, visibleCount, state.pageSize],
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleIntersect, {
-      rootMargin: '100px',
-    });
-
-    if (observerRef.current) observer.observe(observerRef.current);
-
-    return () => {
-      if (observerRef.current) observer.unobserve(observerRef.current);
-    };
-  }, [handleIntersect]);
-
-  if (loading) return <LoadingProgress />;
+  if (uiState.loading) return <LoadingProgress />;
 
   return (
-    <PageWithStickyFilters>
-      <Typography variant="h4" gutterBottom>
-        Products
-      </Typography>
+    <PageWithStickyFilters
+      sidebar={
+        <UserProductFilters
+          state={state}
+          dispatch={dispatch}
+          categories={categories}
+        />
+      }
+      mobileOpen={uiState.mobileDrawerOpen}
+      onMobileClose={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: false })}
+    >
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" gutterBottom>
+          Products
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+          onClick={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: true })}
+        >
+          Show Filters
+        </Button>
+      </Box>
 
-      <UserProductFilters
-        state={state}
-        dispatch={dispatch}
-        categories={categories}
-      />
-
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          maxHeight: 'calc(100vh - 240px)',
-          px: 1,
-          position: 'relative',
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#888 #2c2c2c',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: '#2c2c2c',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#888',
-            borderRadius: '8px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: '#aaa',
-          },
-        }}
-      >
-        {visibleProducts.length === 0 ? (
-          <Typography>No products found.</Typography>
-        ) : (
-          <>
-            {visibleProducts.map((p) => (
-              <Box mb={2} key={p.id}>
+      {/* Product List */}
+      {filteredProducts.length === 0 ? (
+        <Typography>No products found.</Typography>
+      ) : (
+        <List
+          height={window.innerHeight - (headerHeight + footerHeight + 140)}
+          itemCount={Math.min(renderCount, filteredProducts.length)}
+          itemSize={130}
+          width="100%"
+          onItemsRendered={onItemsRendered}
+        >
+          {({ index, style }) => {
+            const p = filteredProducts[index];
+            return (
+              <Box key={p.id} style={style} px={1}>
                 <ProductCardContainer
                   product={p}
                   disabled={false}
-                  onAddToCart={() => setSnackbarOpen(true)}
+                  onAddToCart={() =>
+                    uiDispatch({ type: 'setSnackbarOpen', payload: true })
+                  }
                   onConfirmDelete={() => {}}
                 />
               </Box>
-            ))}
-            {visibleCount < filteredProducts.length && (
-              <Box
-                ref={observerRef}
-                display="flex"
-                justifyContent="center"
-                mt={2}
-              >
-                <CircularProgress />
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
+            );
+          }}
+        </List>
+      )}
 
+      {/* Snackbar */}
       <Snackbar
-        open={snackbarOpen}
+        open={uiState.snackbarOpen}
         autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
+        onClose={() => uiDispatch({ type: 'setSnackbarOpen', payload: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity="success" variant="filled">

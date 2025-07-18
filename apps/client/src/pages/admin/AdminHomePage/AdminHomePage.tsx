@@ -1,7 +1,7 @@
 import { Typography, Grid, Paper, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 
 
 export default function AdminHomePage() {
@@ -10,7 +10,7 @@ export default function AdminHomePage() {
 
   return (
     
-      <AdminStickyPage title={'Admin Dashboard'}>
+      <PageWithStickyFilters title={'Admin Dashboard'}>
       <Grid container spacing={isMobile ? 2 : 3}>
         {/* Metrics section */}
         {[
@@ -46,6 +46,6 @@ export default function AdminHomePage() {
           </Paper>
         </Grid>
       </Grid>
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 }

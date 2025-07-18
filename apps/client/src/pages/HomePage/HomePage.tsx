@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Typography,
-  CircularProgress,
   Container,
   useTheme,
   useMediaQuery,
@@ -22,17 +21,25 @@ export default function HomePage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { data, isLoading, isError } = useLandingPage();
- 
 
-  if (isLoading) return <LoadingProgress />;
+if (isLoading) return <LoadingProgress />;
   if (isError)
     return (
-      <Typography color="error" textAlign="center" mt={6}>
-        Failed to load landing page data.
-      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100%',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <Typography color="error" textAlign="center" mt={6}>
+          Failed to load landing page data.
+        </Typography>
+      </Box>
     );
 
-  // Defensive fallback for data properties
   const landingData: LandingPageData = data ?? {
     title: '',
     subtitle: '',
@@ -153,7 +160,7 @@ export default function HomePage() {
               <Box display="flex" flexDirection="column" gap={4}>
                 {sections.map((section, index) => (
                   <motion.div
-                   key={index}
+                    key={index}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.15 }}

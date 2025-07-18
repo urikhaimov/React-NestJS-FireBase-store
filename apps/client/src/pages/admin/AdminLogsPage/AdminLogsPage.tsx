@@ -14,7 +14,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 import { useLogs } from '../../../hooks/useLogs';
 import type { SecurityLog } from '../../../api/logs';
 
@@ -36,7 +36,7 @@ const AdminLogsPage: React.FC = () => {
   const logsArray: SecurityLog[] = logs ?? [];
 
   return (
-    <AdminStickyPage title="Admin Logs">
+    <PageWithStickyFilters title="Admin Logs">
       <FormControl sx={{ mb: 2, minWidth: 200 }}>
         <InputLabel>Filter by Category</InputLabel>
         <Select
@@ -78,7 +78,7 @@ const AdminLogsPage: React.FC = () => {
           No logs found.
         </Typography>
       )}
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 };
 

@@ -1,7 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
-import axiosInstance from '../api/axiosInstance'; // ✅ Auth interceptor already configured
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axiosInstance from '../api/axiosInstance';
 
 export const useUploadAvatarMutation = (uid: string) => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (file: Blob) => {
       const formData = new FormData();
@@ -13,7 +15,16 @@ export const useUploadAvatarMutation = (uid: string) => {
         },
       });
 
-      return res.data; // Should return { photoURL }
+      return res.data as { photoURL: string };
+    },
+    onSuccess: (data) => {
+      // Option A: Update in place
+      queryClient.setQueryData(['userProfile', uid], (old: any) =>
+        old ? { ...old, photoURL: data.photoURL } : old
+      );
+
+      // Option B (alternative): trigger refetch
+      // queryClient.invalidateQueries({ queryKey: ['userProfile', uid] });
     },
   });
 };

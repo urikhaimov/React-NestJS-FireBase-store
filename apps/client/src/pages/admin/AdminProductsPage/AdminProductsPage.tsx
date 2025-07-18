@@ -31,7 +31,7 @@ import { useInView } from 'react-intersection-observer';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { debounce } from 'lodash';
 import { IProduct } from '@common/types';
-import AdminStickyPage from '@client/layouts/AdminStickyPage';
+import PageWithStickyFilters from '@client/layouts/PageWithStickyFilters';
 import LoadingProgress from '@client/components/LoadingProgress';
 
 export default function AdminProductsPage() {
@@ -175,7 +175,7 @@ export default function AdminProductsPage() {
   }, [inView, filteredProducts.length, visibleCount]);
 
   return (
-    <AdminStickyPage
+    <PageWithStickyFilters
       title="Admin Products"
       filters={
         <AdminProductFilters
@@ -242,6 +242,6 @@ export default function AdminProductsPage() {
           Product order updated
         </Alert>
       </Snackbar>
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 }

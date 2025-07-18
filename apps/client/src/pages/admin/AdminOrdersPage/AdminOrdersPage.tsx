@@ -10,7 +10,7 @@ import {
   Pagination,
 } from '@mui/material';
 import { VariableSizeList, ListChildComponentProps } from 'react-window';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 // Import OrderFilters properly or remove if not ready yet
 // import OrderFilters from './OrderFilters';
 import { useAuthReady } from '@client/hooks/useAuthReady';
@@ -85,7 +85,7 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <AdminStickyPage
+    <PageWithStickyFilters
       title="Admin Orders"
       // Provide real props or remove filters if not implemented
       // filters={<OrderFilters state={state} dispatch={dispatch} />}
@@ -120,6 +120,6 @@ export default function AdminOrdersPage() {
           </Box>
         </>
       )}
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 }

@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 import {
   useCategories,
   useAddCategory,
@@ -64,7 +64,7 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <AdminStickyPage title="Admin Categories">
+    <PageWithStickyFilters title="Admin Categories">
       <Box display="flex" gap={2} mt={2}>
         <TextField
           label="New Category"
@@ -116,6 +116,6 @@ export default function AdminCategoriesPage() {
           </ListItem>
         ))}
       </List>
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 }

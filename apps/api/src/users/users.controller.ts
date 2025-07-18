@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { adminDb, admin } from '../firebase/firebase-admin';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as mime from 'mime-types';
 
 @Controller('users')
 @UseGuards(FirebaseAuthGuard)
@@ -41,34 +42,35 @@ export class UsersController {
   }
 
   // PUT /users/:id
-@Put(':id')
-async update(@Param('id') id: string, @Body() body: UpdateUserDto) {
-  try {
-    console.log('Updating user:', id, body); // 🟩 Add this
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() body: UpdateUserDto) {
+    try {
+      const docRef = adminDb.collection('users').doc(id);
+      const snap = await docRef.get();
+      if (!snap.exists) throw new NotFoundException('User not found');
 
-    const docRef = adminDb.collection('users').doc(id);
-    const snap = await docRef.get();
-    if (!snap.exists) throw new NotFoundException('User not found');
+      const updateData: Partial<UpdateUserDto> = {};
+      if (body.name !== undefined) updateData.name = body.name;
+      if (body.photoURL !== undefined) updateData.photoURL = body.photoURL;
 
-    const updateData: Partial<UpdateUserDto> = {};
-    if (body.name !== undefined) updateData.name = body.name;
-    if (body.photoURL !== undefined) updateData.photoURL = body.photoURL;
-
-    await docRef.update(updateData);
-    return { success: true };
-  } catch (error) {
-    console.error('🔥 Update error:', error); // 🟥 This is key
-    throw new InternalServerErrorException('Failed to update user profile');
+      await docRef.update(updateData);
+      return { success: true };
+    } catch (error) {
+      console.error('🔥 Update error:', error);
+      throw new InternalServerErrorException('Failed to update user profile');
+    }
   }
-}
+
   // DELETE /users/:id/avatar
   @Delete(':id/avatar')
   async deleteAvatar(@Param('id') id: string) {
-    const avatarPath = `avatars/${id}`;
     const bucket = admin.storage().bucket();
 
     try {
-      await bucket.file(avatarPath).delete();
+      // Optionally, delete all versions of avatar by prefix:
+      const [files] = await bucket.getFiles({ prefix: `avatars/${id}/` });
+      await Promise.all(files.map((file) => file.delete()));
+
       await adminDb.collection('users').doc(id).update({ photoURL: null });
       return { success: true };
     } catch (error) {
@@ -89,7 +91,9 @@ async update(@Param('id') id: string, @Body() body: UpdateUserDto) {
     }
 
     try {
-      const avatarPath = `avatars/${id}`;
+      const ext = mime.extension(file.mimetype) || 'jpg';
+      const timestamp = Date.now();
+      const avatarPath = `avatars/${id}/${timestamp}.${ext}`;
       const bucket = admin.storage().bucket();
       const fileRef = bucket.file(avatarPath);
 
@@ -97,7 +101,7 @@ async update(@Param('id') id: string, @Body() body: UpdateUserDto) {
         contentType: file.mimetype,
         public: true,
         metadata: {
-          cacheControl: 'public,max-age=31536000',
+          cacheControl: 'public,max-age=60', // Encourage fresh fetches
         },
       });
 

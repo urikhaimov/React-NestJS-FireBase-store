@@ -1,26 +1,24 @@
+// src/pages/MyOrdersPage/MyOrdersPage.tsx
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
-  useCallback,
-  useState,
   useRef,
+  useState,
 } from 'react';
 import {
   Box,
   Typography,
   Paper,
   Divider,
-  List,
-  ListItem,
-  ListItemText,
-  useMediaQuery,
-  useTheme,
   Chip,
+  CircularProgress,
 } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { Link } from '@mui/material';
 import PageWithStickyFilters from '../../layouts/PageWithStickyFilters';
 import { retryWithBackoff } from '../../utils/retryWithBackoff';
-import { FixedSizeList as ListWindow, ListChildComponentProps } from 'react-window';
 import { Order, filterReducer, initialFilterState } from './LocalReducer';
 import UserOrderFilters from './UserOrderFilters';
 import { useAuthReady } from '../../hooks/useAuthReady';
@@ -28,9 +26,8 @@ import { fetchMyOrders } from '../../api/orderApi';
 import LoadingProgress from '../../components/LoadingProgress';
 import { Timestamp } from 'firebase/firestore';
 import { formatCurrency } from '../../utils/format';
-import { Link as RouterLink } from 'react-router-dom';
-import { Link } from '@mui/material'; // MUI version
-import MyOrdersScrollContainer from '../../components/ScrollContainer';
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { footerHeight, headerHeight } from '../../config/themeConfig';
 function getStatusColor(status: string) {
   switch (status) {
     case 'processing':
@@ -52,8 +49,6 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   const { user, ready } = useAuthReady();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (!ready) return;
@@ -65,7 +60,6 @@ export default function MyOrdersPage() {
           return;
         }
 
-        const idToken = await user.getIdToken();
         const fetchFn = () => fetchMyOrders().then(res => res.data);
         const list = await retryWithBackoff(fetchFn);
 
@@ -101,7 +95,8 @@ export default function MyOrdersPage() {
           filterState.minTotal === null || order.amount >= filterState.minTotal;
         const matchMax =
           filterState.maxTotal === null || order.amount <= filterState.maxTotal;
-        const matchEmail = !filterState.email || order.email.includes(filterState.email);
+        const matchEmail =
+          !filterState.email || order.email.includes(filterState.email);
         return matchStatus && matchStart && matchEnd && matchMin && matchMax && matchEmail;
       })
       .sort((a, b) => {
@@ -111,108 +106,77 @@ export default function MyOrdersPage() {
       });
   }, [orders, filterState]);
 
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastItemRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) {
-          dispatch({ type: 'setPage', payload: filterState.page + 1 });
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [loading, filterState.page]
-  );
-
-  const paginatedOrders = useMemo(() => {
-    return filteredOrders.slice(0, filterState.page * filterState.pageSize);
-  }, [filteredOrders, filterState.page, filterState.pageSize]);
-
-  const Row = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
-      const order = paginatedOrders[index];
-      const isLast = index === paginatedOrders.length - 1;
-      return (
-        <Box style={style} px={1} ref={isLast ? lastItemRef : undefined}>
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-            <Typography variant="subtitle1" fontWeight="bold">
-              <Link
-                component={RouterLink}
-                to={`/order/${order.id}`}
-                underline="hover"
-                sx={{ cursor: 'pointer' }}
-              >
-                Order #{order.id}
-              </Link>
-            </Typography>
-            <Chip
-              label={order.status}
-              color={getStatusColor(order.status)}
-              size="small"
-              sx={{ my: 1 }}
-            />
-            <Typography variant="body2">
-              Date: {order.createdAt.toDate().toLocaleString()}
-            </Typography>
-            <Typography variant="body2">
-              Paid with: Visa ending in 4242
-            </Typography>
-            <Typography variant="body2">
-              Shipping: Express Delivery
-            </Typography>
-            <Typography variant="body2">
-              Delivery ETA: July 8, 2025
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              Total: {formatCurrency(order.amount)}
-            </Typography>
-            <Divider sx={{ my: 1 }} />
-            <List dense disablePadding>
-              {order.items.map((item, idx) => (
-                <ListItem key={idx} disablePadding>
-                  <ListItemText
-                    primary={`${item.name} × ${item.quantity}`}
-                    secondary={`Price: ${formatCurrency(item.price)}`}
-                    sx={{ pl: 1 }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Box>
-      );
-    },
-    [paginatedOrders, lastItemRef]
-  );
-
   if (!ready || loading) {
     return <LoadingProgress />;
   }
 
+  const Row = ({ index, style }: ListChildComponentProps) => {
+    const order = filteredOrders[index];
+
+    return (
+      <Box mb={2} key={order.id} style={style}>
+        <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
+          <Typography variant="subtitle1" fontWeight="bold">
+            <Link
+              component={RouterLink}
+              to={`/order/${order.id}`}
+              underline="hover"
+              sx={{ cursor: 'pointer' }}
+            >
+              Order #{order.id}
+            </Link>
+          </Typography>
+          <Chip
+            label={order.status}
+            color={getStatusColor(order.status)}
+            size="small"
+            sx={{ my: 1 }}
+          />
+          <Typography variant="body2">
+            Date: {order.createdAt.toDate().toLocaleString()}
+          </Typography>
+          <Typography variant="body2">
+            Paid with: Visa ending in 4242
+          </Typography>
+          <Typography variant="body2">
+            Shipping: Express Delivery
+          </Typography>
+          <Typography variant="body2">
+            Delivery ETA: July 8, 2025
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            Total: {formatCurrency(order.amount)}
+          </Typography>
+          <Divider sx={{ my: 1 }} />
+          <ul style={{ margin: 0, padding: 0 }}>
+            {order.items.map((item, idx) => (
+              <li key={idx}>
+                {item.name} × {item.quantity} — Price: {formatCurrency(item.price)}
+              </li>
+            ))}
+          </ul>
+        </Paper>
+      </Box>
+    );
+  };
+
   return (
-    <PageWithStickyFilters>
+    <PageWithStickyFilters sidebar={<UserOrderFilters state={filterState} dispatch={dispatch} />}>
       <Typography variant="h4" gutterBottom>
         My Orders
       </Typography>
 
-      <UserOrderFilters state={filterState} dispatch={dispatch} />
-
-      {paginatedOrders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <Typography>No orders found.</Typography>
       ) : (
-        <ListWindow
-          height={paginatedOrders.length * 280}
-          width="100%"
-          itemCount={paginatedOrders.length}
+        <List
+         height={window.innerHeight - (headerHeight + footerHeight + 140)}
+          itemCount={filteredOrders.length}
           itemSize={280}
-          outerElementType={MyOrdersScrollContainer}
+          width="100%"
         >
           {Row}
-        </ListWindow>
-
-
+        </List>
       )}
     </PageWithStickyFilters>
   );

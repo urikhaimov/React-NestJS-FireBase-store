@@ -23,7 +23,7 @@ import {
   CardActions
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AdminStickyPage from '../../../layouts/AdminStickyPage';
+import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
 import useDebounce from '../../../hooks/useDebouncedValue';
 import { useAdminUsersQuery } from '../../../hooks/useAdminUsersQuery';
 import type { User } from '../../../types/User';
@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
     return <Typography p={4}>❌ Error loading users</Typography>;
 
   return (
-    <AdminStickyPage title="Manage Users">
+    <PageWithStickyFilters title="Manage Users">
       <Box mb={2}>
         <TextField
           fullWidth
@@ -174,6 +174,6 @@ export default function AdminUsersPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </AdminStickyPage>
+    </PageWithStickyFilters>
   );
 }
