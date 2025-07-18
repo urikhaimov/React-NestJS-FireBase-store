@@ -1,3 +1,4 @@
+// src/pages/OrderDetailPage.tsx
 import React from 'react';
 import {
   Box,
@@ -18,8 +19,10 @@ import { useOrderDetails } from '../../hooks/useOrderDetails';
 import { formatCurrency } from '../../utils/format';
 import { headerHeight, footerHeight } from '../../config/themeConfig';
 
-function formatDate(date?: string) {
-  return date ? new Date(date).toLocaleString() : 'N/A';
+function formatDate(date?: string | { toDate?: () => Date }) {
+  if (!date) return 'N/A';
+  if (typeof date === 'string') return new Date(date).toLocaleString();
+  return date.toDate?.()?.toLocaleString?.() || 'N/A';
 }
 
 export default function OrderDetailPage() {
@@ -63,9 +66,21 @@ export default function OrderDetailPage() {
     ownerName = 'N/A',
     total = 0,
     createdAt,
-    payment = {},
-    shippingAddress = {},
-    delivery = {},
+    payment = {
+      method: 'N/A',
+      status: 'N/A',
+      transactionId: '',
+    },
+    shippingAddress = {
+      fullName: '',
+      street: '',
+      city: '',
+      country: '',
+    },
+    delivery = {
+      eta: '',
+      trackingNumber: '',
+    },
     items = [],
     statusHistory = [],
   } = order;
@@ -112,10 +127,10 @@ export default function OrderDetailPage() {
           </Typography>
 
           <Typography>
-            <strong>Payment:</strong> {payment?.method || 'N/A'} (
-            {payment?.status || 'N/A'})
-            {payment?.transactionId && ` • TX: ${payment.transactionId}`}
+            <strong>Payment:</strong> {payment.method} ({payment.status})
+            {payment.transactionId && ` • TX: ${payment.transactionId}`}
           </Typography>
+
           <Typography>
             <strong>Shipping Address:</strong>{' '}
             {[

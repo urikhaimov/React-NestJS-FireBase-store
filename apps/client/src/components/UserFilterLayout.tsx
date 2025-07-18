@@ -1,37 +1,52 @@
+// src/components/layout/UserFilterLayout.tsx
+
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Divider } from '@mui/material';
 
 export interface FilterLayoutProps {
-  title: string;
   children: React.ReactNode;
-  collapsedByDefault?: boolean;
+  collapsedByDefault?: boolean; // Reserved for future collapsible logic
   hasFilters?: boolean;
   onClear?: () => void;
   actions?: React.ReactNode;
 }
 
 export default function UserFilterLayout({
-  title,
   children,
-  collapsedByDefault = false,
   hasFilters = false,
-  onClear,
   actions,
 }: FilterLayoutProps) {
   return (
     <Box mb={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">{title}</Typography>
-        {actions}
-      </Box>
+      {/* Actions Row (left aligned) */}
+      {actions && (
+        <Box
+          display="flex"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={1}
+          mb={1}
+        >
+          {actions}
+        </Box>
+      )}
 
+      {/* Filter active note */}
       {hasFilters && (
-        <Typography variant="body2" sx={{ mb: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+        <Typography
+          variant="body2"
+          sx={{ mb: 2, fontStyle: 'italic', color: 'text.secondary' }}
+        >
           Filters are active.
         </Typography>
       )}
 
-      {children}
+      <Divider sx={{ mb: 2 }} />
+
+      {/* Content */}
+      <Box>
+        {children}
+      </Box>
     </Box>
   );
 }

@@ -1,129 +1,119 @@
+// src/pages/ProductsPage/UserProductFilters.tsx
 import React, { useState } from 'react';
 import {
-  Grid,
-  Button,
   Box,
+  Button,
+  Stack,
+  useMediaQuery,
+  useTheme,
+  TextField,
   Checkbox,
   FormControlLabel,
-  Typography,
 } from '@mui/material';
-import { Dayjs } from 'dayjs';
+import { headerHeight, footerHeight } from '../../config/themeConfig';
+import { State, Action } from './LocalReducer';
+import FilterLayout from '../../components/UserFilterLayout';
 import { Category } from '../../types/firebase';
-import { State, Action } from '../ProductsPage/LocalReducer';
-import UserFilterLayout from '../../components/UserFilterLayout';
-import UserFilterTextField from '../../components/UserFilterTextField';
-import UserFilterDatePicker from '../../components/UserFilterDatePicker';
-
 interface Props {
   state: State;
   dispatch: React.Dispatch<Action>;
-  categories: Category[];
+  hasFilters: boolean;
+  categories: Category[]; // ✅ Add this li
 }
 
-export default function UserProductFilters({ state, dispatch, categories }: Props) {
-  const [showFilters, setShowFilters] = useState(false);
-
-  const hasFilters =
-    state.search ||
-    state.selectedCategoryId ||
-    state.createdAfter ||
-    state.minPrice !== null ||
-    state.maxPrice !== null ||
-    state.inStockOnly;
-
-  const toggleFilters = () => setShowFilters((prev) => !prev);
+export default function UserProductFilters({
+  state,
+  dispatch,
+  hasFilters,
+}: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [showFilters, setShowFilters] = useState(!isMobile);
 
   return (
-    <UserFilterLayout
-      title="Filters"
-      collapsedByDefault={!hasFilters}
+    <FilterLayout
+      hasFilters={hasFilters}
       actions={
-        <Box display="flex" gap={2}>
-          <Button variant="outlined" onClick={toggleFilters}>
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+          }}
+        >
+          {/* Show/Hide Filters Button on the left */}
           <Button
             variant="outlined"
-            color="primary"
-            onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+            onClick={() => setShowFilters((prev) => !prev)}
+            size="small"
           >
-            Reset
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
           </Button>
+
+          {/* Reset button on the right (or hide on mobile) */}
+          {!isMobile && hasFilters && (
+            <Button
+              variant="text"
+              color="warning"
+              onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+              size="small"
+            >
+              Reset
+            </Button>
+          )}
         </Box>
       }
     >
-      {showFilters ? (
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={4}>
-            <UserFilterTextField
+      {showFilters && (
+        <Box
+          sx={{
+            height: isMobile
+              ? `calc(100vh - ${headerHeight + footerHeight + 140}px)`
+              : 'auto',
+            overflowY: isMobile ? 'auto' : 'visible',
+            pr: 1,
+          }}
+        >
+          <Stack spacing={2}>
+            <TextField
+              size="small"
               label="Search"
               value={state.search}
-              onChange={(val) => dispatch({ type: 'SET_SEARCH', payload: val })}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={4}>
-            <UserFilterTextField
-              label="Category"
-              select
-              fullWidth
-              value={state.selectedCategoryId}
-              onChange={(val) =>
-                dispatch({ type: 'SET_CATEGORY', payload: val })
+              onChange={(e) =>
+                dispatch({ type: 'SET_SEARCH', payload: e.target.value })
               }
-              options={[
-                { value: '', label: 'All' },
-                ...categories.map((cat) => ({
-                  value: cat.id,
-                  label: cat.name,
-                })),
-              ]}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={4}>
-            <UserFilterDatePicker
-              label="Created After"
-              value={state.createdAfter}
               fullWidth
-              onChange={(date: Dayjs | null) =>
-                dispatch({ type: 'SET_CREATED_AFTER', payload: date })
-              }
             />
-          </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <UserFilterTextField
+            <TextField
+              size="small"
               label="Min Price"
               type="number"
               value={state.minPrice ?? ''}
-              onChange={(val) =>
+              onChange={(e) =>
                 dispatch({
                   type: 'SET_MIN_PRICE',
-                  payload: val ? Number(val) : null,
+                  payload: e.target.value ? +e.target.value : null,
                 })
               }
               fullWidth
             />
-          </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <UserFilterTextField
+            <TextField
+              size="small"
               label="Max Price"
               type="number"
               value={state.maxPrice ?? ''}
-              onChange={(val) =>
+              onChange={(e) =>
                 dispatch({
                   type: 'SET_MAX_PRICE',
-                  payload: val ? Number(val) : null,
+                  payload: e.target.value ? +e.target.value : null,
                 })
               }
               fullWidth
             />
-          </Grid>
 
-          <Grid item xs={12} sm={6} md={4}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -138,15 +128,9 @@ export default function UserProductFilters({ state, dispatch, categories }: Prop
               }
               label="In Stock Only"
             />
-          </Grid>
-        </Grid>
-      ) : (
-        hasFilters && (
-          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
-            Filters are active. Click "Show Filters" to edit.
-          </Typography>
-        )
+          </Stack>
+        </Box>
       )}
-    </UserFilterLayout>
+    </FilterLayout>
   );
 }

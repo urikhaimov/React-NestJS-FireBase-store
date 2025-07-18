@@ -1,10 +1,8 @@
 // src/pages/MyOrdersPage/MyOrdersPage.tsx
 import React, {
-  useCallback,
   useEffect,
   useMemo,
   useReducer,
-  useRef,
   useState,
 } from 'react';
 import {
@@ -13,7 +11,6 @@ import {
   Paper,
   Divider,
   Chip,
-  CircularProgress,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
@@ -28,6 +25,7 @@ import { Timestamp } from 'firebase/firestore';
 import { formatCurrency } from '../../utils/format';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import { footerHeight, headerHeight } from '../../config/themeConfig';
+
 function getStatusColor(status: string) {
   switch (status) {
     case 'processing':
@@ -65,6 +63,7 @@ export default function MyOrdersPage() {
 
         const converted = list.map((order: any) => ({
           ...order,
+          email: order.email ?? '', // ✅ fallback to empty string
           createdAt: order.createdAt?.seconds
             ? new Timestamp(order.createdAt.seconds, order.createdAt.nanoseconds)
             : Timestamp.fromDate(new Date(order.createdAt)),
@@ -96,7 +95,8 @@ export default function MyOrdersPage() {
         const matchMax =
           filterState.maxTotal === null || order.amount <= filterState.maxTotal;
         const matchEmail =
-          !filterState.email || order.email.includes(filterState.email);
+          !filterState.email || (order.email?.includes?.(filterState.email) ?? false); // ✅ safe check
+
         return matchStatus && matchStart && matchEnd && matchMin && matchMax && matchEmail;
       })
       .sort((a, b) => {
@@ -170,7 +170,7 @@ export default function MyOrdersPage() {
         <Typography>No orders found.</Typography>
       ) : (
         <List
-         height={window.innerHeight - (headerHeight + footerHeight + 140)}
+          height={window.innerHeight - (headerHeight + footerHeight + 140)}
           itemCount={filteredOrders.length}
           itemSize={280}
           width="100%"

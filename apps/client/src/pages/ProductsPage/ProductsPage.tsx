@@ -79,7 +79,8 @@ export default function ProductsPage() {
       (() => {
         if (!p.createdAt) return false;
         let productDate: Date | null = null;
-        if (typeof p.createdAt === 'string') productDate = new Date(p.createdAt);
+        if (typeof p.createdAt === 'string')
+          productDate = new Date(p.createdAt);
         else if (typeof (p.createdAt as any)?.toDate === 'function')
           productDate = (p.createdAt as any).toDate();
         else if (isDate(p.createdAt)) productDate = p.createdAt;
@@ -124,13 +125,28 @@ export default function ProductsPage() {
           state={state}
           dispatch={dispatch}
           categories={categories}
+          hasFilters={
+            !!state.search ||
+            !!state.minPrice ||
+            !!state.maxPrice ||
+            !!state.inStockOnly ||
+            !!state.selectedCategoryId ||
+            !!state.createdAfter
+          }
         />
       }
       mobileOpen={uiState.mobileDrawerOpen}
-      onMobileClose={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: false })}
+      onMobileClose={() =>
+        uiDispatch({ type: 'setMobileDrawerOpen', payload: false })
+      }
     >
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Typography variant="h4" gutterBottom>
           Products
         </Typography>
@@ -138,7 +154,9 @@ export default function ProductsPage() {
           variant="outlined"
           size="small"
           sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
-          onClick={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: true })}
+          onClick={() =>
+            uiDispatch({ type: 'setMobileDrawerOpen', payload: true })
+          }
         >
           Show Filters
         </Button>

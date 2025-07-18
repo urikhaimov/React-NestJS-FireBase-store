@@ -16,7 +16,6 @@ import {
   DialogActions,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
-
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useUserProfileQuery } from '../../hooks/useUserProfileQuery';
 import { useUpdateUserProfileMutation } from '../../hooks/useUpdateUserProfileMutation';
@@ -25,10 +24,9 @@ import { useDeleteAvatarMutation } from '../../hooks/useDeleteAvatarMutation';
 import AvatarUploaderWithCrop from '@client/components/AvatarUploaderWithCrop';
 import LoadingProgress from '@client/components/LoadingProgress';
 import { reducer, initialState } from './LocalReducer';
-import {
-  localUIReducer,
-  initialLocalUIState,
-} from './LocalUIReducer';
+import { localUIReducer, initialLocalUIState } from './LocalUIReducer';
+import { headerHeight, footerHeight } from '../../config/themeConfig';
+import ChangePasswordForm from './components/ChangePasswordForm';
 
 export default function UserProfilePage() {
   const { user, loading, authInitialized } = useAuthStore();
@@ -109,15 +107,29 @@ export default function UserProfilePage() {
 
   return (
     <Box
-      flexGrow={1}
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      px={muiTheme.spacing(2)}
-      py={muiTheme.spacing(4)}
+      sx={{
+        mt: `${headerHeight}px`,
+        mb: `${footerHeight}px`,
+        minHeight: `calc(100vh - ${headerHeight + footerHeight}px)`,
+        px: 2,
+        py: 4,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'start',
+        overflowY: 'auto',
+      }}
     >
-      <Paper sx={{ p: { xs: 2, sm: 3 }, width: '100%', maxWidth: 500, mx: 'auto' }}>
-        <Typography variant="h5" gutterBottom textAlign="center">
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 3 },
+          width: '100%',
+          maxWidth: 500,
+          mx: 'auto',
+          borderRadius: 3,
+        }}
+        elevation={3}
+      >
+        <Typography variant="h5" textAlign="center" gutterBottom>
           My Profile
         </Typography>
 
@@ -147,6 +159,7 @@ export default function UserProfilePage() {
               />
               <TextField label="Email" value={user.email ?? ''} fullWidth disabled />
               <TextField label="UID" value={user.uid ?? ''} fullWidth disabled />
+              <ChangePasswordForm />
               <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
                 Save Changes
               </Button>

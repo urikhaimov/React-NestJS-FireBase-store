@@ -14,6 +14,7 @@ import { FilterState, FilterAction } from './LocalReducer';
 import UserFilterLayout from '../../components/UserFilterLayout';
 import UserFilterTextField from '../../components/UserFilterTextField';
 import UserFilterDatePicker from '../../components/UserFilterDatePicker';
+import { footerHeight, headerHeight } from '../../config/themeConfig';
 
 const statusOptions = ['all', 'pending', 'shipped', 'delivered', 'succeeded'];
 
@@ -29,14 +30,14 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
 
   const hasFilters = Boolean(
     state.email ||
-    state.status !== 'all' ||
-    state.minTotal ||
-    state.maxTotal ||
-    state.startDate ||
-    state.endDate ||
-    state.minPrice ||
-    state.maxPrice ||
-    state.inStockOnly
+      state.status !== 'all' ||
+      state.minTotal ||
+      state.maxTotal ||
+      state.minPrice ||
+      state.maxPrice ||
+      state.startDate ||
+      state.endDate ||
+      state.inStockOnly,
   );
 
   const parseNumber = (val: string): number | undefined => {
@@ -46,13 +47,14 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
 
   return (
     <UserFilterLayout
-      title=""
-      collapsedByDefault
       hasFilters={hasFilters}
-      onClear={() => dispatch({ type: 'RESET_FILTERS' })}
       actions={
-        <Box display="flex" gap={2}>
-          <Button variant="outlined" onClick={() => setShowFilters(prev => !prev)}>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowFilters((prev) => !prev)}
+            size="small"
+          >
             {showFilters ? 'Hide Filters' : 'Show Filters'}
           </Button>
           {!isMobile && hasFilters && (
@@ -60,14 +62,15 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               variant="outlined"
               color="warning"
               onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+              size="small"
             >
               Reset
             </Button>
           )}
-        </Box>
+        </Stack>
       }
     >
-      {showFilters ? (
+      {showFilters && (
         <Box
           sx={{
             ...(isMobile
@@ -78,12 +81,14 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
                   right: 0,
                   bottom: 0,
                   bgcolor: 'background.paper',
-                  zIndex: 1200,
+                  zIndex: 1300,
                   overflowY: 'auto',
                   p: 2,
                 }
               : {
-                  maxHeight: 400,
+                  height:
+                    window.innerHeight -
+                    (headerHeight + footerHeight + 140),
                   overflowY: 'auto',
                   pr: 1,
                 }),
@@ -110,7 +115,9 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="Min Total"
               type="number"
               value={state.minTotal?.toString() || ''}
-              onChange={(val) => dispatch({ type: 'setMinTotal', payload: parseNumber(val) })}
+              onChange={(val) =>
+                dispatch({ type: 'setMinTotal', payload: parseNumber(val) })
+              }
               fullWidth
             />
 
@@ -118,7 +125,9 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="Max Total"
               type="number"
               value={state.maxTotal?.toString() || ''}
-              onChange={(val) => dispatch({ type: 'setMaxTotal', payload: parseNumber(val) })}
+              onChange={(val) =>
+                dispatch({ type: 'setMaxTotal', payload: parseNumber(val) })
+              }
               fullWidth
             />
 
@@ -126,7 +135,9 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="Min Price"
               type="number"
               value={state.minPrice?.toString() || ''}
-              onChange={(val) => dispatch({ type: 'setMinPrice', payload: parseNumber(val) })}
+              onChange={(val) =>
+                dispatch({ type: 'setMinPrice', payload: parseNumber(val) })
+              }
               fullWidth
             />
 
@@ -134,7 +145,9 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="Max Price"
               type="number"
               value={state.maxPrice?.toString() || ''}
-              onChange={(val) => dispatch({ type: 'setMaxPrice', payload: parseNumber(val) })}
+              onChange={(val) =>
+                dispatch({ type: 'setMaxPrice', payload: parseNumber(val) })
+              }
               fullWidth
             />
 
@@ -156,7 +169,10 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="Start Date"
               value={state.startDate ? dayjs(state.startDate) : null}
               onChange={(date: Dayjs | null) =>
-                dispatch({ type: 'setStartDate', payload: date?.toDate() || null })
+                dispatch({
+                  type: 'setStartDate',
+                  payload: date?.toDate() || null,
+                })
               }
               fullWidth
             />
@@ -165,7 +181,10 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               label="End Date"
               value={state.endDate ? dayjs(state.endDate) : null}
               onChange={(date: Dayjs | null) =>
-                dispatch({ type: 'setEndDate', payload: date?.toDate() || null })
+                dispatch({
+                  type: 'setEndDate',
+                  payload: date?.toDate() || null,
+                })
               }
               fullWidth
             />
@@ -175,7 +194,10 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
               select
               value={state.sortDirection}
               onChange={(val) =>
-                dispatch({ type: 'setSortDirection', payload: val as 'asc' | 'desc' })
+                dispatch({
+                  type: 'setSortDirection',
+                  payload: val as 'asc' | 'desc',
+                })
               }
               options={[
                 { value: 'desc', label: 'Newest' },
@@ -185,15 +207,19 @@ export default function UserOrderFilters({ state, dispatch }: Props) {
             />
           </Stack>
         </Box>
-      ) : (
-        hasFilters && (
-          <Box mt={1} fontSize="0.85rem" fontStyle="italic">
-            Filters are active. Click "Show Filters" to edit.
-          </Box>
-        )
       )}
 
-      {/* FAB shown on mobile when filters are active */}
+      {!showFilters && hasFilters && (
+        <Box
+          mt={1}
+          fontSize="0.85rem"
+          fontStyle="italic"
+          color="text.secondary"
+        >
+          Filters are active. Click "Show Filters" to edit.
+        </Box>
+      )}
+
       {isMobile && hasFilters && (
         <Fab
           color="warning"
