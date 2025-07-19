@@ -39,7 +39,7 @@ export default function PageWithStickyFilters({
     <Box
       sx={{
         height: `calc(100vh - ${headerHeight + footerHeight}px)`,
-        overflowY: 'auto',
+        overflow: 'hidden',
         px: { xs: 2, md: 6 },
         py: { xs: 2, md: 4 },
         mt: `${headerHeight}px`,
