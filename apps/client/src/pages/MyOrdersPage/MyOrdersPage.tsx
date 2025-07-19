@@ -5,8 +5,6 @@ import {
   Paper,
   Divider,
   Chip,
-  Button,
-  Stack,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
@@ -24,16 +22,11 @@ import { footerHeight, headerHeight } from '../../config/themeConfig';
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'processing':
-      return 'warning';
-    case 'shipped':
-      return 'info';
-    case 'delivered':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
+    case 'processing': return 'warning';
+    case 'shipped': return 'info';
+    case 'delivered': return 'success';
+    case 'cancelled': return 'error';
+    default: return 'default';
   }
 }
 
@@ -41,8 +34,7 @@ export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false); // ✅ For Drawer
-
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { user, ready } = useAuthReady();
 
   useEffect(() => {
@@ -159,44 +151,29 @@ export default function MyOrdersPage() {
     );
   };
 
-  return (
-    <PageWithStickyFilters
-      title={
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6">My Orders</Typography>
-          <Button
-            variant="outlined"
-            onClick={() => setMobileOpen((open) => !open)}
-          >
-            {mobileOpen ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-          {hasFilters && (
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={() => dispatch({ type: 'RESET_FILTERS' })}
-            >
-              Reset Filters
-            </Button>
-          )}
-        </Stack>
-      }
-      mobileOpen={mobileOpen}
-      onMobileClose={() => setMobileOpen(false)}
-      sidebar={<UserOrderFilters state={filterState} dispatch={dispatch} />}
-    >
-      {filteredOrders.length === 0 ? (
-        <Typography>No orders found.</Typography>
-      ) : (
-        <List
-          height={window.innerHeight - (headerHeight + footerHeight + 140)}
-          itemCount={filteredOrders.length}
-          itemSize={280}
-          width="100%"
-        >
-          {Row}
-        </List>
-      )}
-    </PageWithStickyFilters>
-  );
+return (
+  <PageWithStickyFilters
+    title="My Orders"
+    sidebar={<UserOrderFilters state={filterState} dispatch={dispatch} />}
+    mobileOpen={mobileOpen}
+    onMobileOpen={() => setMobileOpen(true)}          // 👈 Required
+    onMobileClose={() => setMobileOpen(false)}        // 👈 Required
+    hasFilters={hasFilters}                           // 👈 Required
+    onReset={() => dispatch({ type: 'RESET_FILTERS' })} // 👈 Required
+  >
+    {filteredOrders.length === 0 ? (
+      <Typography>No orders found.</Typography>
+    ) : (
+      <List
+        height={window.innerHeight - (headerHeight + footerHeight + 140)}
+        itemCount={filteredOrders.length}
+        itemSize={280}
+        width="100%"
+      >
+        {Row}
+      </List>
+    )}
+  </PageWithStickyFilters>
+);
+
 }

@@ -1,14 +1,13 @@
 import React from 'react';
 import {
   Box,
-  Button,
-  Divider,
   Stack,
   TextField,
   Typography,
   MenuItem,
   Checkbox,
   FormControlLabel,
+  Divider,
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -20,14 +19,13 @@ interface Props {
   state: FilterState;
   dispatch: React.Dispatch<FilterAction>;
   categories: Category[];
-  hasFilters: boolean;
+
 }
 
 export default function UserProductFilters({
   state,
   dispatch,
   categories,
-  hasFilters,
 }: Props) {
   return (
     <Box p={1}>
@@ -115,18 +113,6 @@ export default function UserProductFilters({
           }
           slotProps={{ textField: { size: 'small', fullWidth: true } }}
         />
-
-        {hasFilters && (
-          <>
-            <Divider />
-            <Button
-              variant="outlined"
-              onClick={() => dispatch({ type: 'RESET_FILTERS' })}
-            >
-              Reset Filters
-            </Button>
-          </>
-        )}
       </Stack>
     </Box>
   );

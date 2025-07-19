@@ -127,19 +127,24 @@ export default function ProductsPage() {
 
   return (
     <PageWithStickyFilters
-      title=""
+      title="Products"
       sidebar={
         <UserProductFilters
           state={state}
           dispatch={dispatch}
           categories={categories}
-          hasFilters={hasFilters}
+         
+          
         />
       }
+    onMobileOpen={() =>  uiDispatch({ type: 'setMobileDrawerOpen', payload: true })}          // 👈 Required
+    onMobileClose={() =>  uiDispatch({ type: 'setMobileDrawerOpen', payload: false })}        // 👈 Required
+    hasFilters={hasFilters} 
+    onReset={() => dispatch({ type: 'RESET_FILTERS' })}                       
+
+      
       mobileOpen={uiState.mobileDrawerOpen}
-      onMobileClose={() =>
-        uiDispatch({ type: 'setMobileDrawerOpen', payload: false })
-      }
+    
     >
       <Box
         display="flex"
@@ -147,19 +152,7 @@ export default function ProductsPage() {
         alignItems="center"
         mb={2}
       >
-        <Typography variant="h4" gutterBottom>
-          Products
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
-          onClick={() =>
-            uiDispatch({ type: 'setMobileDrawerOpen', payload: true })
-          }
-        >
-          Show Filters
-        </Button>
+       
       </Box>
 
       {filteredProducts.length === 0 ? (

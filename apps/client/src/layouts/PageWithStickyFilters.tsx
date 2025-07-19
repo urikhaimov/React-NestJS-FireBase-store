@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { headerHeight, footerHeight } from '../config/themeConfig';
+
 interface Props {
   title?: string | React.ReactNode;
   sidebar: React.ReactNode;
@@ -25,7 +26,7 @@ export default function PageWithStickyFilters({
   title,
   sidebar,
   children,
-  mobileOpen,
+  mobileOpen = false,
   onMobileClose,
   onMobileOpen,
   onReset,
@@ -36,15 +37,15 @@ export default function PageWithStickyFilters({
 
   return (
     <Box
-          sx={{
-            height: `calc(100vh - ${headerHeight + footerHeight}px)`,
-            overflowY: 'auto',
-            px: { xs: 2, md: 6 },
-            py: { xs: 2, md: 4 },
-            mt: `${headerHeight}px`,
-            mb: `${footerHeight}px`,
-          }}
-        >
+      sx={{
+        height: `calc(100vh - ${headerHeight + footerHeight}px)`,
+        overflowY: 'auto',
+        px: { xs: 2, md: 6 },
+        py: { xs: 2, md: 4 },
+        mt: `${headerHeight}px`,
+        mb: `${footerHeight}px`,
+      }}
+    >
       {/* Top Row */}
       <Box
         display="flex"
@@ -62,14 +63,14 @@ export default function PageWithStickyFilters({
 
         {/* Actions */}
         <Stack direction="row" spacing={1}>
-          {onMobileOpen && isMobile && (
+          {onMobileOpen && onMobileClose && isMobile && (
             <Button
               variant="outlined"
               size="small"
-              onClick={onMobileOpen}
+              onClick={mobileOpen ? onMobileClose : onMobileOpen}
               sx={{ textTransform: 'none' }}
             >
-              Show Filters
+              {mobileOpen ? 'Hide Filters' : 'Show Filters'}
             </Button>
           )}
           {onReset && hasFilters && (
@@ -104,16 +105,18 @@ export default function PageWithStickyFilters({
             ModalProps={{ keepMounted: true }}
             PaperProps={{ sx: { width: 280 } }}
           >
-           <Box
-          sx={{
-            height: `calc(100vh - ${headerHeight + footerHeight}px)`,
-            overflowY: 'auto',
-            px: { xs: 2, md: 6 },
-            py: { xs: 2, md: 4 },
-            mt: `${headerHeight}px`,
-            mb: `${footerHeight}px`,
-          }}
-        >{sidebar}</Box>
+            <Box
+              sx={{
+                height: `calc(100vh - ${headerHeight + footerHeight}px)`,
+                overflowY: 'auto',
+                px: { xs: 2, md: 6 },
+                py: { xs: 2, md: 4 },
+                mt: `${headerHeight}px`,
+                mb: `${footerHeight}px`,
+              }}
+            >
+              {sidebar}
+            </Box>
           </Drawer>
         ) : (
           <Box
