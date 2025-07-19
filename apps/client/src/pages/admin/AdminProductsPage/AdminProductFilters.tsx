@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Box, Button, Stack, Divider, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
+  Fab,
+} from '@mui/material';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Dayjs } from 'dayjs';
 import { Category } from '../../../hooks/useAllCategories';
 import { State, Action } from './LocalReducer';
@@ -31,7 +40,6 @@ export default function AdminProductFilters({
 
   return (
     <AdminFilterLayout
-      // ⛔️ remove title
       hasFilters={hasFilters}
       onClear={() => dispatch({ type: 'RESET_FILTERS' })}
       actions={
@@ -54,13 +62,24 @@ export default function AdminProductFilters({
               onClick={() => dispatch({ type: 'RESET_FILTERS' })}
               fullWidth={isMobile}
             >
-              Clear Filters
+              Reset
             </Button>
           )}
         </Box>
       }
     >
-      {showFilters ? (
+      {/* Always render filters. Mobile: always shown in drawer. Desktop: toggle visibility */}
+      <Box
+        sx={{
+          ...(isMobile
+            ? { p: 0 }
+            : {
+                display: showFilters ? 'block' : 'none',
+                overflowY: 'auto',
+                pr: 1,
+              }),
+        }}
+      >
         <Stack spacing={2} mt={1}>
           <Divider flexItem />
 
@@ -103,11 +122,30 @@ export default function AdminProductFilters({
             }}
           />
         </Stack>
-      ) : hasFilters ? (
+      </Box>
+
+      {!showFilters && !isMobile && hasFilters && (
         <Box mt={1} ml={1} fontStyle="italic" fontSize="0.9rem" color="text.secondary">
           Filters are active. Click "Show Filters" to edit.
         </Box>
-      ) : null}
+      )}
+
+      {isMobile && hasFilters && (
+        <Fab
+          color="warning"
+          size="medium"
+          aria-label="reset"
+          onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+          sx={{
+            position: 'fixed',
+            bottom: 80,
+            right: 16,
+            zIndex: 1300,
+          }}
+        >
+          <RestartAltIcon />
+        </Fab>
+      )}
     </AdminFilterLayout>
   );
 }

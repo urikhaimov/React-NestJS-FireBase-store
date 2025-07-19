@@ -1,10 +1,3 @@
-import React, {
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
 import {
   Alert,
   Box,
@@ -13,6 +6,13 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
+import React, {
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { fetchAllProducts } from '../../hooks/useProducts';
@@ -33,12 +33,11 @@ export default function ProductsPage() {
   const [state, dispatch] = useReducer(filterReducer, initialState);
   const [uiState, uiDispatch] = useReducer(uiReducer, initialUIState);
   const [products, setProducts] = useState<IProduct[]>([]);
-  const [renderCount, setRenderCount] = useState(20); // start with 20
+  const [renderCount, setRenderCount] = useState(20);
   const observerRef = useRef<HTMLDivElement | null>(null);
 
   const { user, ready } = useAuthReady();
   const { data: categories = [] } = useCategories();
-  const cart = useCartStore();
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -116,23 +115,25 @@ export default function ProductsPage() {
     }
   };
 
+  const hasFilters =
+    !!state.search ||
+    !!state.selectedCategoryId ||
+    !!state.createdAfter ||
+    state.minPrice !== null ||
+    state.maxPrice !== null ||
+    state.inStockOnly;
+
   if (uiState.loading) return <LoadingProgress />;
 
   return (
     <PageWithStickyFilters
+      title=""
       sidebar={
         <UserProductFilters
           state={state}
           dispatch={dispatch}
           categories={categories}
-          hasFilters={
-            !!state.search ||
-            !!state.minPrice ||
-            !!state.maxPrice ||
-            !!state.inStockOnly ||
-            !!state.selectedCategoryId ||
-            !!state.createdAfter
-          }
+          hasFilters={hasFilters}
         />
       }
       mobileOpen={uiState.mobileDrawerOpen}
@@ -140,7 +141,6 @@ export default function ProductsPage() {
         uiDispatch({ type: 'setMobileDrawerOpen', payload: false })
       }
     >
-      {/* Header */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -162,7 +162,6 @@ export default function ProductsPage() {
         </Button>
       </Box>
 
-      {/* Product List */}
       {filteredProducts.length === 0 ? (
         <Typography>No products found.</Typography>
       ) : (
@@ -191,7 +190,6 @@ export default function ProductsPage() {
         </List>
       )}
 
-      {/* Snackbar */}
       <Snackbar
         open={uiState.snackbarOpen}
         autoHideDuration={3000}

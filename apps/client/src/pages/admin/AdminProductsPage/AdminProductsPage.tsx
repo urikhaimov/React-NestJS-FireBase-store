@@ -45,7 +45,9 @@ export default function AdminProductsPage() {
   const sensors = useSensors(useSensor(PointerSensor));
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
-
+  useEffect(() => {
+    console.log('🔥 Loaded products from Firestore:', state.products);
+  }, [state.products]);
   const filteredProducts = useMemo(() => {
     const term = (state.searchTerm || '').toLowerCase();
 
@@ -68,11 +70,17 @@ export default function AdminProductsPage() {
 
       const matchesDate =
         !state.createdAfter ||
-        (createdAtDate && createdAtDate.getTime() >= state.createdAfter.valueOf());
+        (createdAtDate &&
+          createdAtDate.getTime() >= state.createdAfter.valueOf());
 
       return matchesText && matchesCategory && matchesDate;
     });
-  }, [state.products, state.searchTerm, state.selectedCategoryId, state.createdAfter]);
+  }, [
+    state.products,
+    state.searchTerm,
+    state.selectedCategoryId,
+    state.createdAfter,
+  ]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -98,12 +106,14 @@ export default function AdminProductsPage() {
         updatedProducts.splice(
           idx + state.products.indexOf(visibleProducts[0]),
           0,
-          product
+          product,
         );
       }
     });
 
-    const uniqueUpdated = Array.from(new Map(updatedProducts.map((p) => [p.id, p])).values());
+    const uniqueUpdated = Array.from(
+      new Map(updatedProducts.map((p) => [p.id, p])).values(),
+    );
 
     dispatch({ type: 'SET_PRODUCTS', payload: uniqueUpdated });
 
@@ -137,7 +147,11 @@ export default function AdminProductsPage() {
       }));
 
       const invalid = products.filter(
-        (p) => !p || typeof p !== 'object' || !p.id || typeof p.price === 'undefined'
+        (p) =>
+          !p ||
+          typeof p !== 'object' ||
+          !p.id ||
+          typeof p.price === 'undefined',
       );
       if (invalid.length > 0) {
         console.warn('⚠️ Invalid products found:', invalid);
@@ -163,7 +177,7 @@ export default function AdminProductsPage() {
 
   return (
     <PageWithStickyFilters
-      
+      title="Admin Products"
       sidebar={
         <AdminProductFilters
           state={state}
@@ -178,14 +192,25 @@ export default function AdminProductsPage() {
       {state.loading ? (
         <LoadingProgress />
       ) : (
-        <Box sx={{ flexGrow: 1, px: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 240px)' }}>
+        <Box
+          sx={{
+            px: 1,
+            pb: 3,
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+          }}
+        >
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
               items={state.products.map((p) => p.id)}
               strategy={verticalListSortingStrategy}
             >
               {visibleProducts
-                .filter((p): p is IProduct => !!p && typeof p === 'object' && 'id' in p && 'price' in p)
+                .filter(
+                  (p): p is IProduct =>
+                    !!p && typeof p === 'object' && 'id' in p,
+                )
                 .map((product) => (
                   <Box
                     key={product.id}
@@ -201,8 +226,15 @@ export default function AdminProductsPage() {
                     />
                   </Box>
                 ))}
-              <Box ref={sentinelRef} display="flex" justifyContent="center" py={3}>
-                {visibleCount < filteredProducts.length && <CircularProgress size={28} />}
+              <Box
+                ref={sentinelRef}
+                display="flex"
+                justifyContent="center"
+                py={3}
+              >
+                {visibleCount < filteredProducts.length && (
+                  <CircularProgress size={28} />
+                )}
               </Box>
             </SortableContext>
           </DndContext>

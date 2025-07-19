@@ -1,16 +1,12 @@
-// src/pages/MyOrdersPage/MyOrdersPage.tsx
-import React, {
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import {
   Box,
   Typography,
   Paper,
   Divider,
   Chip,
+  Button,
+  Stack,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
@@ -45,6 +41,7 @@ export default function MyOrdersPage() {
   const [filterState, dispatch] = useReducer(filterReducer, initialFilterState);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false); // ✅ For Drawer
 
   const { user, ready } = useAuthReady();
 
@@ -63,7 +60,7 @@ export default function MyOrdersPage() {
 
         const converted = list.map((order: any) => ({
           ...order,
-          email: order.email ?? '', // ✅ fallback to empty string
+          email: order.email ?? '',
           createdAt: order.createdAt?.seconds
             ? new Timestamp(order.createdAt.seconds, order.createdAt.nanoseconds)
             : Timestamp.fromDate(new Date(order.createdAt)),
@@ -80,23 +77,25 @@ export default function MyOrdersPage() {
     loadOrders();
   }, [ready, user]);
 
+  const hasFilters = Boolean(
+    filterState.status !== 'all' ||
+    filterState.startDate ||
+    filterState.endDate ||
+    filterState.minTotal !== null ||
+    filterState.maxTotal !== null ||
+    filterState.email
+  );
+
   const filteredOrders = useMemo(() => {
     return orders
       .filter(order => {
         const created = order.createdAt.toDate();
-        const matchStatus =
-          filterState.status === 'all' || order.status === filterState.status;
-        const matchStart =
-          !filterState.startDate || created >= filterState.startDate;
-        const matchEnd =
-          !filterState.endDate || created <= filterState.endDate;
-        const matchMin =
-          filterState.minTotal === null || order.amount >= filterState.minTotal;
-        const matchMax =
-          filterState.maxTotal === null || order.amount <= filterState.maxTotal;
-        const matchEmail =
-          !filterState.email || (order.email?.includes?.(filterState.email) ?? false); // ✅ safe check
-
+        const matchStatus = filterState.status === 'all' || order.status === filterState.status;
+        const matchStart = !filterState.startDate || created >= filterState.startDate;
+        const matchEnd = !filterState.endDate || created <= filterState.endDate;
+        const matchMin = filterState.minTotal === null || order.amount >= filterState.minTotal;
+        const matchMax = filterState.maxTotal === null || order.amount <= filterState.maxTotal;
+        const matchEmail = !filterState.email || (order.email?.includes?.(filterState.email) ?? false);
         return matchStatus && matchStart && matchEnd && matchMin && matchMax && matchEmail;
       })
       .sort((a, b) => {
@@ -161,11 +160,31 @@ export default function MyOrdersPage() {
   };
 
   return (
-    <PageWithStickyFilters sidebar={<UserOrderFilters state={filterState} dispatch={dispatch} />}>
-      <Typography variant="h4" gutterBottom>
-        My Orders
-      </Typography>
-
+    <PageWithStickyFilters
+      title={
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="h6">My Orders</Typography>
+          <Button
+            variant="outlined"
+            onClick={() => setMobileOpen((open) => !open)}
+          >
+            {mobileOpen ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+          {hasFilters && (
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={() => dispatch({ type: 'RESET_FILTERS' })}
+            >
+              Reset Filters
+            </Button>
+          )}
+        </Stack>
+      }
+      mobileOpen={mobileOpen}
+      onMobileClose={() => setMobileOpen(false)}
+      sidebar={<UserOrderFilters state={filterState} dispatch={dispatch} />}
+    >
       {filteredOrders.length === 0 ? (
         <Typography>No orders found.</Typography>
       ) : (

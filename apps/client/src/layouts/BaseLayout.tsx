@@ -30,12 +30,14 @@ export default function BaseLayout({
       }}
     >
       <Header />
-
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <ScrollContainer sx={{ width: sidebarWidth }}>
+        {isMobile ? (
           <LeftMenu />
-        </ScrollContainer>
-
+        ) : (
+          <ScrollContainer sx={{ width: sidebarWidth }}>
+            <LeftMenu />
+          </ScrollContainer>
+        )}
         <Box
           sx={{
             flex: 1,
