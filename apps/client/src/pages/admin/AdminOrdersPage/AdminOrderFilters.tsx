@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
-  Button,
   Fab,
   Stack,
   useMediaQuery,
@@ -14,7 +13,6 @@ import { FilterState, FilterAction } from './LocalReducer';
 import AdminFilterLayout from '../../../components/AdminFilterLayout';
 import UserFilterTextField from '../../../components/UserFilterTextField';
 import UserFilterDatePicker from '../../../components/UserFilterDatePicker';
-import { footerHeight, headerHeight } from '../../../config/themeConfig';
 
 const statusOptions = ['all', 'pending', 'shipped', 'delivered', 'succeeded'];
 
@@ -24,7 +22,6 @@ interface Props {
 }
 
 export default function AdminOrderFilters({ state, dispatch }: Props) {
-  const [showFilters, setShowFilters] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -37,7 +34,7 @@ export default function AdminOrderFilters({ state, dispatch }: Props) {
     state.maxPrice ||
     state.startDate ||
     state.endDate ||
-    state.inStockOnly,
+    state.inStockOnly
   );
 
   const parseNumber = (val: string): number | undefined => {
@@ -46,43 +43,8 @@ export default function AdminOrderFilters({ state, dispatch }: Props) {
   };
 
   return (
-    <AdminFilterLayout
-      hasFilters={hasFilters}
-      actions={
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            onClick={() => setShowFilters((prev) => !prev)}
-            size="small"
-          >
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-          {!isMobile && hasFilters && (
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={() => dispatch({ type: 'RESET_FILTERS' })}
-              size="small"
-            >
-              Reset
-            </Button>
-          )}
-        </Stack>
-      }
-    >
-      {/* Always render filters — drawer shows on mobile, collapse on desktop */}
-      <Box
-        sx={{
-          ...(isMobile
-            ? { p: 0 }
-            : {
-                display: showFilters ? 'block' : 'none',
-                height: window.innerHeight - (headerHeight + footerHeight + 140),
-                overflowY: 'auto',
-                pr: 1,
-              }),
-        }}
-      >
+    <>
+      <Box pr={1}>
         <Stack spacing={2}>
           <UserFilterTextField
             label="User Email"
@@ -188,12 +150,6 @@ export default function AdminOrderFilters({ state, dispatch }: Props) {
         </Stack>
       </Box>
 
-      {!showFilters && !isMobile && hasFilters && (
-        <Box mt={1} fontSize="0.85rem" fontStyle="italic" color="text.secondary">
-          Filters are active. Click "Show Filters" to edit.
-        </Box>
-      )}
-
       {isMobile && hasFilters && (
         <Fab
           color="warning"
@@ -210,6 +166,6 @@ export default function AdminOrderFilters({ state, dispatch }: Props) {
           <RestartAltIcon />
         </Fab>
       )}
-    </AdminFilterLayout>
+    </>
   );
 }

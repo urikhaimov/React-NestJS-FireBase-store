@@ -5,7 +5,7 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer';
 import ScrollContainer from '../components/ScrollContainer';
 import LeftMenu from '../components/LeftMenu/LeftMenu';
-import { footerHeight, sidebarWidth } from '../config/themeConfig';
+import { footerHeight, sidebarWidth , } from '../config/themeConfig';
 
 interface BaseLayoutProps {
   children: ReactNode;

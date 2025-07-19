@@ -33,9 +33,11 @@ import { debounce } from 'lodash';
 import { IProduct } from '@common/types';
 import PageWithStickyFilters from '@client/layouts/PageWithStickyFilters';
 import LoadingProgress from '@client/components/LoadingProgress';
+import { uiReducer, initialUIState } from './LocalUiReducer';
 
 export default function AdminProductsPage() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [uiState, uiDispatch] = useReducer(uiReducer, initialUIState);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { data: categories = [] } = useAllCategories();
@@ -45,9 +47,11 @@ export default function AdminProductsPage() {
   const sensors = useSensors(useSensor(PointerSensor));
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
+
   useEffect(() => {
     console.log('🔥 Loaded products from Firestore:', state.products);
   }, [state.products]);
+
   const filteredProducts = useMemo(() => {
     const term = (state.searchTerm || '').toLowerCase();
 
@@ -175,6 +179,11 @@ export default function AdminProductsPage() {
     }
   }, [inView, filteredProducts.length, visibleCount]);
 
+  const hasFilters =
+    !!state.searchTerm ||
+    !!state.createdAfter ||
+    !!state.selectedCategoryId;
+
   return (
     <PageWithStickyFilters
       title="Admin Products"
@@ -183,9 +192,18 @@ export default function AdminProductsPage() {
           state={state}
           dispatch={dispatch}
           categories={categories}
-          onAddProduct={handleAddProduct}
+          //onAddProduct={handleAddProduct}
         />
       }
+      onMobileOpen={() =>
+        uiDispatch({ type: 'setMobileDrawerOpen', payload: true })
+      }
+      onMobileClose={() =>
+        uiDispatch({ type: 'setMobileDrawerOpen', payload: false })
+      }
+      mobileOpen={uiState.mobileDrawerOpen}
+      hasFilters={hasFilters}
+      onReset={() => dispatch({ type: 'RESET_FILTERS' })}
     >
       <Divider sx={{ mb: 2 }} />
 

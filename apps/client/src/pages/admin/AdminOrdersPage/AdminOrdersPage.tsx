@@ -1,14 +1,12 @@
-// src/pages/admin/AdminOrdersPage/AdminOrdersPage.tsx
 import React, { useEffect, useReducer, useState, useMemo } from 'react';
 import {
   Box,
   Typography,
   Paper,
-  Button,
   Divider,
   useMediaQuery,
   useTheme,
-  Pagination,
+  Button,
 } from '@mui/material';
 import { VariableSizeList, ListChildComponentProps } from 'react-window';
 import PageWithStickyFilters from '../../../layouts/PageWithStickyFilters';
@@ -24,16 +22,36 @@ import {
   filterReducer,
 } from './LocalReducer';
 
+type UIState = {
+  mobileDrawerOpen: boolean;
+};
+
+type UIAction = { type: 'setMobileDrawerOpen'; payload: boolean };
+
+const uiReducer = (state: UIState, action: UIAction): UIState => {
+  switch (action.type) {
+    case 'setMobileDrawerOpen':
+      return { ...state, mobileDrawerOpen: action.payload };
+    default:
+      return state;
+  }
+};
+
 export default function AdminOrdersPage() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { ready, user } = useAuthReady();
-
+  const { ready } = useAuthReady();
   const [page, setPage] = useState(1);
-  const pageSize = 10;
 
   const [state, dispatch] = useReducer(filterReducer, initialFilterState);
+  const [uiState, uiDispatch] = useReducer(uiReducer, { mobileDrawerOpen: false });
+
+  useEffect(() => {
+    const handler = () => setPage(1);
+    window.addEventListener('admin-orders-reset-page', handler);
+    return () => window.removeEventListener('admin-orders-reset-page', handler);
+  }, []);
 
   const { data: allOrders = [], isLoading, error } = useOrders();
 
@@ -86,13 +104,18 @@ export default function AdminOrdersPage() {
       });
   }, [allOrders, state]);
 
-  const paginatedOrders: Order[] = filteredOrders.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const visibleOrders = filteredOrders;
+
+  const hasFilters =
+    !!state.email ||
+    state.status !== 'all' ||
+    !!state.minTotal ||
+    !!state.maxTotal ||
+    !!state.startDate ||
+    !!state.endDate;
 
   const renderRow = ({ index, style }: ListChildComponentProps) => {
-    const order = paginatedOrders[index];
+    const order = visibleOrders[index];
     if (!order) return null;
 
     const date =
@@ -146,6 +169,11 @@ export default function AdminOrdersPage() {
     <PageWithStickyFilters
       title="Admin Orders"
       sidebar={<AdminOrderFilters state={state} dispatch={dispatch} />}
+      onMobileOpen={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: true })}
+      onMobileClose={() => uiDispatch({ type: 'setMobileDrawerOpen', payload: false })}
+      mobileOpen={uiState.mobileDrawerOpen}
+      hasFilters={hasFilters}
+      onReset={() => dispatch({ type: 'RESET_FILTERS' })}
     >
       <Divider sx={{ mb: 2 }} />
 
@@ -156,30 +184,17 @@ export default function AdminOrdersPage() {
           Failed to load orders: {error.message}
         </Typography>
       ) : (
-        <>
-          <Box
-            sx={{ px: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 240px)' }}
+        <Box sx={{ px: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 240px)' }}>
+          <VariableSizeList
+            height={isMobile ? 320 : 380}
+            width="100%"
+            itemCount={visibleOrders.length}
+            itemSize={() => (isMobile ? 240 : 180)}
+            style={{ overflowX: 'hidden' }}
           >
-            <VariableSizeList
-              height={isMobile ? 320 : 380}
-              width="100%"
-              itemCount={paginatedOrders.length}
-              itemSize={() => (isMobile ? 240 : 180)}
-              style={{ overflowX: 'hidden' }}
-            >
-              {renderRow}
-            </VariableSizeList>
-          </Box>
-
-          <Box mt={2} display="flex" justifyContent="center">
-            <Pagination
-              count={Math.ceil(filteredOrders.length / pageSize)}
-              page={page}
-              onChange={(_, value) => setPage(value)}
-              color="primary"
-            />
-          </Box>
-        </>
+            {renderRow}
+          </VariableSizeList>
+        </Box>
       )}
     </PageWithStickyFilters>
   );

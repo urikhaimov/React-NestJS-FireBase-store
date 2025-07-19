@@ -98,10 +98,11 @@ export function reducer(state: State, action: Action): State {
       return { ...state, createdAfter: action.payload, page: 1 };
     case 'RESET_FILTERS':
       return {
-        ...resetPagination(state),
+        ...state,
         searchTerm: '',
         selectedCategoryId: '',
         createdAfter: null,
+        page: 1,
         successMessage: '',
         pendingDelete: null,
       };
